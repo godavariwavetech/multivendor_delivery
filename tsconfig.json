@@ -1,0 +1,27 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    // The layout guard test reads the source tree, so it needs node's types.
+    "types": ["jest", "node"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@app/*": ["./src/app/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@theme": ["./src/theme"],
+      "@theme/*": ["./src/theme/*"],
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
+      "@domain": ["./src/domain"],
+      "@domain/*": ["./src/domain/*"],
+      "@data": ["./src/data"],
+      "@data/*": ["./src/data/*"],
+      "@api/*": ["./src/api/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@config/*": ["./src/config/*"],
+      "@assets/*": ["./src/assets/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
+}
