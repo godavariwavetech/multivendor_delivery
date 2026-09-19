@@ -1,12 +1,29 @@
+import { Pencil } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BackHeader, Button, Pill, PhotoBox, Screen, Text, useToast } from '@/components';
+import {
+  BackHeader,
+  Button,
+  Card,
+  Chip,
+  ChipRow,
+  IconCircle,
+  PhotoBox,
+  Pill,
+  Screen,
+  SectionLabel,
+  Text,
+  TextField,
+  useToast,
+} from '@/components';
+import { apiClient, endpoints } from '@/api';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORY_LABEL } from '@/domain/labels';
 import type { Category, Product } from '@/domain/types';
 import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
+import { photoUrl, pickPhoto } from '@/utils/photo';
 
 import { BakerySheetView, FoodSheetView, GrocerySheetView, MeatSheetView } from './sheets';
 
@@ -61,6 +78,77 @@ const blankProduct = (category: Category, group: string): Product => {
 };
 
 /**
+ * The details the vendor types: what the item is called, which group it belongs
+ * to, whether it is veg, and how long it takes to make. Everything below this on
+ * the screen is priced per category, so it stays in the sheet views.
+ */
+function DetailsForm({
+  draft,
+  groups,
+  onChange,
+  onDone,
+  isNew,
+}: {
+  draft: Product;
+  groups: string[];
+  onChange: (p: Product) => void;
+  onDone: () => void;
+  isNew: boolean;
+}) {
+  const sheet = draft.sheet;
+  return (
+    <Card>
+      <SectionLabel>{isNew ? 'New item' : 'Item details'}</SectionLabel>
+
+      <TextField
+        label="Name"
+        value={draft.name}
+        onChangeText={name => onChange({ ...draft, name })}
+        placeholder="e.g. Chicken Biryani"
+        autoFocus={isNew}
+        maxLength={60}
+        style={styles.field}
+      />
+
+      {groups.length ? (
+        <>
+          <Text v="bodyStrong" style={styles.field}>
+            Group
+          </Text>
+          <ChipRow scroll={false}>
+            {groups.map(g => (
+              <Chip key={g} label={g} selected={draft.group === g} onPress={() => onChange({ ...draft, group: g })} />
+            ))}
+          </ChipRow>
+        </>
+      ) : null}
+
+      <Text v="bodyStrong" style={styles.field}>
+        Food type
+      </Text>
+      <ChipRow scroll={false}>
+        <Chip label="Veg" selected={draft.veg} onPress={() => onChange({ ...draft, veg: true })} />
+        <Chip label="Non-veg" selected={!draft.veg} onPress={() => onChange({ ...draft, veg: false })} />
+      </ChipRow>
+
+      {sheet.kind === 'food' ? (
+        <TextField
+          label="Prep time"
+          value={String(sheet.prepMin)}
+          onChangeText={v => onChange({ ...draft, sheet: { ...sheet, prepMin: Number(v.replace(/\D/g, '')) || 0 } })}
+          keyboardType="number-pad"
+          suffix="min"
+          maxLength={3}
+          style={styles.field}
+        />
+      ) : null}
+
+      <Button label="Done" variant="outline" onPress={onDone} style={styles.field} />
+    </Card>
+  );
+}
+
+/**
  * Board 2a — the product sheet per category. The screen is shared; only the sheet
  * body changes with the store's category.
  */
@@ -68,14 +156,52 @@ export function ProductEditScreen() {
   const nav = useVendorNav();
   const toast = useToast();
   const { params } = useVendorRoute<'ProductEdit'>();
-  const { store, product, actions } = useVendor();
+  const { store, product, actions, refresh } = useVendor();
   const existing = params.id ? product(params.id) : undefined;
   const [draft, setDraft] = useState<Product>(() => existing ?? blankProduct(store.category, store.groups[0]));
+  // A new item has nothing to show yet, so it opens straight into the form.
+  const [editing, setEditing] = useState(!existing);
+  const [uploading, setUploading] = useState(false);
   const titles = TITLES[store.category];
 
+  /**
+   * The upload is keyed on the product id, so a brand-new item has to be saved
+   * before it can carry a photo — there is no row to attach it to yet.
+   */
+  const addPhoto = async () => {
+    if (!existing) {
+      toast('Save the item first, then add a photo');
+      return;
+    }
+    const picked = await pickPhoto('Item photo');
+    if (!picked) {
+      return;
+    }
+    setUploading(true);
+    try {
+      const res = await apiClient.upload<{ image: string }>(endpoints.vendor.uploadProductImage, picked, {
+        product_id: draft.id,
+      });
+      setDraft(d => ({ ...d, image: res.image }));
+      await refresh();
+      toast('Photo saved');
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'The photo could not be saved.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const save = () => {
-    actions.saveProduct(draft);
-    toast(`${draft.name} saved`);
+    const name = draft.name.trim();
+    if (!name) {
+      // The backend refuses a nameless product, so catch it before the round trip.
+      toast('Give the item a name first');
+      setEditing(true);
+      return;
+    }
+    actions.saveProduct({ ...draft, name });
+    toast(`${name} ${existing ? 'updated' : 'added'}`);
     nav.goBack();
   };
 
@@ -97,32 +223,47 @@ export function ProductEditScreen() {
         subtitle={`${store.name} · ${CATEGORY_LABEL[store.category]}`}
         onBack={nav.goBack}
         pill={CATEGORY_LABEL[store.category]}
-        pillTone="peach"
+        pillTone="sky"
       />
 
-      <View style={styles.head}>
-        <PhotoBox size={92} />
-        <View style={styles.flex}>
-          <Text v="headline">{draft.name}</Text>
-          <Text v="body" muted>
-            {subline}
-          </Text>
-          <View style={styles.tags}>
-            {sheet.kind === 'grocery' ? (
-              <>
-                <Pill label={sheet.ean} tone="neutral" />
-                <Text v="bodyStrong" color={palette.clay} onPress={() => toast('Barcode scanner opens the camera')}>
-                  Scan
-                </Text>
-              </>
-            ) : (
-              tags.map(t => (
-                <Pill key={t} label={t} tone={t === 'Non-veg' ? 'peach' : t === 'Veg' ? 'mint' : 'neutral'} />
-              ))
-            )}
+      {editing ? (
+        <DetailsForm
+          draft={draft}
+          groups={store.groups}
+          onChange={setDraft}
+          onDone={() => setEditing(false)}
+          isNew={!existing}
+        />
+      ) : (
+        <View style={styles.head}>
+          <PhotoBox size={92} uri={photoUrl(draft.image)} busy={uploading} onPress={addPhoto} />
+          <View style={styles.flex}>
+            <View style={styles.nameRow}>
+              <Text v="headline" style={styles.flex}>
+                {draft.name}
+              </Text>
+              <IconCircle icon={Pencil} size={38} onPress={() => setEditing(true)} />
+            </View>
+            <Text v="body" muted>
+              {subline}
+            </Text>
+            <View style={styles.tags}>
+              {sheet.kind === 'grocery' ? (
+                <>
+                  <Pill label={sheet.ean} tone="neutral" />
+                  <Text v="bodyStrong" color={palette.blue} onPress={() => toast('Barcode scanner opens the camera')}>
+                    Scan
+                  </Text>
+                </>
+              ) : (
+                tags.map(t => (
+                  <Pill key={t} label={t} tone={t === 'Non-veg' ? 'sky' : t === 'Veg' ? 'leaf' : 'neutral'} />
+                ))
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {sheet.kind === 'food' ? (
         <FoodSheetView sheet={sheet} available={draft.available} onChange={(s, available) => setDraft(d => ({ ...d, sheet: s, available: available ?? d.available }))} />
@@ -142,6 +283,8 @@ export function ProductEditScreen() {
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', gap: space.lg, alignItems: 'center', marginBottom: space.xs },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  field: { marginTop: space.md },
   flex: { flex: 1, gap: 2 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: space.sm },
 });

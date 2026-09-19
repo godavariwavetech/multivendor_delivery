@@ -163,6 +163,8 @@ export type Product = {
   available: boolean;
   stockLine: string;
   outNote?: string;
+  /** Server path of the primary product_images row, or null when none. */
+  image?: string | null;
   sheet: ProductSheet;
 };
 

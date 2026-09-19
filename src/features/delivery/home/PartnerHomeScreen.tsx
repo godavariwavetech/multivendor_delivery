@@ -31,13 +31,13 @@ export function PartnerHomeScreen() {
         unread={unread > 0}
       />
 
-      <Card tone={state.online ? 'sage' : 'paper'} style={styles.hero}>
+      <Card tone={state.online ? 'green' : 'paper'} style={styles.hero}>
         <View style={styles.row}>
           <View style={styles.flex}>
-            <Text v="display" color={state.online ? palette.cream : palette.ink} style={styles.heroTitle}>
+            <Text v="display" color={state.online ? palette.canvas : palette.ink} style={styles.heroTitle}>
               {state.online ? "You're online" : "You're offline"}
             </Text>
-            <Text v="body" color={state.online ? 'rgba(249, 244, 237, 0.88)' : palette.inkMuted}>
+            <Text v="body" color={state.online ? 'rgba(255, 255, 255, 0.88)' : palette.inkMuted}>
               {state.online ? `Food deliveries · since ${clock(state.onlineSince)}` : 'Go online to receive delivery requests'}
             </Text>
           </View>
@@ -59,14 +59,14 @@ export function PartnerHomeScreen() {
       <TileRow>
         <StatTile value={String(today.deliveries)} label="Deliveries" />
         <StatTile value={String(today.km)} unit="km" label="Distance" />
-        <StatTile value={formatAmount(today.earned)} label="Today" highlight onPress={() => nav.navigate('DeliveryTabs', { screen: 'Earnings' })} />
+        <StatTile value={formatAmount(today.earned)} label="Today" onPress={() => nav.navigate('DeliveryTabs', { screen: 'Earnings' })} />
       </TileRow>
 
       {trip && activeRequest && trip.stage !== 'complete' ? (
         <Card tone="highlight">
           <View style={styles.head}>
             <Text v="cardTitle">{`#${activeRequest.id} · active`}</Text>
-            <Pill label={tripStatusPill(trip, activeRequest, now)} tone="mint" />
+            <Pill label={tripStatusPill(trip, activeRequest, now)} tone="leaf" />
           </View>
           <Text v="body" muted style={styles.gap}>
             {`${activeRequest.store.name} → ${activeRequest.drop.area}`}
@@ -101,7 +101,7 @@ export function PartnerHomeScreen() {
       <Card>
         <View style={styles.head}>
           <Text v="cardTitle">Dinner peak bonus</Text>
-          <Text v="bodyStrong" color={palette.sageDeep}>{`${today.peakDone} of ${today.peakTarget} trips`}</Text>
+          <Text v="bodyStrong" color={palette.greenDeep}>{`${today.peakDone} of ${today.peakTarget} trips`}</Text>
         </View>
         <ProgressBar progress={today.peakDone / today.peakTarget} style={styles.progress} />
         <Text v="body" muted>

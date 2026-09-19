@@ -7,7 +7,7 @@ import { palette, radius, shadow, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'outline' | 'light' | 'clay' | 'sage';
+export type ButtonVariant = 'primary' | 'outline' | 'light' | 'blue' | 'green';
 
 type ButtonProps = {
   label: string;
@@ -29,8 +29,8 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon:
   const delivery = brand?.delivery;
   const scheme = {
     primary: { bg: r.accent, fg: r.onAccent, border: r.accent },
-    clay: { bg: vendor?.button ?? palette.clay, fg: vendor?.onAccent ?? palette.cream, border: vendor?.button ?? palette.clay },
-    sage: { bg: delivery?.button ?? palette.sage, fg: delivery?.onAccent ?? palette.cream, border: delivery?.button ?? palette.sage },
+    blue: { bg: vendor?.button ?? palette.blue, fg: vendor?.onAccent ?? palette.white, border: vendor?.button ?? palette.blue },
+    green: { bg: delivery?.button ?? palette.green, fg: delivery?.onAccent ?? palette.white, border: delivery?.button ?? palette.green },
     outline: { bg: 'transparent', fg: palette.ink, border: palette.line },
     light: { bg: palette.white, fg: palette.ink, border: palette.white },
   }[variant];
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow.card,
   },
-  dot: { position: 'absolute', top: 10, right: 12, width: 7, height: 7, borderRadius: 4, backgroundColor: palette.clayMid },
+  dot: { position: 'absolute', top: 10, right: 12, width: 7, height: 7, borderRadius: 4, backgroundColor: palette.alert },
   circle: { alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
   pressed: { opacity: 0.7 },
 });

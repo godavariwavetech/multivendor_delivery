@@ -39,17 +39,17 @@ export function RateSheetScreen() {
         subtitle={`${store.name} · ${dayMonth(Date.now())}`}
         onBack={nav.goBack}
         pill={CATEGORY_LABEL[store.category]}
-        pillTone="peach"
+        pillTone="sky"
       />
 
       {state.ratesPublished ? (
-        <Banner tone="mint" title="Rates are live for today" body="Customers see these prices until you update them." />
+        <Banner tone="leaf" title="Rates are live for today" body="Customers see these prices until you update them." />
       ) : (
         <Banner
-          tone="peach"
+          tone="sky"
           title="Rates not published for today"
           body="Items stay hidden until you publish."
-          right={<Text v="bodyStrong" color={palette.clayDeep}>{`${products.length} items`}</Text>}
+          right={<Text v="bodyStrong" color={palette.blueDeep}>{`${products.length} items`}</Text>}
         />
       )}
 
@@ -83,7 +83,7 @@ export function RateSheetScreen() {
                 <Divider style={styles.divider} />
                 <View style={styles.tags}>
                   {p.sheet.tags.map((t, i) => (
-                    <Pill key={t} label={t} tone={i === 0 ? 'peach' : 'neutral'} />
+                    <Pill key={t} label={t} tone={i === 0 ? 'sky' : 'neutral'} />
                   ))}
                 </View>
               </>
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     borderColor: palette.line,
     backgroundColor: palette.sunken,
   },
-  rateChanged: { borderColor: palette.peachLine, backgroundColor: palette.peachWash },
+  rateChanged: { borderColor: palette.skyLine, backgroundColor: palette.skyWash },
   rateInput: { minWidth: 30, fontFamily: fonts.semibold, fontSize: 20, color: palette.ink, paddingVertical: 0, textAlign: 'center' },
   divider: { marginVertical: space.md },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

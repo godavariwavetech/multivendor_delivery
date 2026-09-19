@@ -44,7 +44,7 @@ export function TripRow({ trip, onPress }: { trip: Trip; onPress: () => void }) 
         </View>
         <View style={styles.right}>
           <Text v="cardTitle">{formatAmount(trip.earning)}</Text>
-          <Text v="captionStrong" color={cancelled ? palette.inkSubtle : palette.sageDeep}>
+          <Text v="captionStrong" color={cancelled ? palette.inkSubtle : palette.greenDeep}>
             {cancelled ? 'Cancelled' : 'Delivered'}
           </Text>
         </View>
@@ -60,16 +60,16 @@ export function PartnerEarningsScreen() {
 
   return (
     <Screen tab>
-      <TitleHeader title="Earnings" right={<LinkButton label="Statement" color={palette.sageDeep} onPress={() => nav.navigate('Statement')} />} />
+      <TitleHeader title="Earnings" right={<LinkButton label="Statement" color={palette.greenDeep} onPress={() => nav.navigate('Statement')} />} />
 
-      <Card tone="sage" style={styles.hero}>
-        <Text v="body" color="rgba(249, 244, 237, 0.86)">
+      <Card tone="green" style={styles.hero}>
+        <Text v="body" color="rgba(255, 255, 255, 0.86)">
           {week.label}
         </Text>
-        <Text v="hero" color={palette.cream} style={styles.heroAmount}>
+        <Text v="hero" color={palette.canvas} style={styles.heroAmount}>
           {formatAmount(week.total)}
         </Text>
-        <Text v="body" color={palette.cream}>{`${week.trips} food deliveries · ${week.km} km`}</Text>
+        <Text v="body" color={palette.canvas}>{`${week.trips} food deliveries · ${week.km} km`}</Text>
         <View style={styles.bars}>
           <HeroBars values={week.bars} height={64} />
         </View>
@@ -84,25 +84,25 @@ export function PartnerEarningsScreen() {
         <AmountRow label="Payable" amount={week.base + week.distance + week.peak + week.tips} total />
       </Card>
 
-      <Card tone="peach">
+      <Card tone="sky">
         <View style={styles.row}>
           <View style={styles.flex}>
             <Text v="cardTitle">{`Payout on ${week.payoutDate}`}</Text>
             <Text v="body">{`${formatAmount(week.total)} · ${week.bank}`}</Text>
           </View>
-          <Pill label="Pending" tone="peach" />
+          <Pill label="Pending" tone="sky" />
         </View>
       </Card>
 
       <SectionHeader
         title={`Today · ${today.deliveries} trips`}
         action={formatAmount(today.earned)}
-        actionColor={palette.sageDeep}
+        actionColor={palette.greenDeep}
       />
       {state.trips.map(t => (
         <TripRow key={`${t.id}-${t.at}`} trip={t} onPress={() => nav.navigate('TripDetail', { id: t.id })} />
       ))}
-      <LinkButton center label="See full history" color={palette.sageDeep} onPress={() => nav.navigate('History')} style={styles.more} />
+      <LinkButton center label="See full history" color={palette.greenDeep} onPress={() => nav.navigate('History')} style={styles.more} />
     </Screen>
   );
 }
@@ -118,7 +118,7 @@ export function StatementScreen() {
         const amount = i === 0 ? week.total : s.amount;
         const trips = i === 0 ? week.trips : s.trips;
         return (
-          <Card key={s.id} tone={s.status === 'pending' ? 'peach' : 'paper'}>
+          <Card key={s.id} tone={s.status === 'pending' ? 'sky' : 'paper'}>
             <View style={styles.row}>
               <View style={styles.flex}>
                 <Text v="cardTitle">{formatAmount(amount)}</Text>
@@ -127,7 +127,7 @@ export function StatementScreen() {
                   {s.note}
                 </Text>
               </View>
-              <Pill label={s.status === 'pending' ? 'Pending' : 'Paid'} tone={s.status === 'pending' ? 'peach' : 'mint'} />
+              <Pill label={s.status === 'pending' ? 'Pending' : 'Paid'} tone={s.status === 'pending' ? 'sky' : 'leaf'} />
             </View>
           </Card>
         );
@@ -165,7 +165,7 @@ export function TripDetailScreen() {
         subtitle={`${t.store} · ${clock(t.at)}`}
         onBack={nav.goBack}
         pill={cancelled ? 'Cancelled' : 'Delivered'}
-        pillTone={cancelled ? 'neutral' : 'mint'}
+        pillTone={cancelled ? 'neutral' : 'leaf'}
       />
       <Card>
         <RouteTimeline

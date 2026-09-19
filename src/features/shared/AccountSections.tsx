@@ -25,8 +25,8 @@ export function WorkspaceSwitch() {
   return (
     <Card onPress={switchRole}>
       <View style={styles.row}>
-        <View style={[styles.icon, { backgroundColor: role === 'vendor' ? palette.mint : palette.peach }]}>
-          <ArrowLeftRight size={20} color={role === 'vendor' ? palette.sageDeep : palette.clayDeep} strokeWidth={2.2} />
+        <View style={[styles.icon, { backgroundColor: role === 'vendor' ? palette.leaf : palette.sky }]}>
+          <ArrowLeftRight size={20} color={role === 'vendor' ? palette.greenDeep : palette.blueDeep} strokeWidth={2.2} />
         </View>
         <View style={styles.flex}>
           <Text v="cardTitle">{`Switch to ${other}`}</Text>

@@ -8,11 +8,11 @@ import { Text } from './Text';
 export type CardTone =
   | 'paper' // standard card with the dark bottom edge
   | 'highlight' // paper + role-coloured border (new order, active trip)
-  | 'peach' // peach wash + peach border (pending payout, warnings)
-  | 'mint' // mint fill, no border (instructions, "food ready" banners)
+  | 'sky' // blue wash + blue border (pending payout, warnings)
+  | 'leaf' // green fill, no border (instructions, "food ready" banners)
   | 'accent' // solid role colour (hero cards)
-  | 'clay'
-  | 'sage'
+  | 'blue'
+  | 'green'
   | 'sunken' // flat note boxes
   | 'selected'; // role picker selection
 
@@ -30,13 +30,13 @@ export function Card({ children, tone = 'paper', padded = true, onPress, style }
   const toneStyle: ViewStyle = {
     paper: { backgroundColor: palette.paper, ...shadow.card },
     highlight: { backgroundColor: palette.paper, borderWidth: 2, borderColor: r.line },
-    peach: { backgroundColor: palette.peachWash, borderWidth: 1.5, borderColor: palette.peachLine },
-    mint: { backgroundColor: palette.mint },
+    sky: { backgroundColor: palette.skyWash, borderWidth: 1.5, borderColor: palette.skyLine },
+    leaf: { backgroundColor: palette.leaf },
     accent: { backgroundColor: r.accent },
-    clay: { backgroundColor: palette.clay },
-    sage: { backgroundColor: palette.sage },
+    blue: { backgroundColor: palette.blue },
+    green: { backgroundColor: palette.green },
     sunken: { backgroundColor: palette.sunken },
-    selected: { backgroundColor: palette.peachWash, borderWidth: 2, borderColor: palette.clay },
+    selected: { backgroundColor: palette.skyWash, borderWidth: 2, borderColor: palette.blue },
   }[tone];
 
   const body = (
@@ -57,21 +57,21 @@ export function Card({ children, tone = 'paper', padded = true, onPress, style }
 export function Banner({
   title,
   body,
-  tone = 'mint',
+  tone = 'leaf',
   right,
   children,
   style,
 }: {
   title: string;
   body?: string;
-  tone?: 'mint' | 'peach' | 'clay' | 'sage' | 'accent';
+  tone?: 'leaf' | 'sky' | 'blue' | 'green' | 'accent';
   right?: React.ReactNode;
   children?: React.ReactNode;
   style?: ViewStyle;
 }) {
-  const onDark = tone === 'clay' || tone === 'sage' || tone === 'accent';
-  const titleColor = onDark ? palette.cream : tone === 'peach' ? palette.clayDeep : palette.sageDarkest;
-  const bodyColor = onDark ? 'rgba(249, 244, 237, 0.86)' : tone === 'peach' ? palette.clayDeep : palette.sageDeep;
+  const onDark = tone === 'blue' || tone === 'green' || tone === 'accent';
+  const titleColor = onDark ? palette.canvas : tone === 'sky' ? palette.blueDeep : palette.greenDarkest;
+  const bodyColor = onDark ? 'rgba(255, 255, 255, 0.86)' : tone === 'sky' ? palette.blueDeep : palette.greenDeep;
   return (
     <Card tone={tone} style={style}>
       <View style={styles.bannerRow}>

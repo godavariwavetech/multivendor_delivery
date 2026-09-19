@@ -1,9 +1,10 @@
+import { X } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 
 import { Banner, Card, Chip, ChipRow, Divider, KeyValue, SectionLabel, StatTile, Text, TileRow, Toggle } from '@/components';
 import type { BakerySheet, FoodSheet, GrocerySheet, MeatSheet } from '@/domain/types';
-import { palette, space } from '@/theme';
+import { fonts, palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 
 /**
@@ -11,6 +12,44 @@ import { formatAmount } from '@/utils/currency';
  * Food per plate, Grocery per pack, Bakery per weight/box, Meat per kg slab.
  * (Fruits & Veg is a store-wide daily rate sheet: RateSheetScreen.)
  */
+
+/**
+ * A bare input that sits inside a sheet row, so a variant reads as a line of
+ * the card rather than a boxed form field.
+ */
+function VariantInput({
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType,
+  prefix,
+  style,
+}: {
+  value: string;
+  onChangeText: (v: string) => void;
+  placeholder?: string;
+  keyboardType?: 'number-pad';
+  prefix?: string;
+  style?: ViewStyle;
+}) {
+  return (
+    <View style={[styles.variantField, style]}>
+      {prefix ? (
+        <Text v="cardTitle" muted>
+          {prefix}
+        </Text>
+      ) : null}
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={palette.inkSubtle}
+        keyboardType={keyboardType}
+        style={styles.variantInput}
+      />
+    </View>
+  );
+}
 
 function ToggleCard({
   title,
@@ -53,33 +92,56 @@ export function FoodSheetView({
     <>
       <Card>
         <SectionLabel>Variants</SectionLabel>
-        {sheet.variants.map((v, i) => (
-          <View key={v.name}>
-            {i > 0 ? <Divider style={styles.divider} /> : null}
-            <Pressable
-              style={styles.line}
-              onPress={() =>
-                onChange({ ...sheet, variants: sheet.variants.map(x => (x.name === v.name ? { ...x, on: !x.on } : x)) })
-              }>
-              <Text v="cardTitle" style={styles.flex}>
-                {v.name}
-              </Text>
-              <Text v="cardTitle" style={styles.price}>
-                {formatAmount(v.price)}
-              </Text>
-              <Text v="bodyStrong" color={v.on ? palette.sageDeep : palette.inkSubtle} style={styles.onOff}>
-                {v.on ? 'On' : 'Off'}
-              </Text>
-            </Pressable>
-          </View>
-        ))}
+        {sheet.variants.map((v, i) => {
+          const edit = (patch: Partial<(typeof sheet.variants)[number]>) =>
+            onChange({ ...sheet, variants: sheet.variants.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+          return (
+            // Indexed, not keyed by name: the name is editable and may be blank.
+            <View key={`variant-${i}`}>
+              {i > 0 ? <Divider style={styles.divider} /> : null}
+              <View style={styles.line}>
+                <VariantInput
+                  value={v.name}
+                  onChangeText={name => edit({ name })}
+                  placeholder="Half plate"
+                  style={styles.flex}
+                />
+                <VariantInput
+                  value={v.price ? String(v.price) : ''}
+                  onChangeText={t => edit({ price: Number(t.replace(/\D/g, '')) || 0 })}
+                  placeholder="0"
+                  keyboardType="number-pad"
+                  prefix="₹"
+                  style={styles.priceField}
+                />
+                <Pressable onPress={() => edit({ on: !v.on })} hitSlop={8}>
+                  <Text v="bodyStrong" color={v.on ? palette.greenDeep : palette.inkSubtle} style={styles.onOff}>
+                    {v.on ? 'On' : 'Off'}
+                  </Text>
+                </Pressable>
+                {sheet.variants.length > 1 ? (
+                  <Pressable onPress={() => onChange({ ...sheet, variants: sheet.variants.filter((_, j) => j !== i) })} hitSlop={8}>
+                    <X size={18} color={palette.inkSubtle} strokeWidth={2.4} />
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+          );
+        })}
+        <ChipRow scroll={false}>
+          <Chip
+            label="+ Add variant"
+            dashed
+            onPress={() => onChange({ ...sheet, variants: [...sheet.variants, { name: '', price: 0, on: true }] })}
+          />
+        </ChipRow>
       </Card>
 
       <Card>
         <SectionLabel>Add-ons</SectionLabel>
         <ChipRow scroll={false}>
           {sheet.addons.map(a => (
-            <Chip key={a.name} label={`${a.name} ${formatAmount(a.price)}`} tone="peach" />
+            <Chip key={a.name} label={`${a.name} ${formatAmount(a.price)}`} tone="sky" />
           ))}
           <Chip
             label="+ Add"
@@ -248,7 +310,7 @@ export function MeatSheetView({ sheet, onChange }: { sheet: MeatSheet; onChange:
         <KeyValue label="Weight tolerance" value={sheet.tolerance} strong />
       </Card>
 
-      <Banner tone="mint" title="Packing rule sent to partner" body={sheet.packingRule} />
+      <Banner tone="leaf" title="Packing rule sent to partner" body={sheet.packingRule} />
     </>
   );
 }
@@ -260,6 +322,17 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 6 },
   price: { minWidth: 52, textAlign: 'right' },
   onOff: { width: 30, textAlign: 'right' },
+  variantField: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  variantInput: {
+    flex: 1,
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    lineHeight: 22,
+    letterSpacing: -0.1,
+    color: palette.ink,
+    paddingVertical: 4,
+  },
+  priceField: { width: 86 },
   mrp: { marginRight: 2 },
   caption: { marginTop: space.md },
 });

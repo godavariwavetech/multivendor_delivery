@@ -5,6 +5,7 @@ export type { CardTone } from './Card';
 export { Pill, Chip, ChipRow } from './Pill';
 export type { PillTone } from './Pill';
 export { Toggle, Checkbox, ChecklistRow } from './Toggle';
+export { TextField } from './Field';
 export { Radio } from './Radio';
 export { Divider, SectionLabel, SectionHeader, KeyValue, AmountRow, ListGroup, ListRow } from './Rows';
 export { StatTile, TileRow, Avatar, VegMark, PhotoBox, ProgressBar, EmptyState, Fab } from './Misc';

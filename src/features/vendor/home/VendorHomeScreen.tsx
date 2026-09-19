@@ -45,7 +45,7 @@ export function VendorHomeScreen() {
         name={store.name}
         status={status}
         statusDot
-        statusColor={state.open ? palette.sageDeep : palette.clayMid}
+        statusColor={state.open ? palette.greenDeep : palette.alert}
         onBell={() => nav.navigate('Notifications')}
         unread={unread > 0}
       />
@@ -63,7 +63,7 @@ export function VendorHomeScreen() {
       </Card>
 
       <TileRow>
-        <StatTile value={String(newOrders.length)} label="New" highlight onPress={() => goOrders('new')} />
+        <StatTile value={String(newOrders.length)} label="New" onPress={() => goOrders('new')} />
         <StatTile value={String(cookingOrders.length)} label={workLabel(store.category)} onPress={() => goOrders('cooking')} />
         <StatTile value={String(readyOrders.length)} label="Ready" onPress={() => goOrders('ready')} />
       </TileRow>

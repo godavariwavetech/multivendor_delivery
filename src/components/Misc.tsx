@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Plus } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { Image, Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { palette, radius, shadow, space, useTheme } from '@/theme';
 
@@ -79,7 +79,7 @@ export function TileRow({ children }: { children: React.ReactNode }) {
 export function Avatar({ initials, size = 50, tone }: { initials: string; size?: number; tone?: 'soft' | 'onDark' }) {
   const { r } = useTheme();
   const bg = tone === 'onDark' ? 'rgba(255, 255, 255, 0.22)' : r.soft;
-  const fg = tone === 'onDark' ? palette.cream : r.accentDeep;
+  const fg = tone === 'onDark' ? palette.canvas : r.accentDeep;
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }]}>
       <Text v="cardTitle" color={fg} style={{ fontSize: size * 0.36, lineHeight: size * 0.46 }}>
@@ -91,7 +91,7 @@ export function Avatar({ initials, size = 50, tone }: { initials: string; size?:
 
 /** Indian food-safety marker: green square for veg, brown for non-veg. */
 export function VegMark({ veg, faded }: { veg: boolean; faded?: boolean }) {
-  const color = veg ? palette.sageDeep : palette.clay;
+  const color = veg ? palette.veg : palette.nonVeg;
   return (
     <View style={[styles.veg, { borderColor: color, opacity: faded ? 0.5 : 1 }]}>
       <View style={[styles.vegDot, { backgroundColor: color }]} />
@@ -99,13 +99,48 @@ export function VegMark({ veg, faded }: { veg: boolean; faded?: boolean }) {
   );
 }
 
-export function PhotoBox({ size = 84, faded, label = 'PHOTO' }: { size?: number; faded?: boolean; label?: string }) {
+/**
+ * A product or proof photo. With a `uri` it shows the image; without one it is
+ * the placeholder. Given `onPress` it becomes the control that replaces it.
+ */
+export function PhotoBox({
+  size = 84,
+  faded,
+  label = 'PHOTO',
+  uri,
+  onPress,
+  busy,
+}: {
+  size?: number;
+  faded?: boolean;
+  label?: string;
+  uri?: string;
+  onPress?: () => void;
+  busy?: boolean;
+}) {
+  const box = [styles.photo, { width: size, height: size, opacity: faded ? 0.55 : 1 }];
+  const body = uri ? (
+    <Image source={{ uri }} style={[styles.photoImage, { width: size, height: size }]} resizeMode="cover" />
+  ) : (
+    <Text v="caption" subtle>
+      {busy ? '…' : label}
+    </Text>
+  );
+
+  if (!onPress) {
+    return <View style={box}>{body}</View>;
+  }
   return (
-    <View style={[styles.photo, { width: size, height: size, opacity: faded ? 0.55 : 1 }]}>
-      <Text v="caption" subtle>
-        {label}
-      </Text>
-    </View>
+    <Pressable onPress={onPress} disabled={busy} style={({ pressed }) => [...box, pressed && styles.photoPressed]}>
+      {body}
+      {uri ? (
+        <View style={styles.photoEdit}>
+          <Text v="caption" color={palette.white}>
+            {busy ? '…' : 'Change'}
+          </Text>
+        </View>
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -175,7 +210,18 @@ const styles = StyleSheet.create({
   avatar: { alignItems: 'center', justifyContent: 'center' },
   veg: { width: 17, height: 17, borderWidth: 1.6, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   vegDot: { width: 8, height: 8, borderRadius: 4 },
-  photo: { borderRadius: radius.md, backgroundColor: palette.sunken, alignItems: 'center', justifyContent: 'center' },
+  photo: { borderRadius: radius.md, backgroundColor: palette.sunken, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  photoImage: { borderRadius: radius.md },
+  photoPressed: { opacity: 0.85 },
+  photoEdit: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    paddingVertical: 3,
+    backgroundColor: 'rgba(26, 29, 33, 0.55)',
+  },
   track: { height: 7, borderRadius: 4, backgroundColor: palette.lineSoft, overflow: 'hidden' },
   fill: { height: 7, borderRadius: 4 },
   empty: { alignItems: 'center', gap: space.sm, paddingVertical: space.xxl },

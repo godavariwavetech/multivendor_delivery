@@ -27,7 +27,7 @@ export function CouponsScreen() {
             <View style={styles.row}>
               <View style={styles.flex}>
                 <View style={styles.codeTag}>
-                  <Text v="bodyStrong" color={palette.clayDeep} style={styles.code}>
+                  <Text v="bodyStrong" color={palette.blueDeep} style={styles.code}>
                     {c.code}
                   </Text>
                 </View>
@@ -61,8 +61,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: palette.peachLine,
-    backgroundColor: palette.peachWash,
+    borderColor: palette.skyLine,
+    backgroundColor: palette.skyWash,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,

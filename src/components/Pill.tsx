@@ -5,18 +5,18 @@ import { palette, radius, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
-export type PillTone = 'peach' | 'mint' | 'neutral' | 'soft' | 'clay' | 'sage' | 'outline';
+export type PillTone = 'sky' | 'leaf' | 'neutral' | 'soft' | 'blue' | 'green' | 'outline';
 
 /** Status chips: "42s ago", "Preparing · 6 min", "Settled", "Verified". */
 export function Pill({ label, tone = 'neutral', style, strong }: { label: string; tone?: PillTone; style?: ViewStyle; strong?: boolean }) {
   const { r } = useTheme();
   const scheme = {
-    peach: { bg: palette.peach, fg: palette.clayDeep, border: palette.peach },
-    mint: { bg: palette.mint, fg: palette.sageDarkest, border: palette.mint },
+    sky: { bg: palette.sky, fg: palette.blueDeep, border: palette.sky },
+    leaf: { bg: palette.leaf, fg: palette.greenDarkest, border: palette.leaf },
     neutral: { bg: palette.sunken, fg: palette.inkSoft, border: palette.sunken },
     soft: { bg: r.soft, fg: r.accentDeep, border: r.soft },
-    clay: { bg: palette.clay, fg: palette.cream, border: palette.clay },
-    sage: { bg: palette.sage, fg: palette.cream, border: palette.sage },
+    blue: { bg: palette.blue, fg: palette.white, border: palette.blue },
+    green: { bg: palette.green, fg: palette.white, border: palette.green },
     outline: { bg: 'transparent', fg: palette.ink, border: palette.line },
   }[tone];
   return (
@@ -40,13 +40,13 @@ export function Chip({
   label: string;
   selected?: boolean;
   onPress?: () => void;
-  tone?: 'peach';
+  tone?: 'sky';
   dashed?: boolean;
   style?: ViewStyle;
 }) {
   const { r } = useTheme();
-  const bg = selected ? r.accent : tone === 'peach' ? palette.paper : 'transparent';
-  const border = selected ? r.accent : tone === 'peach' ? palette.peachLine : palette.line;
+  const bg = selected ? r.accent : tone === 'sky' ? palette.paper : 'transparent';
+  const border = selected ? r.accent : tone === 'sky' ? palette.skyLine : palette.line;
   const fg = selected ? r.onAccent : dashed ? palette.inkMuted : palette.ink;
   return (
     <Pressable

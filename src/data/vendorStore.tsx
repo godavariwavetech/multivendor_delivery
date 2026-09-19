@@ -54,15 +54,17 @@ type ServerState = {
   notifications: AppNotification[];
   /** Saved on the account, not the device. */
   prefs: { orderNotifications: boolean };
+  /** True only while today's produce rate sheet is the published one. */
+  ratesPublished: boolean;
+  allowSubstitution: boolean;
+  /** The store's named service windows; exactly one is active. */
+  dayparts: typeof DAYPARTS;
   /** The choices the Profile screens offer. */
 };
 
 type State = ServerState & {
   /** Demo mode switches the store category from Profile; live, it follows the store. */
   category: Category;
-  ratesPublished: boolean;
-  allowSubstitution: boolean;
-  dayparts: typeof DAYPARTS;
   loaded: boolean;
 };
 
@@ -417,8 +419,14 @@ function useVendorValue() {
           dispatch({ type: 'saveProduct', product });
           send(endpoints.vendor.saveProduct, { product: productPayload(product) });
         },
-        publishRates: () => dispatch({ type: 'publishRates' }),
-        setSubstitution: (on: boolean) => dispatch({ type: 'setSubstitution', on }),
+        publishRates: () => {
+          dispatch({ type: 'publishRates' });
+          send(endpoints.vendor.publishRates, {});
+        },
+        setSubstitution: (on: boolean) => {
+          dispatch({ type: 'setSubstitution', on });
+          send(endpoints.vendor.substitution, { allow: on });
+        },
         setCategory: (category: Category) => dispatch({ type: 'setCategory', category }),
         toggleCoupon: (code: string) => {
           dispatch({ type: 'toggleCoupon', code });
@@ -439,7 +447,10 @@ function useVendorValue() {
             },
           });
         },
-        setDaypart: (id: string) => dispatch({ type: 'setDaypart', id }),
+        setDaypart: (id: string) => {
+          dispatch({ type: 'setDaypart', id });
+          send(endpoints.vendor.daypart, { daypart: id });
+        },
         setHours: (opening: string, closing: string) => {
           dispatch({ type: 'setHours', opening, closing });
           send(endpoints.vendor.storeHours, { opening_time: opening, closing_time: closing });

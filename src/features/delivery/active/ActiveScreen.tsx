@@ -29,6 +29,7 @@ import { useDeliveryNav } from '@/navigation/types';
 import { palette, radius, shadow, space, useTheme } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { clock } from '@/utils/datetime';
+import { pickPhoto } from '@/utils/photo';
 import { arriveBy, etaAt, keepHotMinutesLeft, paymentLine, readyAt } from '@/utils/trips';
 
 import { PICKUP_COPY, PickupHandling, categoryPill, requiredChecks } from './handling';
@@ -143,7 +144,7 @@ function ToStoreView({ trip, request: r }: { trip: ActiveTrip; request: Delivery
       </View>
       <View style={styles.footer}>
         <SlideToConfirm label="Slide when you reach the store" onConfirm={actions.reachStore} />
-        <LinkButton center label="Can't reach the store · report" color={palette.clay} onPress={() => nav.navigate('ReportProblem', { context: `#${r.id} · ${r.store.name}` })} />
+        <LinkButton center label="Can't reach the store · report" color={palette.blue} onPress={() => nav.navigate('ReportProblem', { context: `#${r.id} · ${r.store.name}` })} />
       </View>
     </SafeAreaView>
   );
@@ -176,7 +177,7 @@ function PickupView({ trip, request: r }: { trip: ActiveTrip; request: DeliveryR
       footer={
         <View style={styles.footerCol}>
           <SlideToConfirm label={copy.slide} onConfirm={slide} />
-          <LinkButton center label={copy.report} color={palette.clay} onPress={() => nav.navigate('ReportProblem', { context: `#${r.id} · ${r.store.name}` })} />
+          <LinkButton center label={copy.report} color={palette.blue} onPress={() => nav.navigate('ReportProblem', { context: `#${r.id} · ${r.store.name}` })} />
         </View>
       }>
       <View style={styles.pickupHead}>
@@ -191,9 +192,13 @@ function PickupView({ trip, request: r }: { trip: ActiveTrip; request: DeliveryR
         trip={trip}
         now={now}
         onToggle={actions.toggleCheck}
-        onPhoto={() => {
-          actions.proofPhoto();
-          toast('Photo of the box saved');
+        onPhoto={async () => {
+          const picked = await pickPhoto('Photo of the parcel');
+          if (!picked) {
+            return;
+          }
+          const result = await actions.proofPhoto(picked);
+          toast(result.ok ? 'Photo of the box saved' : result.error);
         }}
       />
     </Screen>
@@ -251,7 +256,7 @@ function OnTheWayView({ trip, request: r }: { trip: ActiveTrip; request: Deliver
                   {pay.subtitle}
                 </Text>
               </View>
-              <Pill label={pay.pill} tone={pay.paid ? 'mint' : 'peach'} />
+              <Pill label={pay.pill} tone={pay.paid ? 'leaf' : 'sky'} />
             </View>
           </Card>
         </View>
@@ -268,7 +273,7 @@ function OnTheWayView({ trip, request: r }: { trip: ActiveTrip; request: Deliver
             }}
           />
         )}
-        <LinkButton center label="Report a problem" color={palette.clay} onPress={() => nav.navigate('ReportProblem', { context: `#${r.id} · ${r.drop.name}` })} />
+        <LinkButton center label="Report a problem" color={palette.blue} onPress={() => nav.navigate('ReportProblem', { context: `#${r.id} · ${r.drop.name}` })} />
       </View>
     </View>
   );
@@ -300,7 +305,7 @@ function TripCompleteView({ trip, request: r }: { trip: ActiveTrip; request: Del
           <LinkButton
             center
             label="Take a break · go offline"
-            color={palette.clay}
+            color={palette.blue}
             onPress={() => {
               actions.finish();
               actions.setOnline(false);
@@ -318,17 +323,17 @@ function TripCompleteView({ trip, request: r }: { trip: ActiveTrip; request: Del
         {`#${r.id} · ${clock(delivered)}${early ? ` · ${early} min early` : ''}`}
       </Text>
 
-      <Card tone="sage" style={styles.hero}>
-        <Text v="body" color="rgba(249, 244, 237, 0.86)">
+      <Card tone="green" style={styles.hero}>
+        <Text v="body" color="rgba(255, 255, 255, 0.86)">
           Earned on this trip
         </Text>
-        <Text v="hero" color={palette.cream} style={styles.heroAmount}>
+        <Text v="hero" color={palette.canvas} style={styles.heroAmount}>
           {formatAmount(r.payout)}
         </Text>
         <View style={styles.breakdown}>
-          <Text v="body" color={palette.cream}>{`Base ${formatAmount(r.breakdown.base)}`}</Text>
-          <Text v="body" color={palette.cream}>{`Distance ${formatAmount(r.breakdown.distance)}`}</Text>
-          <Text v="body" color={palette.cream}>{`Tip ${formatAmount(r.breakdown.tip)}`}</Text>
+          <Text v="body" color={palette.canvas}>{`Base ${formatAmount(r.breakdown.base)}`}</Text>
+          <Text v="body" color={palette.canvas}>{`Distance ${formatAmount(r.breakdown.distance)}`}</Text>
+          <Text v="body" color={palette.canvas}>{`Tip ${formatAmount(r.breakdown.tip)}`}</Text>
         </View>
       </Card>
 
@@ -362,7 +367,7 @@ function TripCompleteView({ trip, request: r }: { trip: ActiveTrip; request: Del
 
 const styles = StyleSheet.create({
   map: { borderRadius: 0 },
-  root: { flex: 1, backgroundColor: palette.cream },
+  root: { flex: 1, backgroundColor: palette.canvas },
   flex: { flex: 1 },
   body: { paddingHorizontal: space.gutter, paddingTop: space.lg, gap: 10 },
   storeName: { marginTop: 2 },

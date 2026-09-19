@@ -70,7 +70,7 @@ export function IncomingRequestScreen() {
             <Text v="body" muted>{`Respond in ${Math.max(0, Math.ceil(left))} seconds`}</Text>
           </View>
           <View style={styles.payout}>
-            <Text v="display" color={palette.sageDeep}>
+            <Text v="display" color={palette.greenDeep}>
               {formatAmount(r.payout)}
             </Text>
             <Text v="caption" muted>
@@ -81,7 +81,7 @@ export function IncomingRequestScreen() {
 
         {food && r.readyInMin > 0 ? (
           <Banner
-            tone="mint"
+            tone="leaf"
             title={`Food is ready at ${clock(Date.now() + r.readyInMin * 60_000)}.`}
             body="Reach the store around then — no long wait expected."
           />
@@ -116,7 +116,7 @@ export function IncomingRequestScreen() {
               nav.goBack();
             }}
           />
-          <Button label="Accept delivery" variant="sage" size="lg" flex={1.8} onPress={accept} />
+          <Button label="Accept delivery" variant="green" size="lg" flex={1.8} onPress={accept} />
         </View>
         <Text v="caption" subtle center>
           Rejected requests are reassigned automatically.
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   ghostMid: { height: 80 },
   ghostLarge: { height: 120 },
   sheet: {
-    backgroundColor: palette.cream,
+    backgroundColor: palette.canvas,
     borderTopLeftRadius: 34,
     borderTopRightRadius: 34,
     paddingHorizontal: space.gutter,

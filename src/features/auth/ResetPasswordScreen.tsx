@@ -69,7 +69,7 @@ export function ResetPasswordScreen() {
         </View>
       ))}
       {error ? (
-        <Text v="caption" color={palette.clayMid}>
+        <Text v="caption" color={palette.alert}>
           {error}
         </Text>
       ) : null}

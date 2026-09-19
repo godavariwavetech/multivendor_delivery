@@ -32,8 +32,8 @@ export function OrdersScreen() {
     }
   }, [route.params?.tab]);
 
+  // Oldest ticket first, so the queue reads in the order it was accepted.
   const cooking = [...cookingOrders].sort((a, b) => prepSecondsLeft(a, now) - prepSecondsLeft(b, now));
-  const late = cooking.filter(o => prepSecondsLeft(o, now) < 0).length;
 
   const tabs = [
     { key: 'new' as const, label: `New · ${newOrders.length}` },
@@ -50,7 +50,7 @@ export function OrdersScreen() {
         title="Orders"
         right={
           tab === 'cooking' && cooking.length ? (
-            <Text v="body" muted>{`${cooking.length} tickets · ${late} late`}</Text>
+            <Text v="body" muted>{`${cooking.length} tickets`}</Text>
           ) : undefined
         }
       />
@@ -92,13 +92,7 @@ export function OrdersScreen() {
               <CookingCard
                 key={o.id}
                 order={o}
-                now={now}
-                compact={prepSecondsLeft(o, now) > 8 * 60}
                 onOpen={() => open(o.id)}
-                onPlusFive={() => {
-                  actions.addMinutes(o.id, 5);
-                  toast(`#${o.id} · 5 more minutes`);
-                }}
                 onReady={() => {
                   actions.markReady(o.id);
                   toast(`#${o.id} ready · partner notified`);
@@ -106,23 +100,23 @@ export function OrdersScreen() {
               />
             ))}
             <NoteBox style={styles.note}>
-              Timers start when you accept. Marking ready notifies the assigned partner immediately.
+              Marking ready notifies the assigned partner immediately.
             </NoteBox>
           </>
         ) : (
-          <EmptyState icon={CookingPot} title={`Nothing ${work.toLowerCase()}`} body="Accepted orders appear here with a live prep timer." />
+          <EmptyState icon={CookingPot} title={`Nothing ${work.toLowerCase()}`} body="Accepted orders appear here until you mark them ready." />
         ))}
 
       {tab === 'ready' &&
         (readyOrders.length ? (
-          readyOrders.map(o => <OrderRow key={o.id} order={o} now={now} workLabel={work} onPress={() => nav.navigate('Handover', { id: o.id })} />)
+          readyOrders.map(o => <OrderRow key={o.id} order={o} workLabel={work} onPress={() => nav.navigate('Handover', { id: o.id })} />)
         ) : (
           <EmptyState icon={PackageCheck} title="No orders waiting" body="Orders marked ready wait here until the partner collects them." />
         ))}
 
       {tab === 'past' &&
         (pastOrders.length ? (
-          pastOrders.map(o => <OrderRow key={o.id} order={o} now={now} workLabel={work} onPress={() => open(o.id)} />)
+          pastOrders.map(o => <OrderRow key={o.id} order={o} workLabel={work} onPress={() => open(o.id)} />)
         ) : (
           <EmptyState icon={ClipboardCheck} title="No past orders" body="Completed, cancelled and rejected orders are listed here." />
         ))}

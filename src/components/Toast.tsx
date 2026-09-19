@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {message ? (
         <View pointerEvents="none" style={[styles.wrap, { bottom: insets.bottom + 96 }]}>
           <Animated.View style={[styles.toast, { opacity }]}>
-            <Text v="bodyStrong" color={palette.cream} center>
+            <Text v="bodyStrong" color={palette.canvas} center>
               {message}
             </Text>
           </Animated.View>

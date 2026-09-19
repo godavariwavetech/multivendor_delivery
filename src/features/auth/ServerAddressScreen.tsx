@@ -48,7 +48,7 @@ export function ServerAddressScreen() {
         {`Will connect to ${normaliseBaseUrl(value)}/partner_app`}
       </Text>
       <Banner
-        tone="mint"
+        tone="leaf"
         title="Which address?"
         body={'Android emulator · 10.0.2.2:2407\nPhone on the same Wi-Fi · your PC\'s IP, e.g. 192.168.1.5:2407\nUSB · run "adb reverse tcp:2407 tcp:2407", then localhost:2407'}
       />

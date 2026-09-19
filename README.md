@@ -26,8 +26,8 @@ applied. What the app calls and what changed in the database is in
 
 | Mobile | Password | Roles |
 |---|---|---|
-| 98407 21536 | 123456 | Vendor **and** partner — pick either with the tabs |
-| 98407 00001 | 123456 | Vendor only (Amma's Kitchen) |
+| 98407 21536 | 123456 | Vendor (Amma's Kitchen, food) **and** partner (Ravi Kumar) — pick either with the tabs |
+| 98407 00001 | 123456 | Vendor only (Sri Balaji Stores, grocery) |
 | 98407 00002 | 123456 | Partner only (Karthik R.) |
 
 These come from the demo seed. A number can only open a workspace it is registered

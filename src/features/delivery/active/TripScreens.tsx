@@ -29,6 +29,7 @@ import { useDeliveryNav } from '@/navigation/types';
 import { fonts, palette, radius, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { formatCountdown } from '@/utils/datetime';
+import { pickPhoto } from '@/utils/photo';
 
 import { categoryPill, requiredChecks } from './handling';
 
@@ -60,10 +61,10 @@ export function PickupCodeScreen() {
   return (
     <Screen scroll={false} gap={10}>
       <BackHeader title="At the counter" subtitle={`#${r.id} · ${r.store.name}`} onBack={nav.goBack} right={categoryPill(r)} />
-      <Banner tone="mint" title="Ask the vendor for the handover code" body="It is on their handover screen." />
+      <Banner tone="leaf" title="Ask the vendor for the handover code" body="It is on their handover screen." />
       <CodeBoxes value={code} length={4} error={Boolean(error)} />
       {error ? (
-        <Text v="caption" color={palette.clayMid}>
+        <Text v="caption" color={palette.alert}>
           {error}
         </Text>
       ) : r.handoverCode ? (
@@ -120,10 +121,10 @@ export function DeliveryOtpScreen() {
   return (
     <Screen scroll={false} gap={10}>
       <BackHeader title="Complete delivery" subtitle={`#${r.id} · ${r.drop.name}`} onBack={nav.goBack} />
-      <Banner tone="mint" title="Ask the customer for their 4-digit OTP" body="It is shown in their order screen." />
+      <Banner tone="leaf" title="Ask the customer for their 4-digit OTP" body="It is shown in their order screen." />
       <CodeBoxes value={code} length={4} error={Boolean(error)} />
       {error ? (
-        <Text v="caption" color={palette.clayMid}>
+        <Text v="caption" color={palette.alert}>
           {error}
         </Text>
       ) : r.customerOtp ? (
@@ -169,20 +170,34 @@ export function ProofPhotoScreen() {
   const toast = useToast();
   const { activeRequest: r, state, actions } = useDelivery();
   const taken = Boolean(state.active?.proofPhoto);
+  const [busy, setBusy] = useState(false);
 
   return (
     <Screen
       scroll={false}
       footer={
         <Button
-          label={taken ? 'Done' : 'Take photo'}
+          label={busy ? 'Uploading…' : taken ? 'Done' : 'Take photo'}
           size="lg"
           flex={1}
-          onPress={() => {
-            if (!taken) {
-              actions.proofPhoto();
-              toast('Photo attached to the order');
+          disabled={busy}
+          onPress={async () => {
+            if (taken) {
+              nav.goBack();
+              return;
             }
+            const picked = await pickPhoto('Proof of delivery');
+            if (!picked) {
+              return;
+            }
+            setBusy(true);
+            const result = await actions.proofPhoto(picked);
+            setBusy(false);
+            if (!result.ok) {
+              toast(result.error);
+              return;
+            }
+            toast('Photo attached to the order');
             nav.goBack();
           }}
         />
@@ -191,8 +206,8 @@ export function ProofPhotoScreen() {
       <View style={styles.viewfinder}>
         {taken ? (
           <View style={styles.taken}>
-            <Check size={40} color={palette.cream} strokeWidth={3} />
-            <Text v="cardTitle" color={palette.cream}>
+            <Check size={40} color={palette.canvas} strokeWidth={3} />
+            <Text v="cardTitle" color={palette.canvas}>
               Photo saved
             </Text>
           </View>
@@ -202,7 +217,7 @@ export function ProofPhotoScreen() {
             <View style={[styles.corner, styles.tr]} />
             <View style={[styles.corner, styles.bl]} />
             <View style={[styles.corner, styles.br]} />
-            <Text v="bodyStrong" color={palette.cream} center>
+            <Text v="bodyStrong" color={palette.canvas} center>
               Point at the parcel at the door
             </Text>
           </>
@@ -243,7 +258,7 @@ export function DeliveryFailedScreen() {
       footer={
         <Button
           label="Report & return order"
-          variant="clay"
+          variant="blue"
           size="lg"
           flex={1}
           disabled={!canReport}
@@ -260,7 +275,7 @@ export function DeliveryFailedScreen() {
       <Card>
         <View style={styles.waitHead}>
           <Text v="cardTitle">Waiting at the location</Text>
-          <Text v="cardTitle" color={left ? palette.clayMid : palette.sageDeep}>
+          <Text v="cardTitle" color={left ? palette.alert : palette.greenDeep}>
             {left ? formatCountdown(left) : 'Done'}
           </Text>
         </View>
@@ -269,7 +284,7 @@ export function DeliveryFailedScreen() {
           Call the customer twice and wait 5 minutes before reporting.
         </Text>
         {left > 0 && !skipWait ? (
-          <Text v="bodyStrong" color={palette.clay} style={styles.skip} onPress={() => setSkipWait(true)}>
+          <Text v="bodyStrong" color={palette.blue} style={styles.skip} onPress={() => setSkipWait(true)}>
             Skip wait (demo)
           </Text>
         ) : null}
@@ -294,7 +309,7 @@ export function DeliveryFailedScreen() {
       </Card>
 
       <Banner
-        tone="peach"
+        tone="sky"
         title="Return the order to the store"
         body={`${r.category === 'food' ? 'Food orders go' : 'The order goes'} back to ${r.store.name}. You're paid ${formatAmount(attemptPay)} for the attempt.`}
       />
@@ -321,7 +336,7 @@ const styles = StyleSheet.create({
     padding: space.xl,
   },
   taken: { alignItems: 'center', gap: space.md },
-  corner: { position: 'absolute', width: 36, height: 36, borderColor: palette.cream },
+  corner: { position: 'absolute', width: 36, height: 36, borderColor: palette.canvas },
   tl: { top: 24, left: 24, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 10 },
   tr: { top: 24, right: 24, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 10 },
   bl: { bottom: 24, left: 24, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 10 },

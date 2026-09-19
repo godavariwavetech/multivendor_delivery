@@ -74,7 +74,7 @@ export function AcceptOrderScreen() {
         subtitle={`Today ${clock(order.placedAt)} · ${order.payment === 'cod' ? 'COD' : 'Prepaid'} ${formatAmount(order.total)}`}
         onBack={nav.goBack}
         pill={left > 0 ? `${formatCountdown(left)} left` : 'Accept now'}
-        pillTone="peach"
+        pillTone="sky"
       />
 
       <Card>
@@ -125,7 +125,7 @@ export function AcceptOrderScreen() {
       </Card>
 
       <Banner
-        tone="peach"
+        tone="sky"
         title="Rejecting needs a reason"
         body="Item unavailable · kitchen overloaded · store closing. Repeated rejections affect your rating."
       />

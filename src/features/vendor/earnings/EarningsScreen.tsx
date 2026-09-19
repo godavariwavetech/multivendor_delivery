@@ -36,8 +36,8 @@ export function EarningsScreen() {
       <TitleHeader title="Earnings" right={<LinkButton label="Reports" onPress={() => nav.navigate('Reports')} />} />
 
       <Card tone="accent" style={styles.hero}>
-        <Text v="body" color="rgba(249, 244, 237, 0.85)">{`Net payable · ${e.label}`}</Text>
-        <Text v="hero" color={palette.cream} style={styles.heroAmount}>
+        <Text v="body" color="rgba(255, 255, 255, 0.85)">{`Net payable · ${e.label}`}</Text>
+        <Text v="hero" color={palette.canvas} style={styles.heroAmount}>
           {formatAmount(e.net)}
         </Text>
         <HeroSegment
@@ -80,12 +80,12 @@ export function EarningsScreen() {
 export function SettlementCard({ settlement: s, onPress }: { settlement: Settlement; onPress: () => void }) {
   const pill =
     s.status === 'pending'
-      ? { label: 'Pending', tone: 'peach' as const }
+      ? { label: 'Pending', tone: 'sky' as const }
       : s.status === 'settled'
-        ? { label: 'Settled', tone: 'mint' as const }
+        ? { label: 'Settled', tone: 'leaf' as const }
         : { label: 'Refund', tone: 'neutral' as const };
   return (
-    <Card tone={s.status === 'pending' ? 'peach' : 'paper'} onPress={onPress}>
+    <Card tone={s.status === 'pending' ? 'sky' : 'paper'} onPress={onPress}>
       <View style={styles.row}>
         <View style={styles.flex}>
           <Text v="cardTitle">{s.title}</Text>

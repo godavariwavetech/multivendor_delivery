@@ -32,7 +32,7 @@ export function ProductCard({
           <Text v="body" color={off ? palette.inkSubtle : palette.inkMuted} numberOfLines={2}>
             {product.priceLine}
           </Text>
-          <Text v="bodyStrong" color={off ? palette.inkMuted : palette.sageDeep} numberOfLines={1}>
+          <Text v="bodyStrong" color={off ? palette.inkMuted : palette.greenDeep} numberOfLines={1}>
             {off ? `Out of stock${product.outNote ? ` · ${product.outNote}` : ''}` : product.stockLine}
           </Text>
         </View>

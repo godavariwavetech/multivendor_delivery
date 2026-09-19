@@ -88,18 +88,18 @@ export function HandoverScreen() {
       />
 
       {partner ? (
-        <Card tone="sage">
+        <Card tone="green">
           <View style={styles.partner}>
             <Avatar initials={partner.initials} tone="onDark" size={56} />
             <View style={styles.flex}>
-              <Text v="cardTitle" color={palette.cream}>
+              <Text v="cardTitle" color={palette.canvas}>
                 {partner.atCounter ? `${partner.name} is at your counter` : `${partner.name} arrives in ~3 min`}
               </Text>
-              <Text v="body" color="rgba(249, 244, 237, 0.85)">
+              <Text v="body" color="rgba(255, 255, 255, 0.85)">
                 {`${partner.vehicle} · ★ ${partner.rating}`}
               </Text>
             </View>
-            <IconCircle icon={Phone} bg={palette.white} color={palette.sageDeep} onPress={() => toast(`Calling ${partner.name}…`)} />
+            <IconCircle icon={Phone} bg={palette.white} color={palette.greenDeep} onPress={() => toast(`Calling ${partner.name}…`)} />
           </View>
         </Card>
       ) : null}

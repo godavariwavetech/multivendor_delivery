@@ -24,8 +24,8 @@ export const radius = {
  * `boxShadow` needs the new architecture, which this app uses.
  */
 export const shadow = {
-  card: { boxShadow: '0px 1.5px 0px rgba(32, 30, 29, 0.55), 0px 3px 10px rgba(32, 30, 29, 0.05)' },
-  key: { boxShadow: '0px 1.5px 0px rgba(32, 30, 29, 0.45)' },
-  floating: { boxShadow: '0px 6px 16px rgba(32, 30, 29, 0.28)' },
+  card: { boxShadow: '0px 1.5px 0px rgba(26, 29, 33, 0.55), 0px 3px 10px rgba(26, 29, 33, 0.05)' },
+  key: { boxShadow: '0px 1.5px 0px rgba(26, 29, 33, 0.45)' },
+  floating: { boxShadow: '0px 6px 16px rgba(26, 29, 33, 0.28)' },
   none: {},
 } satisfies Record<string, ViewStyle>;

@@ -83,10 +83,10 @@ export function RequestsScreen() {
         <>
           {busy && activeRequest ? (
             <Banner
-              tone="mint"
+              tone="leaf"
               title={`Finish #${activeRequest.id} first`}
               body="You can look, but new requests can be accepted after your active delivery."
-              right={<LinkButton label="Continue" color={palette.sageDeep} onPress={() => nav.navigate('DeliveryTabs', { screen: 'Active' })} />}
+              right={<LinkButton label="Continue" color={palette.greenDeep} onPress={() => nav.navigate('DeliveryTabs', { screen: 'Active' })} />}
             />
           ) : null}
 
@@ -156,9 +156,9 @@ export function RequestsScreen() {
 }
 
 function RequestBody({ request: r, now, strongPayout }: { request: DeliveryRequest; now: number; strongPayout?: boolean }) {
-  const tags: { label: string; tone: 'neutral' | 'peach' | 'mint' }[] = [];
+  const tags: { label: string; tone: 'neutral' | 'sky' | 'leaf' }[] = [];
   if (r.category !== 'food') {
-    tags.push({ label: CATEGORY_LABEL[r.category], tone: 'mint' });
+    tags.push({ label: CATEGORY_LABEL[r.category], tone: 'leaf' });
   }
   if (r.payment === 'cod') {
     tags.push({ label: `COD ${formatAmount(r.codAmount ?? 0)}`, tone: 'neutral' });
@@ -167,7 +167,7 @@ function RequestBody({ request: r, now, strongPayout }: { request: DeliveryReque
     tags.push({ label: `${r.parcels} ${r.category === 'grocery' ? 'bags' : 'parcels'}`, tone: 'neutral' });
   }
   if (r.waitingMin) {
-    tags.push({ label: `Waiting ${r.waitingMin} min`, tone: 'peach' });
+    tags.push({ label: `Waiting ${r.waitingMin} min`, tone: 'sky' });
   }
 
   return (
@@ -176,7 +176,7 @@ function RequestBody({ request: r, now, strongPayout }: { request: DeliveryReque
         <Text v="cardTitle" style={styles.flex}>
           {r.store.name}
         </Text>
-        <Text v="cardTitle" color={strongPayout ? palette.sageDeep : undefined}>
+        <Text v="cardTitle" color={strongPayout ? palette.greenDeep : undefined}>
           {formatAmount(r.payout)}
         </Text>
       </View>

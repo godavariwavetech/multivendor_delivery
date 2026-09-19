@@ -18,20 +18,20 @@ export type RoleColors = {
 
 export const roleColors: Record<Role, RoleColors> = {
   vendor: {
-    accent: palette.clay,
-    accentDeep: palette.clayDeep,
-    onAccent: palette.cream,
-    soft: palette.peach,
-    line: palette.peachLine,
-    wash: palette.peachWash,
+    accent: palette.blue,
+    accentDeep: palette.blueDeep,
+    onAccent: palette.white,
+    soft: palette.sky,
+    line: palette.skyLine,
+    wash: palette.skyWash,
   },
   delivery: {
-    accent: palette.sage,
-    accentDeep: palette.sageDeep,
-    onAccent: palette.cream,
-    soft: palette.mint,
-    line: palette.mintLine,
-    wash: palette.mintWash,
+    accent: palette.green,
+    accentDeep: palette.greenDeep,
+    onAccent: palette.white,
+    soft: palette.leaf,
+    line: palette.leafLine,
+    wash: palette.leafWash,
   },
 };
 

@@ -17,7 +17,7 @@ export function CodeBoxes({ value, length, error }: { value: string; length: num
       {Array.from({ length }).map((_, i) => {
         const filled = i < value.length;
         const active = i === value.length;
-        const borderColor = error ? palette.clayMid : active ? r.accent : filled ? r.line : palette.line;
+        const borderColor = error ? palette.alert : active ? r.accent : filled ? r.line : palette.line;
         return (
           <View key={i} style={[styles.box, { borderColor, borderWidth: active ? 2.5 : 1.5 }, length === 4 && styles.boxLarge]}>
             {filled ? (

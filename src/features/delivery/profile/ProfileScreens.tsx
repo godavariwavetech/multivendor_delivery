@@ -47,7 +47,7 @@ export function PartnerProfileScreen() {
             <Text v="headline">{P.name}</Text>
             <Text v="body" muted>{`Partner ID ${P.id} · ${P.mobile}`}</Text>
             <View style={styles.pills}>
-              <Pill label={`★ ${P.rating}`} tone="mint" />
+              <Pill label={`★ ${P.rating}`} tone="leaf" />
               <Pill label={`${formatAmount(P.trips, '')} trips`} tone="neutral" />
             </View>
           </View>
@@ -62,7 +62,7 @@ export function PartnerProfileScreen() {
 
       <ListGroup>
         <ListRow title="Vehicle & licence" value={P.vehicle} onPress={() => nav.navigate('Vehicle')} />
-        <ListRow title="Documents & KYC" right={<Pill label="Verified" tone="mint" />} onPress={() => nav.navigate('Kyc')} />
+        <ListRow title="Documents & KYC" right={<Pill label="Verified" tone="leaf" />} onPress={() => nav.navigate('Kyc')} />
         <ListRow title="Bank account" value={P.bank} onPress={() => nav.navigate('BankAccount', { role: 'delivery' })} />
         <ListRow
           title="Zone & shift preference"
@@ -97,12 +97,12 @@ export function VehicleScreen() {
         subtitle="Used for pickup verification"
         onBack={nav.goBack}
         pill={P.kycVerified ? 'Verified' : 'In review'}
-        pillTone={P.kycVerified ? 'mint' : 'peach'}
+        pillTone={P.kycVerified ? 'leaf' : 'sky'}
       />
       <Card>
         <View style={styles.row}>
           <View style={styles.vehicleIcon}>
-            <Bike size={28} color={palette.sageDeep} strokeWidth={2} />
+            <Bike size={28} color={palette.greenDeep} strokeWidth={2} />
           </View>
           <View style={styles.flex}>
             <Text v="headline">{P.vehicle}</Text>
@@ -124,7 +124,7 @@ export function VehicleScreen() {
           label="KYC"
           value={P.licenceValid}
           strong
-          valueColor={P.kycVerified ? palette.sageDeep : undefined}
+          valueColor={P.kycVerified ? palette.greenDeep : undefined}
         />
       </Card>
       <NoteBox>Vendors see your registration number at handover. Contact support to change your vehicle.</NoteBox>
@@ -147,7 +147,7 @@ export function KycScreen() {
         subtitle={P.kycVerified ? 'Verified by your store admin' : 'Verification in review'}
         onBack={nav.goBack}
         pill={P.kycVerified ? 'Verified' : 'In review'}
-        pillTone={P.kycVerified ? 'mint' : 'peach'}
+        pillTone={P.kycVerified ? 'leaf' : 'sky'}
       />
       <ListGroup>
         {docs.map(d => (
@@ -155,7 +155,7 @@ export function KycScreen() {
             key={d.title}
             title={d.title}
             subtitle={d.detail}
-            right={<Pill label={P.kycVerified ? 'Verified' : 'In review'} tone={P.kycVerified ? 'mint' : 'peach'} />}
+            right={<Pill label={P.kycVerified ? 'Verified' : 'In review'} tone={P.kycVerified ? 'leaf' : 'sky'} />}
           />
         ))}
       </ListGroup>
@@ -204,7 +204,7 @@ export function ZoneShiftScreen() {
         }}
       />
       <Banner
-        tone="mint"
+        tone="leaf"
         title="Evening peak bonus"
         body={`Dinner hours pay +${formatAmount(today.peakReward)} for ${today.peakTarget} trips in most zones.`}
       />
@@ -217,6 +217,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   flex: { flex: 1, gap: 2 },
   pills: { flexDirection: 'row', gap: 8, marginTop: space.sm },
-  vehicleIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: palette.mint, alignItems: 'center', justifyContent: 'center' },
+  vehicleIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: palette.leaf, alignItems: 'center', justifyContent: 'center' },
   label: { marginTop: space.sm, marginBottom: 0 },
 });

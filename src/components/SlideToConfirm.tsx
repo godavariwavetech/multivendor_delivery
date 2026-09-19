@@ -69,7 +69,7 @@ export function SlideToConfirm({
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
       style={[styles.track, { backgroundColor: fill, opacity: disabled ? 0.5 : 1 }]}>
       <Animated.View style={[styles.labelWrap, { opacity: labelOpacity }]}>
-        <Text v="cardTitle" color={palette.cream} numberOfLines={1}>
+        <Text v="cardTitle" color={palette.canvas} numberOfLines={1}>
           {label}
         </Text>
       </Animated.View>

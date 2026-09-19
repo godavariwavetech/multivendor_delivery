@@ -29,9 +29,9 @@ export function MapPlaceholder({
         <Line x1="-10" y1="150" x2="420" y2="85" stroke={palette.lineSoft} strokeWidth="12" />
         <Line x1="250" y1="270" x2="410" y2="200" stroke={palette.lineSoft} strokeWidth="8" />
         <Circle cx={flipPins ? 300 : 70} cy={flipPins ? 40 : 90} r="11" fill={palette.white} />
-        <Circle cx={flipPins ? 300 : 70} cy={flipPins ? 40 : 90} r="6.5" fill={palette.clay} />
+        <Circle cx={flipPins ? 300 : 70} cy={flipPins ? 40 : 90} r="6.5" fill={palette.blue} />
         <Circle cx={flipPins ? 100 : 312} cy={flipPins ? 150 : 175} r="11" fill={palette.white} />
-        <Circle cx={flipPins ? 100 : 312} cy={flipPins ? 150 : 175} r="6.5" fill={palette.sage} />
+        <Circle cx={flipPins ? 100 : 312} cy={flipPins ? 150 : 175} r="6.5" fill={palette.green} />
       </Svg>
       <View style={styles.chipWrap} pointerEvents="none">
         <View style={styles.chip}>
@@ -52,6 +52,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(249, 244, 237, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
   },
 });

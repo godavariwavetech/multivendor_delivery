@@ -27,7 +27,7 @@ export function RejectOrderScreen() {
   };
 
   return (
-    <Screen footer={<Button label="Reject order" variant="clay" flex={1} disabled={!reason} onPress={reject} />}>
+    <Screen footer={<Button label="Reject order" variant="blue" flex={1} disabled={!reason} onPress={reject} />}>
       <BackHeader title={`Reject #${params.id}`} subtitle="The customer is refunded automatically" onBack={nav.goBack} />
       <SectionLabel style={styles.label}>Why can't you take it?</SectionLabel>
       <ListGroup>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioOn: { backgroundColor: palette.clay, borderColor: palette.clay },
+  radioOn: { backgroundColor: palette.blue, borderColor: palette.blue },
   input: {
     minHeight: 96,
     padding: space.lg,

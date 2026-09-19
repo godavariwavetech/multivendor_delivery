@@ -12,7 +12,7 @@ import { Text } from './Text';
  */
 export function StageTracker({ steps, current }: { steps: string[]; current: number }) {
   const { r, role } = useTheme();
-  const doneLine = role === 'delivery' ? palette.mintLine : palette.peachLine;
+  const doneLine = role === 'delivery' ? palette.leafLine : palette.skyLine;
   return (
     <View style={styles.tracker}>
       <View style={styles.dotsRow}>
@@ -52,9 +52,9 @@ export function RouteTimeline({
   return (
     <View style={styles.route}>
       <View style={styles.rail}>
-        <View style={[styles.routeDot, { backgroundColor: palette.clay }]} />
+        <View style={[styles.routeDot, { backgroundColor: palette.blue }]} />
         <View style={styles.railLine} />
-        <View style={[styles.routeDot, toHollow ? styles.hollow : { backgroundColor: palette.sage }]} />
+        <View style={[styles.routeDot, toHollow ? styles.hollow : { backgroundColor: palette.green }]} />
       </View>
       <View style={styles.routeText}>
         <View>
@@ -94,8 +94,8 @@ const styles = StyleSheet.create({
   route: { flexDirection: 'row', gap: space.md },
   rail: { alignItems: 'center', paddingTop: 5, paddingBottom: 5 },
   routeDot: { width: 14, height: 14, borderRadius: 7 },
-  hollow: { borderWidth: 3, borderColor: palette.sage, backgroundColor: palette.paper },
-  railLine: { flex: 1, width: 2, backgroundColor: palette.mintLineSoft, marginVertical: 3 },
+  hollow: { borderWidth: 3, borderColor: palette.green, backgroundColor: palette.paper },
+  railLine: { flex: 1, width: 2, backgroundColor: palette.leafLineSoft, marginVertical: 3 },
   routeText: { flex: 1, gap: space.md },
   routeTitle: { fontSize: 15 },
 });

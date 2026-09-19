@@ -96,7 +96,7 @@ export function DocumentsScreen() {
         subtitle="KYC for payouts and compliance"
         onBack={nav.goBack}
         pill={verified ? 'Verified' : 'In review'}
-        pillTone={verified ? 'mint' : 'peach'}
+        pillTone={verified ? 'leaf' : 'sky'}
       />
       <ListGroup>
         {docs.map(d => (
@@ -104,7 +104,7 @@ export function DocumentsScreen() {
             key={d.title}
             title={d.title}
             subtitle={d.detail}
-            right={<Pill label={verified ? 'Verified' : 'In review'} tone={verified ? 'mint' : 'peach'} />}
+            right={<Pill label={verified ? 'Verified' : 'In review'} tone={verified ? 'leaf' : 'sky'} />}
           />
         ))}
       </ListGroup>

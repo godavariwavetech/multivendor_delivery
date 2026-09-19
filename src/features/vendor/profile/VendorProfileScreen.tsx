@@ -29,7 +29,7 @@ export function VendorProfileScreen() {
             <Text v="body" muted>
               {`${CATEGORY_LABEL[store.category]} · ${store.area} · ID ${store.code}`}
             </Text>
-            <Pill label={`★ ${store.rating} · ${formatAmount(store.ratings, '')} ratings`} tone="mint" style={styles.pill} />
+            <Pill label={`★ ${store.rating} · ${formatAmount(store.ratings, '')} ratings`} tone="leaf" style={styles.pill} />
           </View>
         </View>
       </Card>
@@ -41,7 +41,7 @@ export function VendorProfileScreen() {
           value={store.hours.replace(/:00/g, '')}
           onPress={() => nav.navigate('Timings')}
         />
-        <ListRow title="FSSAI & GST documents" right={<Pill label="Verified" tone="mint" />} onPress={() => nav.navigate('Documents')} />
+        <ListRow title="FSSAI & GST documents" right={<Pill label="Verified" tone="leaf" />} onPress={() => nav.navigate('Documents')} />
         <ListRow title="Bank account for payouts" value={store.bank} onPress={() => nav.navigate('BankAccount', { role: 'vendor' })} />
       </ListGroup>
 

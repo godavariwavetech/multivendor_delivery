@@ -50,10 +50,10 @@ import type { AuthParams, DeliveryParams, DeliveryTabParams, VendorParams, Vendo
 
 const navTheme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: palette.cream, card: palette.paper, text: palette.ink, border: palette.lineSoft },
+  colors: { ...DefaultTheme.colors, background: palette.canvas, card: palette.paper, text: palette.ink, border: palette.lineSoft },
 };
 
-const stackOptions = { headerShown: false, contentStyle: { backgroundColor: palette.cream } } as const;
+const stackOptions = { headerShown: false, contentStyle: { backgroundColor: palette.canvas } } as const;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -181,7 +181,7 @@ export function RootNavigator() {
     return (
       <ThemeProvider role="vendor">
         <View style={splashStyles.screen}>
-          <ActivityIndicator color={palette.clay} />
+          <ActivityIndicator color={palette.blue} />
         </View>
       </ThemeProvider>
     );
@@ -203,5 +203,5 @@ export function RootNavigator() {
 }
 
 const splashStyles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.cream },
+  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.canvas },
 });

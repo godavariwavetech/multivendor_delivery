@@ -74,17 +74,17 @@ function FoodHandling({ request: r, pickup, trip, now, onToggle }: HandlingProps
   const left = Math.round((readyAt(trip, r) - now) / 1000);
   return (
     <>
-      <Card tone="sage">
+      <Card tone="green">
         <View style={styles.row}>
           <View style={styles.flex}>
-            <Text v="cardTitle" color={palette.cream}>
+            <Text v="cardTitle" color={palette.canvas}>
               {left > 0 ? `Food ready in ${Math.ceil(left / 60)} min` : 'Food is ready'}
             </Text>
-            <Text v="body" color="rgba(249, 244, 237, 0.86)">
+            <Text v="body" color="rgba(255, 255, 255, 0.86)">
               {left > 0 ? 'Wait at counter · vendor is packing' : 'Collect it from the counter'}
             </Text>
           </View>
-          <Text v="display" color={palette.cream}>
+          <Text v="display" color={palette.canvas}>
             {left > 0 ? formatCountdown(left) : 'Ready'}
           </Text>
         </View>
@@ -95,7 +95,7 @@ function FoodHandling({ request: r, pickup, trip, now, onToggle }: HandlingProps
         <KeyValue label="Payment" value={paymentValue(r)} strong />
         <KeyValue label="Deliver within" value={`${pickup.deliverWithinMin} min · keep hot`} strong />
       </Card>
-      <Banner tone="peach" title={pickup.warning.title} body={pickup.warning.body} />
+      <Banner tone="sky" title={pickup.warning.title} body={pickup.warning.body} />
     </>
   );
 }
@@ -122,7 +122,7 @@ function GroceryHandling({ request: r, pickup, trip, onToggle }: HandlingProps<G
             </View>
             <Text
               v="bodyStrong"
-              color={palette.clayDeep}
+              color={palette.blueDeep}
               style={styles.viewPill}
               onPress={() => {
                 const short = pickup.shortSupply;
@@ -135,7 +135,7 @@ function GroceryHandling({ request: r, pickup, trip, onToggle }: HandlingProps<G
           </View>
         </Card>
       ) : null}
-      <Banner tone="peach" title={pickup.warning.title} body={pickup.warning.body} />
+      <Banner tone="sky" title={pickup.warning.title} body={pickup.warning.body} />
     </>
   );
 }
@@ -170,13 +170,13 @@ function ProduceHandling({ request: r, pickup, trip, onToggle }: HandlingProps<P
       </Card>
 
       {!pickup.substitution ? null : decided ? (
-        <Banner tone="mint" title="Substitution sent to customer" body="You'll be notified if they decline. Carry on with the pickup." />
+        <Banner tone="leaf" title="Substitution sent to customer" body="You'll be notified if they decline. Carry on with the pickup." />
       ) : (
-        <Card tone="peach">
-          <Text v="cardTitle" color={palette.clayDeep}>
+        <Card tone="sky">
+          <Text v="cardTitle" color={palette.blueDeep}>
             {pickup.substitution.title}
           </Text>
-          <Text v="body" color={palette.clayDeep} style={styles.gap}>
+          <Text v="body" color={palette.blueDeep} style={styles.gap}>
             {pickup.substitution.body}
           </Text>
           <View style={styles.actions}>
@@ -192,7 +192,7 @@ function ProduceHandling({ request: r, pickup, trip, onToggle }: HandlingProps<P
             />
             <Button
               label="Ask customer"
-              variant="clay"
+              variant="blue"
               size="sm"
               flex={1.3}
               onPress={() => {
@@ -221,7 +221,7 @@ function ProduceHandling({ request: r, pickup, trip, onToggle }: HandlingProps<P
 function BakeryHandling({ request: r, pickup, trip, onToggle, onPhoto }: HandlingProps<BakeryPickup>) {
   return (
     <>
-      <Banner tone="clay" title={pickup.banner.title} body={pickup.banner.body} />
+      <Banner tone="blue" title={pickup.banner.title} body={pickup.banner.body} />
       <Checklist title="Handling checklist" items={pickup.checklist} trip={trip} onToggle={onToggle} />
       <Card>
         <KeyValue label="Message on cake" value={pickup.message} strong />
@@ -237,9 +237,9 @@ function BakeryHandling({ request: r, pickup, trip, onToggle, onPhoto }: Handlin
             </Text>
           </View>
           {trip.proofPhoto ? (
-            <IconCircle icon={Check} bg={palette.sage} color={palette.white} />
+            <IconCircle icon={Check} bg={palette.green} color={palette.white} />
           ) : (
-            <IconCircle icon={Camera} bg={palette.mint} color={palette.sageDeep} onPress={onPhoto} />
+            <IconCircle icon={Camera} bg={palette.leaf} color={palette.greenDeep} onPress={onPhoto} />
           )}
         </View>
       </Card>
@@ -252,7 +252,7 @@ function BakeryHandling({ request: r, pickup, trip, onToggle, onPhoto }: Handlin
 function MeatHandling({ request: r, pickup, trip, onToggle }: HandlingProps<MeatPickup>) {
   return (
     <>
-      <Banner tone="sage" title={pickup.banner.title} body={pickup.banner.body} />
+      <Banner tone="green" title={pickup.banner.title} body={pickup.banner.body} />
       <Checklist title="Confirm at counter" items={pickup.checklist} trip={trip} onToggle={onToggle} />
       <Card>
         {pickup.lines.map((l, i) => (
@@ -269,7 +269,7 @@ function MeatHandling({ request: r, pickup, trip, onToggle }: HandlingProps<Meat
         <Divider style={styles.dividerSm} />
         <KeyValue label={r.payment === 'cod' ? 'Collect cash on delivery' : 'Prepaid'} value={formatAmount(r.codAmount ?? r.orderTotal)} strong />
       </Card>
-      <Banner tone="peach" title={pickup.warning.title} body={pickup.warning.body} />
+      <Banner tone="sky" title={pickup.warning.title} body={pickup.warning.body} />
     </>
   );
 }
@@ -311,7 +311,7 @@ export const PICKUP_COPY: Record<DeliveryRequest['category'], (r: DeliveryReques
   meat: () => ({ slide: 'Slide to confirm pickup', report: 'No ice pack available · report' }),
 };
 
-export const categoryPill = (r: DeliveryRequest) => <Pill label={labelFor(r)} tone="mint" />;
+export const categoryPill = (r: DeliveryRequest) => <Pill label={labelFor(r)} tone="leaf" />;
 
 const labelFor = (r: DeliveryRequest) =>
   ({ food: 'Food', grocery: 'Grocery', produce: 'Fruits & Veg', bakery: 'Bakery', meat: 'Meat' })[r.category];
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   weighRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 4 },
   weight: { minWidth: 70, textAlign: 'right' },
   viewPill: {
-    backgroundColor: palette.peach,
+    backgroundColor: palette.sky,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,

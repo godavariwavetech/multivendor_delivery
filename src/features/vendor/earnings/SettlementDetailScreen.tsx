@@ -22,11 +22,11 @@ export function SettlementDetailScreen() {
         subtitle={s.period}
         onBack={nav.goBack}
         pill={pill}
-        pillTone={s.status === 'pending' ? 'peach' : s.status === 'settled' ? 'mint' : 'neutral'}
+        pillTone={s.status === 'pending' ? 'sky' : s.status === 'settled' ? 'leaf' : 'neutral'}
       />
 
       {s.status === 'pending' ? (
-        <Banner tone="peach" title={`${s.title}`} body={`${s.paidOn} to ${store.bank}. Orders until Sunday midnight are included.`} />
+        <Banner tone="sky" title={`${s.title}`} body={`${s.paidOn} to ${store.bank}. Orders until Sunday midnight are included.`} />
       ) : null}
 
       {s.status === 'refund' ? (

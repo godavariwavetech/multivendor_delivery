@@ -11,7 +11,7 @@ export function MiniBars({ values, height = 52 }: { values: number[]; height?: n
   return (
     <View style={[styles.miniBars, { height }]}>
       {values.map((v, i) => {
-        const color = i >= values.length - 1 ? palette.clay : i >= values.length - 3 ? palette.clayMid : palette.peachLine;
+        const color = i >= values.length - 1 ? palette.blue : i >= values.length - 3 ? palette.blueMid : palette.skyLine;
         return <View key={i} style={[styles.miniBar, { height: Math.max(8, v * height), backgroundColor: color }]} />;
       })}
     </View>
@@ -39,7 +39,7 @@ export function DayBars({
   data: { day: string; value: number; tone: 'light' | 'mid' | 'dark' }[];
   height?: number;
 }) {
-  const tone = { light: palette.peachLine, mid: palette.clayMid, dark: palette.clay };
+  const tone = { light: palette.skyLine, mid: palette.blueMid, dark: palette.blue };
   return (
     <View style={styles.dayBars}>
       {data.map(d => (

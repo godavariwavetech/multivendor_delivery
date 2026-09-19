@@ -1,6 +1,6 @@
 import { Bike, Store } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, LinkButton, Screen, SegmentOption, SegmentedTabs, Text } from '@/components';
 import { USE_MOCK_DATA } from '@config/constants';
@@ -73,13 +73,10 @@ export function LoginScreen() {
   return (
     <ThemeProvider role={role} brand={branding}>
       <Screen gap={0} contentStyle={styles.content}>
-        <View style={[styles.logo, { backgroundColor: accent }]}>
-          <Text v="display" color={palette.cream} style={styles.logoLetter}>
-            e
-          </Text>
-        </View>
-        <Text v="hero" style={styles.brand}>
-          {'eKart360\nPartner'}
+        {/* The full wordmark carries the brand here, so the heading only names the app. */}
+        <Image source={require('@/assets/images/ekart360-logo.png')} style={styles.logo} resizeMode="contain" />
+        <Text v="hero" style={styles.brand} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+          Partner
         </Text>
         <Text v="body" muted style={styles.lead}>
           {'Choose your workspace and sign in with\nyour registered mobile number.'}
@@ -137,7 +134,7 @@ export function LoginScreen() {
         </View>
 
         {error ? (
-          <Text v="caption" color={palette.clayMid} style={styles.error}>
+          <Text v="caption" color={palette.alert} style={styles.error}>
             {error}
           </Text>
         ) : null}
@@ -153,7 +150,7 @@ export function LoginScreen() {
 
         <Button
           label={busy ? 'Please wait…' : role === 'vendor' ? 'Sign in as Vendor' : 'Sign in as Partner'}
-          variant={role === 'vendor' ? 'clay' : 'sage'}
+          variant={role === 'vendor' ? 'blue' : 'green'}
           size="lg"
           disabled={busy}
           onPress={submit}
@@ -181,15 +178,9 @@ export function LoginScreen() {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingTop: space.xxl },
-  logo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space.xl,
-  },
-  logoLetter: { fontSize: 32, lineHeight: 40 },
+  // 00.png is 513×132. Held to that ratio and capped, so a narrow screen
+  // shrinks it instead of letting it run past the gutter.
+  logo: { width: '100%', maxWidth: 233, aspectRatio: 513 / 132, marginBottom: space.xl },
   brand: { marginBottom: space.sm },
   lead: { marginBottom: space.xxl, fontSize: 15, lineHeight: 22 },
   fieldLabel: { marginBottom: space.sm },

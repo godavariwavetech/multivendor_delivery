@@ -131,7 +131,7 @@ export function ListRow({
       onPress={onPress}
       style={({ pressed }) => [styles.listRow, pressed && styles.pressed]}>
       <View style={styles.flex}>
-        <Text v="bodyStrong" color={danger ? palette.clayMid : undefined} style={styles.listTitle}>
+        <Text v="bodyStrong" color={danger ? palette.alert : undefined} style={styles.listTitle}>
           {title}
         </Text>
         {subtitle ? (
@@ -178,6 +178,6 @@ const styles = StyleSheet.create({
   },
   listTitle: { fontSize: 15 },
   listValue: { flexShrink: 1, textAlign: 'right' },
-  pressed: { backgroundColor: 'rgba(32, 30, 29, 0.04)' },
+  pressed: { backgroundColor: 'rgba(26, 29, 33, 0.04)' },
   flex: { flex: 1 },
 });

@@ -23,6 +23,7 @@ import {
 } from '@/components';
 import { useDelivery } from '@/data/deliveryStore';
 import { useVendor } from '@/data/vendorStore';
+import { useSupport } from '@/data/support';
 import { SharedParams, useSharedNav } from '@/navigation/types';
 import { fonts, palette, radius, space, useTheme } from '@/theme';
 import { ago } from '@/utils/datetime';
@@ -104,18 +105,33 @@ const FAQS = {
 
 export function HelpScreen() {
   const nav = useSharedNav();
-  const toast = useToast();
   const { role } = useTheme();
+  const support = useSupport();
   const [open, setOpen] = useState<number | null>(0);
 
   return (
     <Screen>
       <BackHeader title="Help & support" subtitle="We usually respond within 5 minutes" onBack={nav.goBack} />
+      {/*
+        Call and Email dial and compose for real, using the number and address
+        the tenant configured. An unconfigured channel is not shown at all —
+        there is nothing behind it. "Message" raises a support ticket, which is
+        the one written channel this platform actually has.
+      */}
       <View style={styles.contactRow}>
-        <ContactTile icon={Headset} label="Call" onPress={() => toast('Calling partner support · 1800 000 000')} />
-        <ContactTile icon={MessageCircle} label="Chat" onPress={() => toast('Chat opens with a support agent')} />
-        <ContactTile icon={Mail} label="Email" onPress={() => toast('support@koodai.example copied')} />
+        {support.info.phone ? (
+          <ContactTile icon={Headset} label="Call" onPress={() => support.open(`tel:${support.info.phone}`)} />
+        ) : null}
+        <ContactTile icon={MessageCircle} label="Message" onPress={() => nav.navigate('ReportProblem', {})} />
+        {support.info.email ? (
+          <ContactTile icon={Mail} label="Email" onPress={() => support.open(`mailto:${support.info.email}`)} />
+        ) : null}
       </View>
+      {!support.info.phone && !support.info.email ? (
+        <Text v="caption" muted style={styles.label}>
+          No support phone or email is set up for this store yet. Messages still reach support.
+        </Text>
+      ) : null}
 
       <SectionLabel style={styles.label}>Common questions</SectionLabel>
       <ListGroup>
@@ -157,30 +173,43 @@ function ContactTile({ icon: Icon, label, onPress }: { icon: typeof Headset; lab
   );
 }
 
-const TOPICS = {
-  vendor: ['Partner not here', 'Wrong partner', 'Order issue', 'Payout issue', 'App problem'],
-  delivery: ['Order not ready', 'Customer issue', 'Address wrong', 'Vehicle trouble', 'Payout issue', 'App problem'],
-};
 
 export function ReportProblemScreen() {
   const nav = useSharedNav();
   const toast = useToast();
-  const { role } = useTheme();
   const route = useRoute<RouteProp<SharedParams, 'ReportProblem'>>();
+  const support = useSupport();
   const [topic, setTopic] = useState<string | null>(null);
   const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const submit = () => {
-    toast(`Ticket #SR-${10480 + Math.floor(Math.random() * 90)} raised · support will call you`);
+  // The topics come from the server, which is also what it validates against.
+  const topics = support.info.topics;
+
+  const submit = async () => {
+    if (!topic || busy) {
+      return;
+    }
+    setBusy(true);
+    const result = await support.raiseTicket(topic, text.trim());
+    setBusy(false);
+    if (!result.ok) {
+      toast(result.error);
+      return;
+    }
+    toast(`Ticket ${result.reference} raised · support will call you`);
     nav.goBack();
   };
 
   return (
-    <Screen footer={<Button label="Submit report" size="lg" flex={1} disabled={!topic} onPress={submit} />}>
+    <Screen
+      footer={
+        <Button label={busy ? 'Sending…' : 'Submit report'} size="lg" flex={1} disabled={!topic || busy} onPress={submit} />
+      }>
       <BackHeader title="Report a problem" subtitle={route.params?.context ?? 'Tell us what went wrong'} onBack={nav.goBack} />
       <SectionLabel style={styles.label}>What's it about?</SectionLabel>
       <ChipRow scroll={false}>
-        {TOPICS[role].map(t => (
+        {topics.map(t => (
           <Chip key={t} label={t} selected={topic === t} onPress={() => setTopic(t)} />
         ))}
       </ChipRow>
@@ -195,7 +224,7 @@ export function ReportProblemScreen() {
           style={styles.textArea}
         />
       </Card>
-      <Banner tone="mint" title="Urgent during a trip or service?" body="Call support directly from Help & support — calls are answered first." />
+      <Banner tone="leaf" title="Urgent during a trip or service?" body="Call support directly from Help & support — calls are answered first." />
     </Screen>
   );
 }
@@ -203,36 +232,74 @@ export function ReportProblemScreen() {
 export function PrivacyScreen() {
   const nav = useSharedNav();
   const toast = useToast();
+  const support = useSupport();
+  const [busy, setBusy] = useState(false);
+
+  const pendingExport = support.requests.find(r => r.type === 'data_export' && r.status === 0);
+  const pendingDeletion = support.requests.find(r => r.type === 'delete_account' && r.status === 0);
+
+  const exportData = async () => {
+    if (busy) {
+      return;
+    }
+    setBusy(true);
+    const result = await support.requestExport();
+    setBusy(false);
+    toast(result.ok ? `Export ${result.reference} requested · we will email the link` : result.error);
+  };
+
+  const requestDeletion = async () => {
+    setBusy(true);
+    const result = await support.requestDeletion('Requested from the app');
+    setBusy(false);
+    toast(result.ok ? `Deletion request ${result.reference} received` : result.error);
+  };
+
   return (
     <Screen>
       <BackHeader title="Terms & privacy" subtitle="Account and data settings" onBack={nav.goBack} />
       <ListGroup>
-        <ListRow title="Terms of service" onPress={() => toast('Opens the latest terms (v4, 1 Aug)')} />
-        <ListRow title="Privacy policy" onPress={() => toast('Opens the privacy policy')} />
-        <ListRow title="Download my data" subtitle="Orders, payouts and profile as a ZIP" onPress={() => toast('We will email your data export within 24 h')} />
+        {/* Only offered when the tenant has published a document to open. */}
+        {support.info.termsUrl ? (
+          <ListRow title="Terms of service" onPress={() => support.open(support.info.termsUrl as string)} />
+        ) : null}
+        {support.info.privacyUrl ? (
+          <ListRow title="Privacy policy" onPress={() => support.open(support.info.privacyUrl as string)} />
+        ) : null}
+        <ListRow
+          title="Download my data"
+          subtitle={pendingExport ? `Requested · ${pendingExport.reference}` : 'Orders, payouts and profile'}
+          onPress={pendingExport ? undefined : exportData}
+        />
       </ListGroup>
+      {!support.info.termsUrl && !support.info.privacyUrl ? (
+        <Text v="caption" muted style={styles.label}>
+          Your store admin has not published the terms or privacy policy yet.
+        </Text>
+      ) : null}
       <Card>
         <SectionLabel>What we keep</SectionLabel>
         <KeyValue label="Order history" value="7 years (tax law)" />
         <KeyValue label="Location during trips" value="90 days" />
         <KeyValue label="Call recordings" value="30 days" />
       </Card>
-      <Card tone="peach">
-        <Text v="cardTitle" color={palette.clayDeep}>
+      <Card tone="sky">
+        <Text v="cardTitle" color={palette.blueDeep}>
           Delete account
         </Text>
-        <Text v="body" color={palette.clayDeep} style={styles.gap}>
+        <Text v="body" color={palette.blueDeep} style={styles.gap}>
           Your login is removed after pending payouts settle. Tax records are kept as the law requires.
         </Text>
         <Button
-          label="Request deletion"
-          variant="clay"
+          label={pendingDeletion ? `Requested · ${pendingDeletion.reference}` : 'Request deletion'}
+          variant="blue"
           size="sm"
+          disabled={Boolean(pendingDeletion) || busy}
           style={styles.deleteBtn}
           onPress={() =>
-            Alert.alert('Delete account?', 'Your store admin must approve this. You can cancel within 7 days.', [
+            Alert.alert('Delete account?', 'Your store admin must approve this. Open orders have to be finished first.', [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Request deletion', style: 'destructive', onPress: () => toast('Deletion request sent') },
+              { text: 'Request deletion', style: 'destructive', onPress: requestDeletion },
             ])
           }
         />

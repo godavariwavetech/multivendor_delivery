@@ -430,7 +430,24 @@ function useDeliveryValue() {
           dispatch({ type: 'arrived' });
           send(endpoints.delivery.arrived, { assignment_id: assignmentId });
         },
-        proofPhoto: () => dispatch({ type: 'proofPhoto' }),
+        /**
+         * Uploads the photo and only then marks the trip as having proof — the
+         * flag used to be set locally with nothing behind it. The stored path
+         * goes on delivery_assignments.proof_photo.
+         */
+        proofPhoto: async (photo: { uri: string; name: string; type: string }): Promise<ActionResult> => {
+          if (!assignmentId) {
+            return { ok: false, error: 'No active delivery to attach a photo to.' };
+          }
+          try {
+            await apiClient.upload(endpoints.delivery.uploadProof, photo, { assignment_id: String(assignmentId) });
+            dispatch({ type: 'proofPhoto' });
+            refresh();
+            return { ok: true };
+          } catch (error) {
+            return { ok: false, error: error instanceof Error ? error.message : 'The photo could not be saved.' };
+          }
+        },
         /** The customer reads out the OTP; the server checks it. */
         complete: async (otp: string): Promise<ActionResult> => {
           if (!LIVE) {

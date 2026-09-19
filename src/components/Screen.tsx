@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import { Edge, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette, space } from '@/theme';
@@ -29,19 +29,29 @@ export function Screen({ children, tab, scroll = true, footer, overlay, contentS
   const body = [styles.content, { gap }, bleed && styles.bleed, contentStyle];
   return (
     <SafeAreaView edges={safeEdges} style={styles.root}>
-      {scroll ? (
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={[body, styles.scrollPad]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={[styles.flex, body]}>{children}</View>
-      )}
-      {overlay}
-      {footer ? <BottomBar>{footer}</BottomBar> : null}
+      {/*
+        The app is edge-to-edge (android:edgeToEdgeEnabled), so the window does
+        not resize when the keyboard opens and it would sit on top of whatever
+        field is being typed into. KeyboardAvoidingView listens to the keyboard
+        events instead of relying on the resize, and pads the bottom by the
+        keyboard's height, which shrinks the scroll area so Android can bring
+        the focused input back into view.
+      */}
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        {scroll ? (
+          <ScrollView
+            style={styles.flex}
+            contentContainerStyle={[body, styles.scrollPad]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={[styles.flex, body]}>{children}</View>
+        )}
+        {overlay}
+        {footer ? <BottomBar>{footer}</BottomBar> : null}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -132,7 +142,7 @@ export function HomeHeader({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: palette.cream },
+  root: { flex: 1, backgroundColor: palette.canvas },
   flex: { flex: 1 },
   content: { paddingHorizontal: space.gutter, paddingTop: space.sm },
   scrollPad: { paddingBottom: space.xxl + 60 },

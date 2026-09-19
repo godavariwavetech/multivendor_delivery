@@ -15,10 +15,21 @@ export const DEFAULT_API_BASE_URL =
     default: 'http://localhost:2407',
   }) ?? 'http://localhost:2407';
 
+/**
+ * The address of the machine the backend was built against, tried on first run
+ * so a phone on the same network connects without anyone typing an address.
+ * It is only a guess: the Server screen overrides it, and what is typed there
+ * is what the device remembers.
+ */
+export const DEV_LAN_BASE_URL = 'http://192.168.1.7:2407';
+
 /** The mobile app's mount point in the backend. */
 export const API_PREFIX = '/partner_app';
 
 export const REQUEST_TIMEOUT_MS = 20000;
+
+/** A photo takes longer than a JSON call, especially on mobile data. */
+export const UPLOAD_TIMEOUT_MS = 60000;
 
 /**
  * Demo mode: screens run on the seeded data in src/data/demo instead of the

@@ -142,8 +142,8 @@ export function OsmMap({
               style={[styles.pin, { left: pinLeft - 15, top: pinTop - 30 }]}>
               <MapPin
                 size={30}
-                color={from ? palette.clay : r.accent}
-                fill={from ? palette.peach : r.soft}
+                color={from ? palette.blue : r.accent}
+                fill={from ? palette.sky : r.soft}
                 strokeWidth={2.2}
               />
             </View>
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: space.sm,
     paddingVertical: 2,
-    backgroundColor: 'rgba(249, 244, 237, 0.82)',
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
     borderTopLeftRadius: radius.sm,
   },
   creditText: { fontSize: 10 },

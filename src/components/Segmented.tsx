@@ -35,7 +35,7 @@ export function SegmentedTabs<K extends string>({
       {options.map(o => {
         const selected = o.key === value;
         const Icon = o.icon;
-        const fg = selected ? palette.cream : palette.inkMuted;
+        const fg = selected ? palette.canvas : palette.inkMuted;
         return (
           <Pressable
             key={o.key}
@@ -105,7 +105,7 @@ export function HeroSegment<K extends string>({
           <Pressable key={t.key} onPress={() => onChange(t.key)} style={[styles.heroPill, selected && styles.heroOn]}>
             <Text
               v="bodyStrong"
-              color={selected ? palette.cream : 'rgba(249, 244, 237, 0.85)'}
+              color={selected ? palette.canvas : 'rgba(255, 255, 255, 0.85)'}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.8}>

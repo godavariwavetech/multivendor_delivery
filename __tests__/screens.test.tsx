@@ -11,6 +11,7 @@ import ReactTestRenderer from 'react-test-renderer';
 import { ToastProvider } from '../src/components';
 import { DeliveryStoreProvider, useDelivery } from '../src/data/deliveryStore';
 import { SessionProvider, useSession } from '../src/data/session';
+import { SupportProvider } from '../src/data/support';
 import { VendorStoreProvider, useVendor } from '../src/data/vendorStore';
 import { ForgotPasswordScreen } from '../src/features/auth/ForgotPasswordScreen';
 import { LoginScreen } from '../src/features/auth/LoginScreen';
@@ -88,21 +89,23 @@ async function renderScreen(
   await ReactTestRenderer.act(async () => {
     tree = ReactTestRenderer.create(
       <SessionProvider>
-        <VendorStoreProvider>
-          <DeliveryStoreProvider>
-            <ThemeProvider role={role}>
-              <ToastProvider>
-                <Script run={run}>
-                  <NavigationContainer>
-                    <Stack.Navigator screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="Test" component={Component} initialParams={params} />
-                    </Stack.Navigator>
-                  </NavigationContainer>
-                </Script>
-              </ToastProvider>
-            </ThemeProvider>
-          </DeliveryStoreProvider>
-        </VendorStoreProvider>
+        <SupportProvider signedIn={false}>
+          <VendorStoreProvider>
+            <DeliveryStoreProvider>
+              <ThemeProvider role={role}>
+                <ToastProvider>
+                  <Script run={run}>
+                    <NavigationContainer>
+                      <Stack.Navigator screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="Test" component={Component} initialParams={params} />
+                      </Stack.Navigator>
+                    </NavigationContainer>
+                  </Script>
+                </ToastProvider>
+              </ThemeProvider>
+            </DeliveryStoreProvider>
+          </VendorStoreProvider>
+        </SupportProvider>
       </SessionProvider>,
     );
   });
@@ -120,7 +123,7 @@ afterAll(() => {
 
 describe('auth', () => {
   test.each([
-    ['Login', LoginScreen, undefined, 'eKart360'],
+    ['Login', LoginScreen, undefined, 'ekart360-logo'], // the wordmark image renders
     ['OTP', OtpScreen, { mobile: '9840721536', purpose: 'login' }, 'Verify your number'],
     ['Forgot password', ForgotPasswordScreen, undefined, 'Reset password'],
     ['Reset password', ResetPasswordScreen, { mobile: '9840721536' }, 'New password'],
@@ -135,7 +138,7 @@ describe('auth', () => {
     expect(out).toContain('Sign in as Vendor');
   });
 
-  test('logo and accents follow the selected workspace tab', async () => {
+  test('accents follow the selected workspace tab', async () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(
@@ -148,31 +151,20 @@ describe('auth', () => {
         </SessionProvider>,
       );
     });
-    type Node = { type: string; props: { style?: unknown }; children: (Node | string)[] | null };
-    /** Background colour of the rendered element that directly wraps the brand letter. */
-    const logoColor = () => {
-      const isMark = (n: Node | string) => typeof n !== 'string' && n.children?.length === 1 && n.children[0] === 'e';
-      const find = (n: Node | Node[] | string | null): Node | undefined => {
-        if (!n || typeof n === 'string') {
-          return undefined;
-        }
-        if (Array.isArray(n)) {
-          return n.map(find).find(Boolean);
-        }
-        if (n.children?.some(isMark)) {
-          return n;
-        }
-        return n.children ? find(n.children as Node[]) : undefined;
-      };
-      const logo = find(tree.toJSON() as Node | Node[]);
-      const styles = [logo?.props.style].flat(Infinity) as { backgroundColor?: string }[];
+    /**
+     * The logo is the brand wordmark and never recolours, so the accent is read
+     * off the sign-in button — the one button on this screen.
+     */
+    const signInColor = () => {
+      const button = tree.root.findAll(n => n.props.accessibilityRole === 'button').pop();
+      const styles = [button?.props.style].flat(Infinity) as ({ backgroundColor?: string } | null)[];
       return styles.map(s => s?.backgroundColor).filter(Boolean).pop();
     };
-    expect(logoColor()).toBe('#643312'); // vendor clay
+    expect(signInColor()).toBe('#1D44B5'); // vendor blue, from the logo
 
     const tabs = tree.root.findAll(n => n.props.accessibilityRole === 'tab' && typeof n.props.onPress === 'function');
     await ReactTestRenderer.act(async () => tabs[tabs.length - 1].props.onPress());
-    expect(logoColor()).toBe('#56633F'); // delivery sage
+    expect(signInColor()).toBe('#098D11'); // delivery green, from the logo
     expect(JSON.stringify(tree.toJSON())).toContain('Sign in as Partner');
 
     await ReactTestRenderer.act(async () => tree.unmount());
@@ -196,7 +188,7 @@ describe('vendor', () => {
   test.each([
     ['Home', VendorHomeScreen, undefined, 'Accepting orders'],
     ['Orders · new', OrdersScreen, { tab: 'new' }, 'VK-2841'],
-    ['Orders · cooking', OrdersScreen, { tab: 'cooking' }, 'late'],
+    ['Orders · cooking', OrdersScreen, { tab: 'cooking' }, 'Mark ready'],
     ['Orders · ready', OrdersScreen, { tab: 'ready' }, 'at counter'],
     ['Orders · past', OrdersScreen, { tab: 'past' }, 'Delivered'],
     ['Order detail · new', OrderDetailScreen, { id: 'VK-2841' }, 'Accept & start preparing'],
@@ -223,6 +215,19 @@ describe('vendor', () => {
     ['Bank account', BankAccountScreen, { role: 'vendor' }, 'HDFC Bank'],
   ] as const)('%s', async (_, C, params, expected) => {
     expect(await renderScreen(C, { params })).toContain(expected);
+  });
+
+  test('a new item opens straight into the details form', async () => {
+    const out = await renderScreen(ProductEditScreen, { params: {} });
+    expect(out).toContain('New item'); // the form, not the read-only header
+    expect(out).toContain('Food type');
+    expect(out).toContain('+ Add variant');
+  });
+
+  test('an existing item shows its details, with the form behind the edit button', async () => {
+    const out = await renderScreen(ProductEditScreen, { params: { id: 'f-biryani' } });
+    expect(out).toContain('Chicken Biryani');
+    expect(out).not.toContain('Food type'); // collapsed until the pencil is tapped
   });
 
   test.each([

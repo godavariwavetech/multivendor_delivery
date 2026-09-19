@@ -25,7 +25,7 @@ import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { dayClock } from '@/utils/datetime';
-import { itemsLabel, prepLabel } from '@/utils/orders';
+import { itemsLabel } from '@/utils/orders';
 import { SearchX } from 'lucide-react-native';
 
 const STEP: Record<OrderStatus, number> = {
@@ -58,7 +58,7 @@ export function OrderDetailScreen() {
   }
 
   const work = workLabel(store.category);
-  const pillTone = order.status === 'new' || order.status === 'ready' ? 'peach' : order.status === 'cooking' ? 'mint' : 'neutral';
+  const pillTone = order.status === 'new' || order.status === 'ready' ? 'sky' : order.status === 'cooking' ? 'leaf' : 'neutral';
 
   const footer =
     order.status === 'new' ? (
@@ -96,16 +96,16 @@ export function OrderDetailScreen() {
         title={`#${order.id}`}
         subtitle={`${dayClock(order.placedAt, now)} · ${order.refunded ? 'Refunded' : order.payment === 'cod' ? 'COD' : 'Prepaid'}`}
         onBack={nav.goBack}
-        pill={order.status === 'cooking' ? prepLabel(order, now) : ORDER_STATUS_LABEL[order.status]}
+        pill={ORDER_STATUS_LABEL[order.status]}
         pillTone={pillTone}
       />
 
       {order.status === 'cancelled' || order.status === 'rejected' ? (
-        <Card tone="peach">
-          <Text v="bodyStrong" color={palette.clayDeep}>
+        <Card tone="sky">
+          <Text v="bodyStrong" color={palette.blueDeep}>
             {order.closeNote}
           </Text>
-          <Text v="body" color={palette.clayDeep}>
+          <Text v="body" color={palette.blueDeep}>
             {order.refunded ? `${formatAmount(order.total)} refunded to the customer's original payment.` : 'No payout for this order.'}
           </Text>
         </Card>

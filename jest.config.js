@@ -3,7 +3,7 @@ module.exports = {
   setupFiles: ['<rootDir>/jest.setup.js'],
   // These ship untranspiled ESM and must go through Babel.
   transformIgnorePatterns: [
-    'node_modules/(?!(?:@react-native|react-native|@react-navigation|react-native-gesture-handler|react-native-reanimated|react-native-worklets|react-native-screens|react-native-safe-area-context|react-native-svg|lucide-react-native)/)',
+    'node_modules/(?!(?:@react-native|react-native|@react-navigation|react-native-gesture-handler|react-native-reanimated|react-native-worklets|react-native-screens|react-native-safe-area-context|react-native-svg|react-native-image-picker|lucide-react-native)/)',
   ],
   moduleNameMapper: {
     // Jest can't transform lucide's .mjs entry; use its CommonJS build instead.

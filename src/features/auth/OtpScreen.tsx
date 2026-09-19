@@ -82,7 +82,7 @@ export function OtpScreen() {
           <LinkButton label="Change number" onPress={nav.goBack} />
         </View>
         {error ? (
-          <Text v="caption" color={palette.clayMid}>
+          <Text v="caption" color={palette.alert}>
             {error}
           </Text>
         ) : (
