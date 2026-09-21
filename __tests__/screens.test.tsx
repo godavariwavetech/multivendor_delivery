@@ -83,7 +83,18 @@ const Stack = createNativeStackNavigator();
 
 async function renderScreen(
   Component: React.ComponentType<any>,
-  { role = 'vendor', params, run }: { role?: Role; params?: object; run?: (s: Stores) => void | Promise<void> } = {},
+  {
+    role = 'vendor',
+    params,
+    run,
+    interact,
+  }: {
+    role?: Role;
+    params?: object;
+    run?: (s: Stores) => void | Promise<void>;
+    /** Taps things on the mounted tree before it is read back. */
+    interact?: (root: ReactTestRenderer.ReactTestInstance) => void | Promise<void>;
+  } = {},
 ) {
   let tree!: ReactTestRenderer.ReactTestRenderer;
   await ReactTestRenderer.act(async () => {
@@ -109,6 +120,11 @@ async function renderScreen(
       </SessionProvider>,
     );
   });
+  if (interact) {
+    // Not wrapped in one act: each press in `interact` is its own act, so the tree
+    // re-renders between presses and the next lookup sees the new handlers.
+    await interact(tree.root);
+  }
   const text = JSON.stringify(tree.toJSON());
   await ReactTestRenderer.act(async () => tree.unmount());
   return text;
@@ -220,14 +236,57 @@ describe('vendor', () => {
   test('a new item opens straight into the details form', async () => {
     const out = await renderScreen(ProductEditScreen, { params: {} });
     expect(out).toContain('New item'); // the form, not the read-only header
-    expect(out).toContain('Food type');
+    expect(out).toContain('Category');
+    expect(out).toContain('Sub category');
+    expect(out).toContain('Veg / Non-veg'); // a dish is veg or non-veg
     expect(out).toContain('+ Add variant');
+  });
+
+  test('grocery items pick a category and sub category, and are not asked veg / non-veg', async () => {
+    const out = await renderScreen(ProductEditScreen, { params: {}, run: s => s.vendor.actions.setCategory('grocery') });
+    expect(out).toContain('Sub category');
+    expect(out).toContain('Masala & spices'); // the first category is preselected
+    expect(out).not.toContain('Veg / Non-veg');
+    expect(out).not.toContain('Food type');
+  });
+
+  test('clearing the category with the × also empties the sub category', async () => {
+    const out = await renderScreen(ProductEditScreen, {
+      params: {},
+      run: s => s.vendor.actions.setCategory('grocery'),
+      interact: async root => {
+        const clear = root.findAll(n => n.props.accessibilityLabel === 'Clear Category' && typeof n.props.onPress === 'function');
+        await ReactTestRenderer.act(async () => clear[0].props.onPress());
+      },
+    });
+    expect(out).toContain('Select category');
+    expect(out).toContain('None available'); // with no category there is nothing to pick a sub category from
+    expect(out).not.toContain('Masala & spices');
+  });
+
+  test('saving with the category cleared asks for one instead of saving', async () => {
+    const hasText = (n: ReactTestRenderer.ReactTestInstance, text: string) =>
+      n.findAll(c => (c.children as unknown[]).includes(text)).length > 0;
+    const out = await renderScreen(ProductEditScreen, {
+      params: {},
+      run: s => s.vendor.actions.setCategory('grocery'),
+      interact: async root => {
+        const clear = root.findAll(n => n.props.accessibilityLabel === 'Clear Category' && typeof n.props.onPress === 'function');
+        await ReactTestRenderer.act(async () => clear[0].props.onPress());
+        const save = root.findAll(
+          n => n.props.accessibilityRole === 'button' && typeof n.props.onPress === 'function' && hasText(n, 'Save product'),
+        );
+        await ReactTestRenderer.act(async () => save[0].props.onPress());
+      },
+    });
+    expect(out).toContain('Pick a category first');
+    expect(out).toContain('New item'); // still on the form, not navigated away
   });
 
   test('an existing item shows its details, with the form behind the edit button', async () => {
     const out = await renderScreen(ProductEditScreen, { params: { id: 'f-biryani' } });
     expect(out).toContain('Chicken Biryani');
-    expect(out).not.toContain('Food type'); // collapsed until the pencil is tapped
+    expect(out).not.toContain('Sub category'); // collapsed until the pencil is tapped
   });
 
   test.each([

@@ -72,6 +72,16 @@ export type Order = {
   closeNote?: string;
 };
 
+/**
+ * A product category and its sub categories — `categories` rows, where a sub
+ * category is a row whose `parent_id` is the category. Ids are `categories.id`.
+ */
+export type CategoryOption = {
+  id: number;
+  name: string;
+  subCategories: { id: number; name: string }[];
+};
+
 export type Store = {
   category: Category;
   name: string;
@@ -91,7 +101,10 @@ export type Store = {
   closingTime?: string;
   service: string;
   bank: string;
+  /** Names of the categories in use — the menu's filter chips. */
   groups: string[];
+  /** The category picker on the product form; absent from an older backend. */
+  categories?: CategoryOption[];
   itemNoun: string; // dish, product, cut…
 };
 
@@ -157,7 +170,12 @@ export type Product = {
   id: string;
   category: Category;
   name: string;
+  /** Name of the product's category (not the sub category); used by the menu's filter chips. */
   group: string;
+  /** `categories.id` of the category, and of the sub category when one is picked. */
+  categoryId?: number | null;
+  subCategoryId?: number | null;
+  subCategory?: string | null;
   veg: boolean;
   priceLine: string;
   available: boolean;

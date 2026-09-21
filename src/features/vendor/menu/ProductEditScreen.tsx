@@ -6,8 +6,7 @@ import {
   BackHeader,
   Button,
   Card,
-  Chip,
-  ChipRow,
+  Dropdown,
   IconCircle,
   PhotoBox,
   Pill,
@@ -20,7 +19,7 @@ import {
 import { apiClient, endpoints } from '@/api';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORY_LABEL } from '@/domain/labels';
-import type { Category, Product } from '@/domain/types';
+import type { Category, CategoryOption, Product, Store } from '@/domain/types';
 import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { photoUrl, pickPhoto } from '@/utils/photo';
@@ -35,8 +34,30 @@ const TITLES: Record<Category, { edit: string; add: string; save: string }> = {
   meat: { edit: 'Edit cut', add: 'New cut', save: 'Save cut' },
 };
 
-const blankProduct = (category: Category, group: string): Product => {
-  const base = { id: `new-${Date.now()}`, category, group, available: true, outNote: undefined };
+/**
+ * The store's category list. A backend that does not send one still has the names
+ * of the categories in use, so those become the options (negative ids: local only).
+ */
+const categoryOptions = (store: Store): CategoryOption[] =>
+  store.categories?.length
+    ? store.categories
+    : store.groups.map((name, i) => ({ id: -(i + 1), name, subCategories: [] }));
+
+/** The category a product is filed under: by id when the server sent one, else by name. */
+const categoryOf = (categories: CategoryOption[], p: Product) =>
+  categories.find(c => c.id === p.categoryId) ?? categories.find(c => c.name === p.group);
+
+const blankProduct = (category: Category, first?: CategoryOption): Product => {
+  const base = {
+    id: `new-${Date.now()}`,
+    category,
+    group: first?.name ?? 'Menu',
+    categoryId: first?.id ?? null,
+    subCategoryId: null,
+    subCategory: null,
+    available: true,
+    outNote: undefined,
+  };
   switch (category) {
     case 'grocery':
       return {
@@ -78,24 +99,36 @@ const blankProduct = (category: Category, group: string): Product => {
 };
 
 /**
- * The details the vendor types: what the item is called, which group it belongs
- * to, whether it is veg, and how long it takes to make. Everything below this on
- * the screen is priced per category, so it stays in the sheet views.
+ * The details the vendor types: what the item is called, its category and sub
+ * category, and — for food and bakery only — whether it is veg, and how long it
+ * takes to make. Everything below this on the screen is priced per store type,
+ * so it stays in the sheet views.
  */
 function DetailsForm({
   draft,
-  groups,
+  categories,
+  askVeg,
   onChange,
   onDone,
   isNew,
 }: {
   draft: Product;
-  groups: string[];
+  categories: CategoryOption[];
+  /** Veg / non-veg is a choice for food and bakery; grocery, produce and meat do not ask. */
+  askVeg: boolean;
   onChange: (p: Product) => void;
   onDone: () => void;
   isNew: boolean;
 }) {
   const sheet = draft.sheet;
+  const selected = categoryOf(categories, draft);
+  const pickCategory = (c: CategoryOption) =>
+    onChange({ ...draft, group: c.name, categoryId: c.id, subCategoryId: null, subCategory: null });
+  // A sub category belongs to its category, so clearing one clears both.
+  const clearCategory = () => onChange({ ...draft, group: '', categoryId: null, subCategoryId: null, subCategory: null });
+  const subCategories = selected?.subCategories ?? [];
+  const pickSubCategory = (s: { id: number; name: string } | undefined) =>
+    onChange({ ...draft, subCategoryId: s?.id ?? null, subCategory: s?.name ?? null });
   return (
     <Card>
       <SectionLabel>{isNew ? 'New item' : 'Item details'}</SectionLabel>
@@ -110,26 +143,47 @@ function DetailsForm({
         style={styles.field}
       />
 
-      {groups.length ? (
-        <>
-          <Text v="bodyStrong" style={styles.field}>
-            Group
-          </Text>
-          <ChipRow scroll={false}>
-            {groups.map(g => (
-              <Chip key={g} label={g} selected={draft.group === g} onPress={() => onChange({ ...draft, group: g })} />
-            ))}
-          </ChipRow>
-        </>
-      ) : null}
+      <Dropdown
+        label="Category"
+        value={selected?.id}
+        options={categories.map(c => ({ key: c.id, label: c.name }))}
+        onSelect={key => {
+          const c = categories.find(x => x.id === key);
+          if (c) {
+            pickCategory(c);
+          } else {
+            clearCategory();
+          }
+        }}
+        clearable
+        placeholder={categories.length ? 'Select category' : 'No categories yet'}
+        disabled={!categories.length}
+        style={styles.field}
+      />
 
-      <Text v="bodyStrong" style={styles.field}>
-        Food type
-      </Text>
-      <ChipRow scroll={false}>
-        <Chip label="Veg" selected={draft.veg} onPress={() => onChange({ ...draft, veg: true })} />
-        <Chip label="Non-veg" selected={!draft.veg} onPress={() => onChange({ ...draft, veg: false })} />
-      </ChipRow>
+      <Dropdown
+        label="Sub category"
+        value={draft.subCategoryId}
+        options={subCategories.map(s => ({ key: s.id, label: s.name }))}
+        onSelect={key => pickSubCategory(subCategories.find(s => s.id === key))}
+        clearable
+        placeholder={subCategories.length ? 'Select sub category' : 'None available'}
+        disabled={!subCategories.length}
+        style={styles.field}
+      />
+
+      {askVeg ? (
+        <Dropdown
+          label="Veg / Non-veg"
+          value={draft.veg ? 'veg' : 'nonveg'}
+          options={[
+            { key: 'veg', label: 'Veg' },
+            { key: 'nonveg', label: 'Non-veg' },
+          ]}
+          onSelect={key => onChange({ ...draft, veg: key === 'veg' })}
+          style={styles.field}
+        />
+      ) : null}
 
       {sheet.kind === 'food' ? (
         <TextField
@@ -158,7 +212,8 @@ export function ProductEditScreen() {
   const { params } = useVendorRoute<'ProductEdit'>();
   const { store, product, actions, refresh } = useVendor();
   const existing = params.id ? product(params.id) : undefined;
-  const [draft, setDraft] = useState<Product>(() => existing ?? blankProduct(store.category, store.groups[0]));
+  const categories = categoryOptions(store);
+  const [draft, setDraft] = useState<Product>(() => existing ?? blankProduct(store.category, categories[0]));
   // A new item has nothing to show yet, so it opens straight into the form.
   const [editing, setEditing] = useState(!existing);
   const [uploading, setUploading] = useState(false);
@@ -200,20 +255,26 @@ export function ProductEditScreen() {
       setEditing(true);
       return;
     }
+    if (categories.length && !draft.group && draft.categoryId == null) {
+      // Cleared with the ×: without one, the backend would file it under the store's first category.
+      toast('Pick a category first');
+      setEditing(true);
+      return;
+    }
     actions.saveProduct({ ...draft, name });
     toast(`${name} ${existing ? 'updated' : 'added'}`);
     nav.goBack();
   };
 
   const sheet = draft.sheet;
-  const subline =
-    sheet.kind === 'food'
-      ? `${draft.group} · Prep ${sheet.prepMin} min`
-      : sheet.kind === 'grocery'
-        ? `Brand ${sheet.brand} · ${draft.group}`
-        : sheet.kind === 'bakery'
-          ? `${draft.group} · Eggless option`
-          : `${draft.group} · Bone-in`;
+  const where = [draft.group, draft.subCategory].filter(Boolean).join(' › ');
+  const subline = (
+    sheet.kind === 'grocery'
+      ? [`Brand ${sheet.brand}`, where]
+      : [where, sheet.kind === 'food' ? `Prep ${sheet.prepMin} min` : sheet.kind === 'bakery' ? 'Eggless option' : 'Bone-in']
+  )
+    .filter(Boolean)
+    .join(' · ');
   const tags = sheet.kind === 'food' || sheet.kind === 'bakery' || sheet.kind === 'meat' ? sheet.tags : [];
 
   return (
@@ -229,7 +290,8 @@ export function ProductEditScreen() {
       {editing ? (
         <DetailsForm
           draft={draft}
-          groups={store.groups}
+          categories={categories}
+          askVeg={store.category === 'food' || store.category === 'bakery'}
           onChange={setDraft}
           onDone={() => setEditing(false)}
           isNew={!existing}

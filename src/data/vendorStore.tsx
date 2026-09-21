@@ -294,6 +294,10 @@ const productPayload = (p: Product) => {
   return {
     id: /^\d+$/.test(p.id) ? Number(p.id) : undefined,
     name: p.name,
+    // Only real categories.id values; the form's stand-ins for a store with no
+    // category list are negative and stay local.
+    categoryId: p.categoryId && p.categoryId > 0 ? p.categoryId : undefined,
+    subCategoryId: p.subCategoryId && p.subCategoryId > 0 ? p.subCategoryId : undefined,
     veg: p.veg,
     available: p.available,
     prepMin: sheet.kind === 'food' ? sheet.prepMin : undefined,

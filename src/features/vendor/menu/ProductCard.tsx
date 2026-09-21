@@ -24,7 +24,10 @@ export function ProductCard({
         <PhotoBox size={72} faded={off} />
         <View style={styles.flex}>
           <View style={styles.nameRow}>
-            <VegMark veg={product.veg} faded={off} />
+            {/* Veg / non-veg is a dish attribute; grocery and produce items do not carry one. */}
+            {product.category === 'grocery' || product.category === 'produce' ? null : (
+              <VegMark veg={product.veg} faded={off} />
+            )}
             <Text v="cardTitle" color={off ? palette.inkMuted : undefined} numberOfLines={2} style={styles.flex}>
               {product.name}
             </Text>

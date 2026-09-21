@@ -44,6 +44,35 @@ export const STORES: Record<Category, Store> = {
     service: 'All day',
     bank: 'HDFC ••4412',
     groups: ['Masala & spices', 'Staples', 'Oils'],
+    // Same ids as the demo seed in the backend (database/seed_grocery_subcategories.sql).
+    categories: [
+      {
+        id: 9011,
+        name: 'Masala & spices',
+        subCategories: [
+          { id: 9021, name: 'Powders' },
+          { id: 9022, name: 'Whole spices' },
+          { id: 9023, name: 'Masala blends' },
+        ],
+      },
+      {
+        id: 9012,
+        name: 'Staples',
+        subCategories: [
+          { id: 9024, name: 'Rice' },
+          { id: 9025, name: 'Dals & pulses' },
+          { id: 9026, name: 'Flours & atta' },
+        ],
+      },
+      {
+        id: 9013,
+        name: 'Oils',
+        subCategories: [
+          { id: 9027, name: 'Cooking oils' },
+          { id: 9028, name: 'Ghee & butter' },
+        ],
+      },
+    ],
     itemNoun: 'product',
   },
   produce: {
