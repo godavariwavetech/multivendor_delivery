@@ -6,7 +6,7 @@
  * server, so no emulator/LAN address juggling is needed. Still editable from
  * the sign-in screen ("Server") and stored on the device.
  */
-export const DEFAULT_API_BASE_URL = 'http://godavariwave.in:2407';
+export const DEFAULT_API_BASE_URL = 'https://godavariwave.in:2407';
 
 /**
  * The address of the machine the backend was built against, tried on first run
@@ -14,7 +14,7 @@ export const DEFAULT_API_BASE_URL = 'http://godavariwave.in:2407';
  * It is only a guess: the Server screen overrides it, and what is typed there
  * is what the device remembers.
  */
-export const DEV_LAN_BASE_URL = 'http://192.168.1.7:2407';
+// export const DEV_LAN_BASE_URL = 'http://192.168.1.7:2407';
 
 /** The mobile app's mount point in the backend. */
 export const API_PREFIX = '/partner_app';

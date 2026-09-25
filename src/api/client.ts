@@ -52,9 +52,9 @@ export const getAuthToken = () => authToken;
  * tcp:2407` is running, which is the usual USB setup; 10.0.2.2 is the host as
  * seen from the emulator; DEV_LAN_BASE_URL is the machine the app was built on,
  * which is where a phone on the same Wi-Fi finds it. If none of them answer, the
- * address has to come from the Server screen.
+ * address has to come from the Server screen
  */
-const CANDIDATES = ['http://localhost:2407', DEFAULT_API_BASE_URL, DEV_LAN_BASE_URL];
+const CANDIDATES = [DEFAULT_API_BASE_URL, DEV_LAN_BASE_URL];
 
 const answers = async (url: string) => {
   const controller = new AbortController();
