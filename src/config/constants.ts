@@ -1,19 +1,12 @@
-import { Platform } from 'react-native';
-
 /**
  * Backend: D:\projects\multivendor_backend — Express + MySQL on port 2407, with
  * the app's routes mounted at /partner_app.
  *
- * 10.0.2.2 is the host machine as seen from the Android emulator. On a real
- * phone the PC's LAN address is needed instead, so the address is editable from
+ * Pointed at a colleague's hosted instance (godavariwave.in) instead of a local
+ * server, so no emulator/LAN address juggling is needed. Still editable from
  * the sign-in screen ("Server") and stored on the device.
  */
-export const DEFAULT_API_BASE_URL =
-  Platform.select({
-    android: 'http://10.0.2.2:2407',
-    ios: 'http://localhost:2407',
-    default: 'http://localhost:2407',
-  }) ?? 'http://localhost:2407';
+export const DEFAULT_API_BASE_URL = 'http://godavariwave.in:2407';
 
 /**
  * The address of the machine the backend was built against, tried on first run
