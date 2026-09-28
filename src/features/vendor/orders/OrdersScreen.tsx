@@ -4,7 +4,7 @@ import { ClipboardCheck, CookingPot, PackageCheck, ReceiptText } from 'lucide-re
 import React, { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { EmptyState, NoteBox, Screen, TabPills, Text, TitleHeader, useToast } from '@/components';
+import { EmptyState, NoteBox, Screen, TabPills, WorkspaceHero, useToast } from '@/components';
 import { USE_MOCK_DATA } from '@config/constants';
 import { useVendor } from '@/data/vendorStore';
 import { workLabel } from '@/domain/labels';
@@ -46,13 +46,9 @@ export function OrdersScreen() {
 
   return (
     <Screen tab>
-      <TitleHeader
+      <WorkspaceHero
         title="Orders"
-        right={
-          tab === 'cooking' && cooking.length ? (
-            <Text v="body" muted>{`${cooking.length} tickets`}</Text>
-          ) : undefined
-        }
+        subtitle={tab === 'cooking' && cooking.length ? `${cooking.length} tickets in progress` : 'Manage incoming and active orders'}
       />
       <TabPills tabs={tabs} value={tab} onChange={setTab} />
 

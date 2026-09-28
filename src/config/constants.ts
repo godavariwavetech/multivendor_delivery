@@ -28,7 +28,10 @@ export const UPLOAD_TIMEOUT_MS = 60000;
  * Demo mode: screens run on the seeded data in src/data/demo instead of the
  * API. Used by the tests, and handy for showing the app with no server around.
  */
-export const USE_MOCK_DATA = false;
+export const USE_MOCK_DATA = true;
+
+/** Temporary development data for the history-period card while its API is deployed. */
+export const USE_MOCK_HISTORY = true;
 
 /** How often a signed-in workspace refetches its state. */
 export const POLL_INTERVAL_MS = 15000;

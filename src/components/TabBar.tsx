@@ -39,7 +39,7 @@ export function TabBar({
                 navigation.navigate(route.name, route.params);
               }
             }}>
-            <View style={[styles.iconPill, focused && { backgroundColor: r.soft }]}>
+            <View style={[styles.iconPill, focused && { backgroundColor: r.soft, borderColor: r.line, borderWidth: 1 }]}>
               {Icon ? (
                 <Icon size={24} color={focused ? r.accent : palette.inkSubtle} strokeWidth={focused ? 2.4 : 2} />
               ) : null}
@@ -60,8 +60,8 @@ const styles = StyleSheet.create({
     backgroundColor: palette.paper,
     borderTopWidth: 1,
     borderTopColor: palette.lineSoft,
-    paddingTop: 8,
+    paddingTop: 7,
   },
-  item: { flex: 1, alignItems: 'center', gap: 3 },
-  iconPill: { width: 60, height: 34, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  item: { flex: 1, alignItems: 'center', gap: 2 },
+  iconPill: { width: 54, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

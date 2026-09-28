@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   variantField: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   variantInput: {
     flex: 1,
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.regular,
     fontSize: 16,
     lineHeight: 22,
     letterSpacing: -0.1,

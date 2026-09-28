@@ -16,7 +16,7 @@ export type PaymentMode = 'prepaid' | 'cod';
 export type Account = {
   mobile: string;
   roles: Role[];
-  vendor?: { storeName: string; area: string };
+  vendor?: { storeName: string; area: string; category?: Category };
   partner?: { name: string; zone: string };
 };
 

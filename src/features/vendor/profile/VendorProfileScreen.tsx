@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Avatar, Card, ListGroup, ListRow, Pill, Screen, Text, TitleHeader, Toggle } from '@/components';
+import { Avatar, Card, ListGroup, ListRow, Pill, Screen, Text, Toggle, WorkspaceHero } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORY_LABEL } from '@/domain/labels';
 import { useVendorNav } from '@/navigation/types';
@@ -19,7 +19,7 @@ export function VendorProfileScreen() {
 
   return (
     <Screen tab>
-      <TitleHeader title="Profile" />
+      <WorkspaceHero title="Profile" subtitle="Store settings, documents and payouts" />
 
       <Card style={styles.storeCard}>
         <View style={styles.row}>

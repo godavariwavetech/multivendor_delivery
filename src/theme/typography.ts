@@ -20,29 +20,29 @@ export const fonts = {
 
 export const type = {
   // Large numbers and screen-level headings
-  hero: { fontFamily: fonts.display, fontSize: 34, lineHeight: 40, letterSpacing: -0.6 },
-  display: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, letterSpacing: -0.5 },
-  displaySm: { fontFamily: fonts.bold, fontSize: 21, lineHeight: 27, letterSpacing: -0.3 },
-  code: { fontFamily: fonts.display, fontSize: 44, lineHeight: 52, letterSpacing: 8 },
+  hero: { fontFamily: fonts.regular, fontSize: 25, lineHeight: 30, letterSpacing: -0.3 },
+  display: { fontFamily: fonts.regular, fontSize: 21, lineHeight: 26, letterSpacing: -0.2 },
+  displaySm: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 21, letterSpacing: -0.1 },
+  code: { fontFamily: fonts.regular, fontSize: 32, lineHeight: 39, letterSpacing: 6 },
 
   // Structure
-  title: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 32, letterSpacing: -0.4 },
-  headline: { fontFamily: fonts.semibold, fontSize: 19, lineHeight: 25, letterSpacing: -0.2 },
-  stat: { fontFamily: fonts.bold, fontSize: 25, lineHeight: 30, letterSpacing: -0.4 },
-  cardTitle: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, letterSpacing: -0.1 },
+  title: { fontFamily: fonts.regular, fontSize: 19, lineHeight: 24, letterSpacing: -0.2 },
+  headline: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 19 },
+  stat: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 23, letterSpacing: -0.2 },
+  cardTitle: { fontFamily: fonts.regular, fontSize: 12.5, lineHeight: 17 },
 
   // Reading text
-  bodyStrong: { fontFamily: fonts.medium, fontSize: 14.5, lineHeight: 21 },
-  body: { fontFamily: fonts.regular, fontSize: 14.5, lineHeight: 21 },
-  caption: { fontFamily: fonts.regular, fontSize: 12.5, lineHeight: 17 },
-  captionStrong: { fontFamily: fonts.medium, fontSize: 12.5, lineHeight: 17 },
-  label: { fontFamily: fonts.semibold, fontSize: 11, lineHeight: 15, letterSpacing: 0.9, textTransform: 'uppercase' },
-  tab: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 14 },
+  bodyStrong: { fontFamily: fonts.regular, fontSize: 11.5, lineHeight: 16 },
+  body: { fontFamily: fonts.regular, fontSize: 11.5, lineHeight: 16 },
+  caption: { fontFamily: fonts.regular, fontSize: 10, lineHeight: 14 },
+  captionStrong: { fontFamily: fonts.regular, fontSize: 10, lineHeight: 14 },
+  label: { fontFamily: fonts.regular, fontSize: 9, lineHeight: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+  tab: { fontFamily: fonts.regular, fontSize: 9, lineHeight: 12 },
 
   // Controls
-  button: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 21, letterSpacing: -0.1 },
-  buttonSm: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 19 },
-  keypad: { fontFamily: fonts.medium, fontSize: 23, lineHeight: 29 },
+  button: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16 },
+  buttonSm: { fontFamily: fonts.regular, fontSize: 11, lineHeight: 15 },
+  keypad: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 22 },
 } as const satisfies Record<string, TextStyle>;
 
 export type TypeVariant = keyof typeof type;

@@ -1,8 +1,9 @@
 import React from 'react';
+import { Package, ShoppingBag, Store } from 'lucide-react-native';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import { Edge, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { palette, space } from '@/theme';
+import { palette, radius, space, useTheme } from '@/theme';
 
 import { BackButton, BellButton } from './Button';
 import { Avatar } from './Misc';
@@ -24,7 +25,7 @@ type ScreenProps = {
   gap?: number;
 };
 
-export function Screen({ children, tab, scroll = true, footer, overlay, contentStyle, bleed, edges, gap = 10 }: ScreenProps) {
+export function Screen({ children, tab, scroll = true, footer, overlay, contentStyle, bleed, edges, gap = 12 }: ScreenProps) {
   const safeEdges: Edge[] = edges ?? (tab || footer ? ['top'] : ['top', 'bottom']);
   const body = [styles.content, { gap }, bleed && styles.bleed, contentStyle];
   return (
@@ -141,11 +142,44 @@ export function HomeHeader({
   );
 }
 
+/** Compact branded banner for each primary workspace tab. */
+export function WorkspaceHero({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle: string;
+  right?: React.ReactNode;
+}) {
+  const { r } = useTheme();
+  return (
+    <View style={[styles.workspaceHero, { backgroundColor: r.accent }]}>
+      <View pointerEvents="none" style={styles.heroPattern}>
+        <ShoppingBag style={styles.heroPatternOne} size={68} color={palette.white} strokeWidth={1} />
+        <Store style={styles.heroPatternTwo} size={54} color={palette.white} strokeWidth={1} />
+        <Package style={styles.heroPatternThree} size={45} color={palette.white} strokeWidth={1} />
+      </View>
+      <View style={styles.workspaceHeroContent}>
+        <View style={styles.flex}>
+          <Text v="title" color={palette.white} style={styles.workspaceHeroTitle}>
+            {title}
+          </Text>
+          <Text v="caption" color="rgba(255,255,255,0.88)">
+            {subtitle}
+          </Text>
+        </View>
+        {right}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas },
   flex: { flex: 1 },
-  content: { paddingHorizontal: space.gutter, paddingTop: space.sm },
-  scrollPad: { paddingBottom: space.xxl + 60 },
+  content: { paddingHorizontal: space.gutter, paddingTop: space.md },
+  scrollPad: { paddingBottom: space.xxl + 58 },
   bleed: { paddingHorizontal: 0, paddingTop: 0 },
   bottomBar: {
     flexDirection: 'row',
@@ -160,10 +194,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: space.md,
-    paddingBottom: space.sm,
+    paddingTop: space.sm,
+    paddingBottom: space.xs,
     gap: space.md,
   },
-  backHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
-  homeHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
+  backHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs },
+  homeHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs },
+  workspaceHero: {
+    minHeight: 96,
+    marginHorizontal: -space.gutter,
+    marginTop: -space.md,
+    paddingHorizontal: space.gutter,
+    paddingTop: space.xl,
+    paddingBottom: space.lg,
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  heroPattern: { ...StyleSheet.absoluteFillObject, opacity: 0.12 },
+  heroPatternOne: { position: 'absolute', right: -6, top: -12, transform: [{ rotate: '-20deg' }] },
+  heroPatternTwo: { position: 'absolute', right: 80, bottom: -16, transform: [{ rotate: '16deg' }] },
+  heroPatternThree: { position: 'absolute', left: 42, top: -16, transform: [{ rotate: '20deg' }] },
+  workspaceHeroContent: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  workspaceHeroTitle: { fontSize: 20, lineHeight: 25 },
 });

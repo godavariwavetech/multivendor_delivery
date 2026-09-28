@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.sunken,
   },
   rateChanged: { borderColor: palette.skyLine, backgroundColor: palette.skyWash },
-  rateInput: { minWidth: 30, fontFamily: fonts.semibold, fontSize: 20, color: palette.ink, paddingVertical: 0, textAlign: 'center' },
+  rateInput: { minWidth: 30, fontFamily: fonts.regular, fontSize: 18, color: palette.ink, paddingVertical: 0, textAlign: 'center' },
   divider: { marginVertical: space.md },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

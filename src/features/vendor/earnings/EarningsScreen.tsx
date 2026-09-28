@@ -12,7 +12,7 @@ import {
   SectionHeader,
   SectionLabel,
   Text,
-  TitleHeader,
+  WorkspaceHero,
 } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import type { Settlement } from '@/domain/types';
@@ -33,7 +33,7 @@ export function EarningsScreen() {
 
   return (
     <Screen tab>
-      <TitleHeader title="Earnings" right={<LinkButton label="Reports" onPress={() => nav.navigate('Reports')} />} />
+      <WorkspaceHero title="Earnings" subtitle="Payouts, sales and settlement history" right={<LinkButton label="Reports" onPress={() => nav.navigate('Reports')} color={palette.white} />} />
 
       <Card tone="accent" style={styles.hero}>
         <Text v="body" color="rgba(255, 255, 255, 0.85)">{`Net payable · ${e.label}`}</Text>

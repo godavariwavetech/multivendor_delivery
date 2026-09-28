@@ -2,7 +2,7 @@ import { Search, SearchX } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Chip, ChipRow, EmptyState, Fab, LinkButton, NoteBox, Screen, Text, TitleHeader, useToast } from '@/components';
+import { Chip, ChipRow, EmptyState, Fab, LinkButton, NoteBox, Screen, Text, WorkspaceHero, useToast } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import { useVendorNav } from '@/navigation/types';
 import { fonts, palette, radius, space } from '@/theme';
@@ -37,15 +37,16 @@ export function MenuScreen() {
   return (
     <View style={styles.root}>
       <Screen tab>
-        <TitleHeader
+        <WorkspaceHero
           title="Menu"
+          subtitle={`${pluralise(products.length, noun)} · ${unavailable} unavailable`}
           right={
             food ? (
               <LinkButton label="Timings" onPress={() => nav.navigate('Timings')} />
             ) : produce ? (
               <LinkButton label="Today's rates" onPress={() => nav.navigate('RateSheet')} />
             ) : (
-              <Text v="body" muted>{`${pluralise(products.length, noun)} · ${unavailable} unavailable`}</Text>
+              <Text v="caption" color="rgba(255,255,255,0.88)">{`${pluralise(products.length, noun)} · ${unavailable} unavailable`}</Text>
             )
           }
         />

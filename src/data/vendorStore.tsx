@@ -348,6 +348,13 @@ function useVendorValue() {
     return () => clearInterval(timer);
   }, [active, refresh]);
 
+  // Each mock credential opens its matching V1 business category.
+  useEffect(() => {
+    if (!LIVE && session?.activeRole === 'vendor' && session.account.vendor?.category) {
+      dispatch({ type: 'setCategory', category: session.account.vendor.category });
+    }
+  }, [session]);
+
   /** Sends an action, then refetches so the screens show what the server stored. */
   const send = useCallback(
     async (path: string, body: Record<string, unknown>) => {

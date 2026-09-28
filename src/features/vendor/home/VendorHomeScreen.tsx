@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { MapPin, ShoppingBag, Store, UtensilsCrossed } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import {
   Card,
-  HomeHeader,
+  DateRangePicker,
+  Avatar,
+  BellButton,
   LinkButton,
   MiniBars,
   Screen,
@@ -18,17 +21,28 @@ import { useVendor } from '@/data/vendorStore';
 import { workLabel } from '@/domain/labels';
 import { useNow } from '@/hooks/useNow';
 import { useVendorNav } from '@/navigation/types';
-import { palette, space } from '@/theme';
+import { palette, radius, space, useTheme } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 
 import { NewOrderCard } from '../orders/OrderCards';
+
+type HistoryRange = { from: Date | null; to: Date | null };
+
+const apiDate = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 /** Board 4a·1 (Food home) — queue first, money second. */
 export function VendorHomeScreen() {
   const nav = useVendorNav();
   const now = useNow();
   const { store, state, newOrders, cookingOrders, readyOrders, unread, actions } = useVendor();
+  const { r } = useTheme();
   const first = newOrders[0];
+  const [historyRange, setHistoryRange] = useState<HistoryRange>({ from: null, to: null });
+  const openHistory = (range: HistoryRange) => {
+    setHistoryRange(range);
+    if (range.from && range.to) nav.navigate('HistoryDetails', { from: apiDate(range.from), to: apiDate(range.to) });
+  };
 
   const status = !state.open
     ? 'Closed · not accepting orders'
@@ -39,16 +53,44 @@ export function VendorHomeScreen() {
   const goOrders = (tab: 'new' | 'cooking' | 'ready') => nav.navigate('VendorTabs', { screen: 'Orders', params: { tab } });
 
   return (
-    <Screen tab>
-      <HomeHeader
-        initials={store.initials}
-        name={store.name}
-        status={status}
-        statusDot
-        statusColor={state.open ? palette.greenDeep : palette.alert}
-        onBell={() => nav.navigate('Notifications')}
-        unread={unread > 0}
-      />
+    <Screen tab contentStyle={styles.screen} gap={0}>
+      <View style={[styles.hero, { backgroundColor: r.accent }]}>
+        <View pointerEvents="none" style={styles.pattern}>
+          <ShoppingBag style={styles.patternOne} size={86} color={palette.white} strokeWidth={1} />
+          <Store style={styles.patternTwo} size={70} color={palette.white} strokeWidth={1} />
+          <UtensilsCrossed style={styles.patternThree} size={56} color={palette.white} strokeWidth={1} />
+        </View>
+        <View style={styles.heroTop}>
+          <View style={styles.flex}>
+            <Text v="headline" color={palette.white} style={styles.storeName}>
+              {store.name}
+            </Text>
+            <View style={styles.statusRow}>
+              <View style={[styles.statusDot, { backgroundColor: state.open ? '#7CE783' : '#FFB3AE' }]} />
+              <Text v="caption" color="rgba(255,255,255,0.90)">
+                {status}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.profileAction}>
+            <Avatar initials={store.initials} size={46} tone="onDark" />
+            <BellButton onPress={() => nav.navigate('Notifications')} dot={unread > 0} />
+          </View>
+        </View>
+        <View style={styles.locationRow}>
+          <MapPin size={14} color="rgba(255,255,255,0.88)" strokeWidth={2.2} />
+          <Text v="caption" color="rgba(255,255,255,0.88)">
+            {`${store.category} store · ${store.area}`}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.workspace}>
+        <View style={styles.workspaceHeading}>
+          <Text v="cardTitle">Today’s workspace</Text>
+          <Text v="caption" muted>{`${newOrders.length + cookingOrders.length + readyOrders.length} active orders`}</Text>
+        </View>
+        <DateRangePicker value={historyRange} onChange={openHistory} />
 
       <Card>
         <View style={styles.row}>
@@ -108,12 +150,36 @@ export function VendorHomeScreen() {
           ) : null}
         </Card>
       )}
+      </View>
 
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { paddingHorizontal: 0, paddingTop: 0 },
+  hero: { minHeight: 158, overflow: 'hidden', paddingHorizontal: space.gutter, paddingTop: space.lg, paddingBottom: 24 },
+  pattern: { ...StyleSheet.absoluteFillObject, opacity: 0.12 },
+  patternOne: { position: 'absolute', right: -8, top: -18, transform: [{ rotate: '-18deg' }] },
+  patternTwo: { position: 'absolute', right: 90, top: 50, transform: [{ rotate: '15deg' }] },
+  patternThree: { position: 'absolute', left: -8, bottom: -16, transform: [{ rotate: '-24deg' }] },
+  heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  storeName: { fontSize: 19, lineHeight: 24 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5 },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  profileAction: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 20 },
+  workspace: {
+    gap: 12,
+    marginTop: -12,
+    paddingHorizontal: space.gutter,
+    paddingTop: space.lg,
+    paddingBottom: space.xxl + 60,
+    backgroundColor: palette.canvas,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+  },
+  workspaceHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1 },
   gap: { marginTop: 4 },

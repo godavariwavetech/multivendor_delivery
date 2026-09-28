@@ -32,6 +32,7 @@ import { EarningsScreen } from '@/features/vendor/earnings/EarningsScreen';
 import { ReportsScreen } from '@/features/vendor/earnings/ReportsScreen';
 import { SettlementDetailScreen } from '@/features/vendor/earnings/SettlementDetailScreen';
 import { VendorHomeScreen } from '@/features/vendor/home/VendorHomeScreen';
+import { HistoryDetailsScreen } from '@/features/vendor/home/HistoryDetailsScreen';
 import { MenuScreen } from '@/features/vendor/menu/MenuScreen';
 import { OutOfStockScreen } from '@/features/vendor/menu/OutOfStockScreen';
 import { ProductEditScreen } from '@/features/vendor/menu/ProductEditScreen';
@@ -95,6 +96,7 @@ function VendorNavigator() {
   return (
     <VendorStack.Navigator screenOptions={stackOptions}>
       <VendorStack.Screen name="VendorTabs" component={VendorTabs} />
+      <VendorStack.Screen name="HistoryDetails" component={HistoryDetailsScreen} />
       <VendorStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <VendorStack.Screen name="AcceptOrder" component={AcceptOrderScreen} />
       <VendorStack.Screen name="RejectOrder" component={RejectOrderScreen} />

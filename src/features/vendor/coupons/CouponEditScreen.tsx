@@ -195,5 +195,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fieldLocked: { backgroundColor: palette.sunken },
-  input: { fontFamily: fonts.semibold, fontSize: 16, color: palette.ink, paddingVertical: 0, letterSpacing: 0.5 },
+  input: { fontFamily: fonts.regular, fontSize: 14, color: palette.ink, paddingVertical: 0, letterSpacing: 0.4 },
 });

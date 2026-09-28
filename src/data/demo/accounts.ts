@@ -1,25 +1,43 @@
 import type { Account } from '@/domain/types';
 
 /**
- * Demo logins. Any password of 4+ characters and any 6-digit OTP is accepted.
- * The first account holds both roles, so it sees the workspace picker (board 1a).
+ * The Food account demonstrates the workspace picker. Category stores are
+ * vendor-only; one delivery account tests all V1 pickup categories.
  */
 export const DEMO_ACCOUNTS: Account[] = [
   {
     mobile: '9840721536',
     roles: ['vendor', 'delivery'],
-    vendor: { storeName: "Amma's Kitchen", area: 'Anna Nagar' },
+    vendor: { storeName: "Amma's Kitchen", area: 'Anna Nagar', category: 'food' },
     partner: { name: 'Ravi Kumar', zone: 'Zone 4 · Chennai North' },
   },
   {
     mobile: '9840700001',
     roles: ['vendor'],
-    vendor: { storeName: "Amma's Kitchen", area: 'Anna Nagar' },
+    vendor: { storeName: 'Sri Balaji Stores', area: 'Anna Nagar East', category: 'grocery' },
   },
   {
     mobile: '9840700002',
-    roles: ['delivery'],
+    roles: ['vendor'],
+    vendor: { storeName: 'Green Farm Mandi', area: 'Koyambedu', category: 'produce' },
     partner: { name: 'Ravi Kumar', zone: 'Zone 4 · Chennai North' },
+  },
+  {
+    mobile: '9840700003',
+    roles: ['vendor'],
+    vendor: { storeName: 'Anna Nagar Bakes', area: 'Anna Nagar', category: 'bakery' },
+    partner: { name: 'Suresh M.', zone: 'Zone 4, Chennai North' },
+  },
+  {
+    mobile: '9840700004',
+    roles: ['vendor'],
+    vendor: { storeName: 'Marina Fresh Meats', area: 'Triplicane', category: 'meat' },
+    partner: { name: 'Fathima N.', zone: 'Zone 1, Chennai Central' },
+  },
+  {
+    mobile: '9840700005',
+    roles: ['delivery'],
+    partner: { name: 'Karthik R.', zone: 'Zone 4, Chennai North' },
   },
 ];
 

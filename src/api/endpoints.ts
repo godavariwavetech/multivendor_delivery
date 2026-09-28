@@ -25,6 +25,7 @@ export const endpoints = {
   },
   vendor: {
     state: '/getvendorstate',
+    history: '/getvendorhistory',
     storeOnline: '/updatestoreonline',
     storeBusy: '/updatestorebusy',
     weeklyHoliday: '/updateweeklyholiday',

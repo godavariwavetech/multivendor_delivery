@@ -8,14 +8,14 @@ export const space = {
   lg: 16,
   xl: 20,
   xxl: 28,
-  gutter: 18,
+  gutter: 16,
 } as const;
 
 export const radius = {
   sm: 10,
-  md: 14,
-  lg: 20,
-  xl: 26,
+  md: 12,
+  lg: 16,
+  xl: 22,
   pill: 999,
 } as const;
 
@@ -24,8 +24,8 @@ export const radius = {
  * `boxShadow` needs the new architecture, which this app uses.
  */
 export const shadow = {
-  card: { boxShadow: '0px 1.5px 0px rgba(26, 29, 33, 0.55), 0px 3px 10px rgba(26, 29, 33, 0.05)' },
-  key: { boxShadow: '0px 1.5px 0px rgba(26, 29, 33, 0.45)' },
+  card: { boxShadow: '0px 1px 0px rgba(26, 29, 33, 0.35), 0px 3px 10px rgba(26, 29, 33, 0.04)' },
+  key: { boxShadow: '0px 1px 0px rgba(26, 29, 33, 0.3)' },
   floating: { boxShadow: '0px 6px 16px rgba(26, 29, 33, 0.28)' },
   none: {},
 } satisfies Record<string, ViewStyle>;

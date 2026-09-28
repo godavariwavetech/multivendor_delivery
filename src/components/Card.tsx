@@ -29,14 +29,14 @@ export function Card({ children, tone = 'paper', padded = true, onPress, style }
 
   const toneStyle: ViewStyle = {
     paper: { backgroundColor: palette.paper, ...shadow.card },
-    highlight: { backgroundColor: palette.paper, borderWidth: 2, borderColor: r.line },
-    sky: { backgroundColor: palette.skyWash, borderWidth: 1.5, borderColor: palette.skyLine },
+    highlight: { backgroundColor: palette.paper, borderWidth: 1.5, borderColor: r.line },
+    sky: { backgroundColor: palette.skyWash, borderWidth: 1, borderColor: palette.skyLine },
     leaf: { backgroundColor: palette.leaf },
     accent: { backgroundColor: r.accent },
     blue: { backgroundColor: palette.blue },
     green: { backgroundColor: palette.green },
     sunken: { backgroundColor: palette.sunken },
-    selected: { backgroundColor: palette.skyWash, borderWidth: 2, borderColor: palette.blue },
+    selected: { backgroundColor: palette.skyWash, borderWidth: 1.5, borderColor: palette.blue },
   }[tone];
 
   const body = (
@@ -104,7 +104,7 @@ export function NoteBox({ children, style }: { children: string; style?: ViewSty
 
 const styles = StyleSheet.create({
   card: { borderRadius: radius.lg },
-  padded: { padding: space.lg },
+  padded: { padding: 14 },
   pressed: { opacity: 0.88 },
   bannerRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   bannerBody: { marginTop: 3 },

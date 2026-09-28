@@ -23,7 +23,7 @@ type ButtonProps = {
 /** Pill buttons with semibold labels, used on every screen of the board. */
 export function Button({ label, onPress, variant = 'primary', size = 'md', icon: Icon, disabled, style, flex }: ButtonProps) {
   const { r, brand } = useTheme();
-  const height = { lg: 54, md: 48, sm: 40 }[size];
+  const height = { lg: 50, md: 44, sm: 36 }[size];
 
   const vendor = brand?.vendor;
   const delivery = brand?.delivery;
@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 20,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
+    borderRadius: radius.md,
+    borderWidth: 1,
   },
   center: { alignSelf: 'center' },
   back: {

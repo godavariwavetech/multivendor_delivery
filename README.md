@@ -22,7 +22,7 @@ with `database/migration_partner_app.sql` and `database/seed_partner_app_demo.sq
 applied. What the app calls and what changed in the database is in
 [docs/backend-alignment.md](docs/backend-alignment.md).
 
-### Sign in
+### Live backend sign in
 
 | Mobile | Password | Roles |
 |---|---|---|
@@ -33,6 +33,22 @@ applied. What the app calls and what changed in the database is in
 These come from the demo seed. A number can only open a workspace it is registered
 for. "Use OTP instead" and "Forgot password" work too — no SMS gateway is wired up,
 so the code is printed in the backend's console.
+
+### V1 category test credentials (mock mode)
+
+Set `USE_MOCK_DATA` to `true` in `src/config/constants.ts`. Every password below
+is `123456` (any password of four or more characters also works). The Delivery
+workspace includes Food, Grocery, Fruits & Vegetables, Bakery & Sweets, and Meat &
+Seafood pickup scenarios.
+
+| Mobile | Password | Opens |
+|---|---|---|
+| 98407 21536 | 123456 | Both workspaces — Food vendor (Amma's Kitchen) or Delivery partner; choose the tab at sign-in. |
+| 98407 00001 | 123456 | Vendor only — Sri Balaji Stores (Grocery). |
+| 98407 00002 | 123456 | Vendor only — Green Farm Mandi (Fruits & Vegetables). |
+| 98407 00003 | 123456 | Vendor only — Anna Nagar Bakes (Bakery & Sweets). |
+| 98407 00004 | 123456 | Vendor only — Marina Fresh Meats (Meat & Seafood). |
+| 98407 00005 | 123456 | Delivery partner only — all five V1 category pickup flows. |
 
 ### Server address
 

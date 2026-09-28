@@ -30,6 +30,7 @@ export type VendorTabParams = {
 
 export type VendorParams = SharedParams & {
   VendorTabs: NavigatorScreenParams<VendorTabParams> | undefined;
+  HistoryDetails: { from: string; to: string };
   OrderDetail: { id: string };
   AcceptOrder: { id: string };
   RejectOrder: { id: string };
