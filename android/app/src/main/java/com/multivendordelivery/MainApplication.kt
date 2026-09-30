@@ -1,4 +1,4 @@
-package com.multivendordelivery
+package com.ekart360vendor
 
 import android.app.Application
 import com.facebook.react.PackageList
