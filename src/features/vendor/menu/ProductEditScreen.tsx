@@ -23,6 +23,7 @@ import type { Category, CategoryOption, Product, Store } from '@/domain/types';
 import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { photoUrl, pickPhoto } from '@/utils/photo';
+import { productPriceLine } from '@/utils/productPrice';
 
 import { BakerySheetView, FoodSheetView, GrocerySheetView, MeatSheetView } from './sheets';
 
@@ -219,6 +220,14 @@ export function ProductEditScreen() {
   const [uploading, setUploading] = useState(false);
   const titles = TITLES[store.category];
 
+  const returnToMenu = () => {
+    if (nav.canGoBack()) {
+      nav.goBack();
+    } else {
+      nav.navigate('VendorTabs', { screen: 'Menu' });
+    }
+  };
+
   /**
    * The upload is keyed on the product id, so a brand-new item has to be saved
    * before it can carry a photo — there is no row to attach it to yet.
@@ -247,7 +256,7 @@ export function ProductEditScreen() {
     }
   };
 
-  const save = () => {
+  const save = async () => {
     const name = draft.name.trim();
     if (!name) {
       // The backend refuses a nameless product, so catch it before the round trip.
@@ -261,9 +270,17 @@ export function ProductEditScreen() {
       setEditing(true);
       return;
     }
-    actions.saveProduct({ ...draft, name });
+    if (draft.sheet.kind === 'food' && draft.sheet.variants.length === 0) {
+      toast('Add at least one variant before saving');
+      return;
+    }
+    const updated = { ...draft, name };
+    const saved = await actions.saveProduct({ ...updated, priceLine: productPriceLine(updated) });
+    if (!saved) {
+      return;
+    }
     toast(`${name} ${existing ? 'updated' : 'added'}`);
-    nav.goBack();
+    returnToMenu();
   };
 
   const sheet = draft.sheet;
@@ -282,7 +299,7 @@ export function ProductEditScreen() {
       <BackHeader
         title={existing ? titles.edit : titles.add}
         subtitle={`${store.name} · ${CATEGORY_LABEL[store.category]}`}
-        onBack={nav.goBack}
+        onBack={returnToMenu}
         pill={CATEGORY_LABEL[store.category]}
         pillTone="sky"
       />

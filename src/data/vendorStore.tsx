@@ -1,6 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { ApiError, apiClient, endpoints } from '@/api';
+import { storage } from '@/api/storage';
+import { productPriceLine } from '@/utils/productPrice';
 import { useToast } from '@/components';
 import { POLL_INTERVAL_MS, USE_MOCK_DATA } from '@config/constants';
 import type { Branding } from '@/theme';
@@ -35,6 +37,7 @@ import {
 import { useSession } from './session';
 
 const LIVE = !USE_MOCK_DATA;
+const DEMO_PRODUCTS_STORAGE_KEY = 'partner.demo.products.v1';
 
 /** The slices that come from GET /getvendorstate. */
 type ServerState = {
@@ -70,6 +73,7 @@ type State = ServerState & {
 
 type Action =
   | { type: 'hydrate'; data: ServerState }
+  | { type: 'restoreDemoProducts'; products: Product[] }
   | { type: 'toggleOpen' }
   | { type: 'setBusy'; on: boolean }
   | { type: 'accept'; id: string; prepMinutes: number }
@@ -159,6 +163,74 @@ const liveInitial = (): State => ({
 
 const initial = (): State => (LIVE ? liveInitial() : demoInitial());
 
+const isDemoProduct = (value: unknown): value is Product => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const product = value as Partial<Product>;
+  const expectedSheetKind: Record<Category, Product['sheet']['kind']> = {
+    food: 'food',
+    grocery: 'grocery',
+    produce: 'produce',
+    bakery: 'bakery',
+    meat: 'meat',
+  };
+  return (
+    typeof product.id === 'string' &&
+    typeof product.name === 'string' &&
+    typeof product.group === 'string' &&
+    typeof product.category === 'string' &&
+    product.category in expectedSheetKind &&
+    Boolean(product.sheet && product.sheet.kind === expectedSheetKind[product.category as Category])
+  );
+};
+
+const normalizeDemoProduct = (product: Product): Product => {
+  if (product.category !== 'food') {
+    return product;
+  }
+  const withPrice = { ...product, priceLine: productPriceLine(product) };
+  const name = product.name.toLowerCase();
+  if (/kalakand|rasmalai|halwa|barfi/.test(name)) {
+    return { ...withPrice, group: 'Sweets', categoryId: -5, subCategoryId: null, subCategory: null };
+  }
+  if (product.group !== 'Biryani') {
+    return withPrice;
+  }
+  const subCategory =
+    /fried rice/.test(name) ? 'Fried Rice' :
+    /sambar rice/.test(name) ? 'Sambar Rice' :
+    /paneer biryani/.test(name) ? 'Paneer Biryani' :
+    /chicken biryani/.test(name) ? 'Chicken Biryani' :
+    /veg biryani/.test(name) ? 'Veg Biryani' :
+    /curd rice/.test(name) ? 'Curd Rice' :
+    /lemon rice/.test(name) ? 'Lemon Rice' :
+    /tomato rice/.test(name) ? 'Tomato Rice' :
+    /pulao/.test(name) ? 'Pulao' : 'Biryani';
+  const subCategoryId = {
+    Biryani: -101,
+    'Fried Rice': -102,
+    'Sambar Rice': -103,
+    'Paneer Biryani': -104,
+    'Chicken Biryani': -105,
+    'Veg Biryani': -106,
+    'Curd Rice': -107,
+    'Lemon Rice': -108,
+    'Tomato Rice': -109,
+    Pulao: -110,
+  }[subCategory];
+  return { ...withPrice, group: 'Rice items', categoryId: -1, subCategoryId, subCategory };
+};
+
+const mergeDemoProducts = (saved: Product[]) => {
+  const products = new Map(PRODUCTS.map(product => [product.id, product]));
+  saved.map(normalizeDemoProduct).forEach(product => products.set(product.id, product));
+  return [...products.values()];
+};
+
+const persistDemoProducts = (products: Product[]) =>
+  storage.set(DEMO_PRODUCTS_STORAGE_KEY, JSON.stringify(mergeDemoProducts(products)));
+
 const updateOrder = (orders: Order[], id: string, patch: (o: Order) => Partial<Order>) =>
   orders.map(o => (o.id === id ? { ...o, ...patch(o) } : o));
 
@@ -169,6 +241,8 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'hydrate':
       return { ...state, ...action.data, category: action.data.store.category, loaded: true };
+    case 'restoreDemoProducts':
+      return { ...state, products: action.products };
     case 'toggleOpen':
       return { ...state, open: !state.open };
     case 'setBusy':
@@ -316,6 +390,41 @@ function useVendorValue() {
   const toast = useToast();
   const active = LIVE && session?.activeRole === 'vendor';
   const busy = useRef(false);
+  const demoProductsReady = useRef(!USE_MOCK_DATA);
+  const demoProductsRestoreStarted = useRef(false);
+  const legacyProductsMigrationStarted = useRef(false);
+
+  useEffect(() => {
+    if (!USE_MOCK_DATA || demoProductsRestoreStarted.current) {
+      return;
+    }
+    demoProductsRestoreStarted.current = true;
+    (async () => {
+      let products = state.products;
+      const saved = await storage.get(DEMO_PRODUCTS_STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed: unknown = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.every(isDemoProduct)) {
+            products = mergeDemoProducts(parsed);
+            dispatch({ type: 'restoreDemoProducts', products });
+          } else {
+            await storage.remove(DEMO_PRODUCTS_STORAGE_KEY);
+          }
+        } catch {
+          await storage.remove(DEMO_PRODUCTS_STORAGE_KEY);
+        }
+      }
+      await storage.set(DEMO_PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+      demoProductsReady.current = true;
+    })();
+  }, [state.products]);
+
+  useEffect(() => {
+    if (USE_MOCK_DATA && demoProductsReady.current) {
+      storage.set(DEMO_PRODUCTS_STORAGE_KEY, JSON.stringify(state.products));
+    }
+  }, [state.products]);
 
   const refresh = useCallback(async () => {
     if (!active || busy.current) {
@@ -338,6 +447,48 @@ function useVendorValue() {
       busy.current = false;
     }
   }, [active, toast, signOut, setBranding]);
+
+  // Items created in the old offline demo are kept on the device. Upload them
+  // once after the vendor's database state and its category list are available.
+  useEffect(() => {
+    if (USE_MOCK_DATA || !active || !state.loaded || legacyProductsMigrationStarted.current) {
+      return;
+    }
+    legacyProductsMigrationStarted.current = true;
+    (async () => {
+      const stored = await storage.get(DEMO_PRODUCTS_STORAGE_KEY);
+      if (!stored) {
+        return;
+      }
+      try {
+        const parsed: unknown = JSON.parse(stored);
+        if (!Array.isArray(parsed) || !parsed.every(isDemoProduct)) {
+          return;
+        }
+        let products = parsed as Product[];
+        let migratedCount = 0;
+        for (const product of products.filter(item => item.id.startsWith('new-'))) {
+          const category = state.store.categories?.find(item => item.name === product.group) ?? state.store.categories?.[0];
+          const subCategory = category?.subCategories.find(item => item.name === product.subCategory);
+          const payload = productPayload({
+            ...product,
+            categoryId: category?.id ?? null,
+            subCategoryId: subCategory?.id ?? null,
+          });
+          const result = await apiClient.post<{ product_id: number }>(endpoints.vendor.saveProduct, { product: payload });
+          products = products.map(item => item.id === product.id ? { ...item, id: String(result.product_id) } : item);
+          await storage.set(DEMO_PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+          migratedCount += 1;
+        }
+        await refresh();
+        if (migratedCount > 0) {
+          toast('Saved dishes from this device to your store');
+        }
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Some device-saved dishes could not be uploaded');
+      }
+    })();
+  }, [active, refresh, state.loaded, state.store.categories, toast]);
 
   useEffect(() => {
     if (!active) {
@@ -426,9 +577,30 @@ function useVendorValue() {
           dispatch({ type: 'setAvailable', id, available });
           send(endpoints.vendor.productAvailability, { product_id: Number(id), is_available: available });
         },
-        saveProduct: (product: Product) => {
+        saveProduct: async (product: Product): Promise<boolean> => {
+          if (!USE_MOCK_DATA) {
+            if (!active) {
+              toast('Sign in to save this item');
+              return false;
+            }
+            try {
+              await apiClient.post(endpoints.vendor.saveProduct, { product: productPayload(product) });
+              await refresh();
+              return true;
+            } catch (error) {
+              toast(error instanceof Error ? error.message : 'The item could not be saved');
+              return false;
+            }
+          }
+          const exists = state.products.some(p => p.id === product.id);
+          const next = exists
+            ? state.products.map(p => (p.id === product.id ? product : p))
+            : [product, ...state.products];
           dispatch({ type: 'saveProduct', product });
-          send(endpoints.vendor.saveProduct, { product: productPayload(product) });
+          if (USE_MOCK_DATA) {
+            persistDemoProducts(next);
+          }
+          return true;
         },
         publishRates: () => {
           dispatch({ type: 'publishRates' });
@@ -481,7 +653,7 @@ function useVendorValue() {
         },
       },
     };
-  }, [state, refresh, send]);
+  }, [active, state, refresh, send, toast]);
 }
 
 export function VendorStoreProvider({ children }: { children: React.ReactNode }) {

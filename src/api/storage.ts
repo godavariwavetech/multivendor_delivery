@@ -1,5 +1,5 @@
 /**
- * Small key/value store for the auth token and the server address.
+ * Small key/value wrapper around AsyncStorage for app data.
  *
  * AsyncStorage is a native module: it is missing in Jest and in any build made
  * before it was added, so every call falls back to an in-memory map rather than

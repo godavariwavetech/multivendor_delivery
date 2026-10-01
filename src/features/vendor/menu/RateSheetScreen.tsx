@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { BackHeader, Banner, Button, Card, Divider, KeyValue, Pill, PhotoBox, Screen, Text, Toggle, useToast } from '@/components';
+import { BackHeader, Banner, Button, Card, Divider, KeyValue, Pill, Screen, Text, Toggle, useToast } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORY_LABEL } from '@/domain/labels';
 import type { Product } from '@/domain/types';
 import { useVendorNav } from '@/navigation/types';
 import { fonts, palette, radius, space } from '@/theme';
 import { dayMonth } from '@/utils/datetime';
+
+import { ProductPhoto } from './ProductPhoto';
 
 /** Board 2a·3 — rates change daily, so the whole screen is a rate sheet. */
 export function RateSheetScreen() {
@@ -57,7 +59,7 @@ export function RateSheetScreen() {
         p.sheet.kind === 'produce' ? (
           <Card key={p.id}>
             <View style={styles.row}>
-              <PhotoBox size={60} label="" />
+              <ProductPhoto product={p} size={60} />
               <View style={styles.flex}>
                 <Text v="cardTitle">{p.name}</Text>
                 <Text v="body" muted>

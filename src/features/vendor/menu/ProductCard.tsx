@@ -1,9 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Card, PhotoBox, Text, Toggle, VegMark } from '@/components';
+import { Card, Text, Toggle, VegMark } from '@/components';
 import type { Product } from '@/domain/types';
 import { palette, space } from '@/theme';
+import { productPriceLine } from '@/utils/productPrice';
+
+import { ProductPhoto } from './ProductPhoto';
 
 /** Board 4a·3 — photo, veg marker, price line, stock line and availability switch. */
 export function ProductCard({
@@ -21,7 +24,7 @@ export function ProductCard({
   return (
     <Card onPress={onPress} style={styles.card}>
       <View style={styles.row}>
-        <PhotoBox size={72} faded={off} />
+        <ProductPhoto product={product} size={72} faded={off} />
         <View style={styles.flex}>
           <View style={styles.nameRow}>
             {/* Veg / non-veg is a dish attribute; grocery and produce items do not carry one. */}
@@ -33,7 +36,7 @@ export function ProductCard({
             </Text>
           </View>
           <Text v="body" color={off ? palette.inkSubtle : palette.inkMuted} numberOfLines={2}>
-            {product.priceLine}
+            {productPriceLine(product)}
           </Text>
           <Text v="bodyStrong" color={off ? palette.inkMuted : palette.greenDeep} numberOfLines={1}>
             {off ? `Out of stock${product.outNote ? ` · ${product.outNote}` : ''}` : product.stockLine}

@@ -119,11 +119,14 @@ export function FoodSheetView({
                     {v.on ? 'On' : 'Off'}
                   </Text>
                 </Pressable>
-                {sheet.variants.length > 1 ? (
-                  <Pressable onPress={() => onChange({ ...sheet, variants: sheet.variants.filter((_, j) => j !== i) })} hitSlop={8}>
-                    <X size={18} color={palette.inkSubtle} strokeWidth={2.4} />
-                  </Pressable>
-                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete ${v.name || 'variant'}`}
+                  onPress={() => onChange({ ...sheet, variants: sheet.variants.filter((_, j) => j !== i) })}
+                  hitSlop={8}
+                >
+                  <X size={18} color={palette.inkSubtle} strokeWidth={2.4} />
+                </Pressable>
               </View>
             </View>
           );
@@ -139,14 +142,52 @@ export function FoodSheetView({
 
       <Card>
         <SectionLabel>Add-ons</SectionLabel>
+        {sheet.addons.map((addon, i) => (
+          <View key={`addon-${i}`}>
+            {i > 0 ? <Divider style={styles.divider} /> : null}
+            <View style={styles.line}>
+              <VariantInput
+                value={addon.name}
+                onChangeText={name =>
+                  onChange({
+                    ...sheet,
+                    addons: sheet.addons.map((x, j) => (j === i ? { ...x, name } : x)),
+                  })
+                }
+                placeholder="Add-on name"
+                style={styles.flex}
+              />
+              <VariantInput
+                value={addon.price ? String(addon.price) : ''}
+                onChangeText={value =>
+                  onChange({
+                    ...sheet,
+                    addons: sheet.addons.map((x, j) =>
+                      j === i ? { ...x, price: Number(value.replace(/\D/g, '')) || 0 } : x,
+                    ),
+                  })
+                }
+                placeholder="0"
+                keyboardType="number-pad"
+                prefix="₹"
+                style={styles.priceField}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${addon.name || 'add-on'}`}
+                onPress={() => onChange({ ...sheet, addons: sheet.addons.filter((_, j) => j !== i) })}
+                hitSlop={8}
+              >
+                <X size={18} color={palette.inkSubtle} strokeWidth={2.4} />
+              </Pressable>
+            </View>
+          </View>
+        ))}
         <ChipRow scroll={false}>
-          {sheet.addons.map(a => (
-            <Chip key={a.name} label={`${a.name} ${formatAmount(a.price)}`} tone="sky" />
-          ))}
           <Chip
-            label="+ Add"
+            label="+ Add add-on"
             dashed
-            onPress={() => onChange({ ...sheet, addons: [...sheet.addons, { name: 'Extra onion', price: 10 }] })}
+            onPress={() => onChange({ ...sheet, addons: [...sheet.addons, { name: '', price: 0 }] })}
           />
         </ChipRow>
       </Card>

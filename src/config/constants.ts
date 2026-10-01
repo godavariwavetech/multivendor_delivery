@@ -1,12 +1,15 @@
 /**
- * Backend: D:\projects\multivendor_backend — Express + MySQL on port 2407, with
+ * Backend: D:\projects\multivendor_backend — Express + MySQL, with
  * the app's routes mounted at /partner_app.
  *
  * Pointed at a colleague's hosted instance (godavariwave.in) instead of a local
  * server, so no emulator/LAN address juggling is needed. Still editable from
  * the sign-in screen ("Server") and stored on the device.
  */
-export const DEFAULT_API_BASE_URL = 'https://godavariwave.in:2407';
+/** The backend's port (PORT in its .env; 2407 when that is not set). Change it here only. */
+export const API_PORT = 2407;
+
+export const DEFAULT_API_BASE_URL = `https://godavariwave.in:${API_PORT}`;
 
 /**
  * The address of the machine the backend was built against, tried on first run
@@ -14,7 +17,7 @@ export const DEFAULT_API_BASE_URL = 'https://godavariwave.in:2407';
  * It is only a guess: the Server screen overrides it, and what is typed there
  * is what the device remembers.
  */
-// export const DEV_LAN_BASE_URL = 'http://192.168.1.7:2407';
+// export const DEV_LAN_BASE_URL = `http://192.168.1.7:${API_PORT}`;
 
 /** The mobile app's mount point in the backend. */
 export const API_PREFIX = '/partner_app';
@@ -25,8 +28,8 @@ export const REQUEST_TIMEOUT_MS = 20000;
 export const UPLOAD_TIMEOUT_MS = 60000;
 
 /**
- * Demo mode: screens run on the seeded data in src/data/demo instead of the
- * API. Used by the tests, and handy for showing the app with no server around.
+ * Use the partner API so menu changes are stored in the database. Set true only
+ * when intentionally previewing the seeded offline demo screens.
  */
 export const USE_MOCK_DATA = false;
 

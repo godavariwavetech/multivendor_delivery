@@ -1,4 +1,4 @@
-import { API_PREFIX, DEFAULT_API_BASE_URL, DEV_LAN_BASE_URL, REQUEST_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from '@config/constants';
+import { API_PORT, API_PREFIX, DEFAULT_API_BASE_URL, REQUEST_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from '@config/constants';
 
 import { ApiError, NetworkError } from './errors';
 import { storage } from './storage';
@@ -11,7 +11,7 @@ const TOKEN_KEY = 'partner.token';
 let baseUrl = DEFAULT_API_BASE_URL;
 let authToken: string | null = null;
 
-/** "192.168.1.5" → "http://192.168.1.5:2407", and no trailing slash. */
+/** "192.168.1.5" → "http://192.168.1.5:<API_PORT>", and no trailing slash. */
 export const normaliseBaseUrl = (value: string) => {
   let url = value.trim();
   if (!url) {
@@ -21,7 +21,7 @@ export const normaliseBaseUrl = (value: string) => {
     url = `http://${url}`;
   }
   if (!/:\d+$/.test(url.replace(/\/+$/, ''))) {
-    url = `${url.replace(/\/+$/, '')}:2407`;
+    url = `${url.replace(/\/+$/, '')}:${API_PORT}`;
   }
   return url.replace(/\/+$/, '');
 };
@@ -48,13 +48,12 @@ export const getAuthToken = () => authToken;
 
 /**
  * First run, with nothing saved: try the addresses that work without being
- * typed in. `localhost` is the phone itself unless `adb reverse tcp:2407
- * tcp:2407` is running, which is the usual USB setup; 10.0.2.2 is the host as
- * seen from the emulator; DEV_LAN_BASE_URL is the machine the app was built on,
- * which is where a phone on the same Wi-Fi finds it. If none of them answer, the
- * address has to come from the Server screen
+ * typed in. `localhost` is the phone itself unless `adb reverse
+ * tcp:<API_PORT> tcp:<API_PORT>` is running, which is the usual USB setup; 10.0.2.2 is the host as
+ * seen from the emulator. If the configured server does not answer, its address
+ * can be changed from the Server screen.
  */
-const CANDIDATES = [DEFAULT_API_BASE_URL, DEV_LAN_BASE_URL];
+const CANDIDATES = [DEFAULT_API_BASE_URL];
 
 const answers = async (url: string) => {
   const controller = new AbortController();
@@ -85,7 +84,7 @@ const probe = async () => {
       return true;
     }
   }
-  baseUrl = DEV_LAN_BASE_URL;
+  baseUrl = DEFAULT_API_BASE_URL;
   return false;
 };
 
