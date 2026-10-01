@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { BackButton, Banner, Button, Screen, Text, useToast } from '@/components';
-import { getBaseUrl, normaliseBaseUrl, setBaseUrl } from '@/api';
+import { API_PORT } from '@config/constants';
+import { getBaseUrl,normaliseBaseUrl, setBaseUrl } from '@/api';
 import { useAuthNav } from '@/navigation/types';
 import { fonts, palette, radius, space } from '@/theme';
 
@@ -39,7 +40,7 @@ export function ServerAddressScreen() {
           autoCorrect={false}
           keyboardType="url"
           style={styles.input}
-          placeholder="http://192.168.1.5:2407"
+          placeholder={`http://192.168.1.5:${API_PORT}`}
           placeholderTextColor={palette.inkSubtle}
           onSubmitEditing={save}
         />
@@ -50,7 +51,7 @@ export function ServerAddressScreen() {
       <Banner
         tone="leaf"
         title="Which address?"
-        body={'Android emulator · 10.0.2.2:2407\nPhone on the same Wi-Fi · your PC\'s IP, e.g. 192.168.1.5:2407\nUSB · run "adb reverse tcp:2407 tcp:2407", then localhost:2407'}
+        body={`Android emulator · 10.0.2.2:${API_PORT}\nPhone on the same Wi-Fi · your PC's IP, e.g. 192.168.1.5:${API_PORT}\nUSB · run "adb reverse tcp:${API_PORT} tcp:${API_PORT}", then localhost:${API_PORT}`}
       />
     </Screen>
   );

@@ -17,7 +17,7 @@ against `/partner_app`, loads both workspaces from MySQL and writes every action
 (accept, reject, mark ready, handover, pickup, delivery OTP, coupons, availability,
 online/busy). It refetches on each action and every 15 seconds.
 
-Run the backend first (`npm start` in `D:\projects\multivendor_backend`, port set by PORT in its .env, default 2407; the app side is API_PORT in src/config/constants.ts)
+Run the backend first (`npm start` in `D:\projects\multivendor_backend`, port set by PORT in its .env; the app side is API_PORT in src/config/constants.ts)
 with `database/migration_partner_app.sql` and `database/seed_partner_app_demo.sql`
 applied. What the app calls and what changed in the database is in
 [docs/backend-alignment.md](docs/backend-alignment.md).
