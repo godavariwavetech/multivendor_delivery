@@ -3,7 +3,7 @@ import React from 'react';
 import { Pressable, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 
 import { Banner, Card, Chip, ChipRow, Divider, KeyValue, SectionLabel, StatTile, Text, TileRow, Toggle } from '@/components';
-import type { BakerySheet, FoodSheet, GrocerySheet, MeatSheet } from '@/domain/types';
+import type { BakerySheet, FoodSheet, GrocerySheet, MeatSheet, ProduceSheet } from '@/domain/types';
 import { fonts, palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 
@@ -260,6 +260,34 @@ export function GrocerySheetView({
   );
 }
 
+// ─── Fruits & Veg ─────────────────────────────────────────────────────────────
+
+/** A fruit or vegetable is priced per unit; the rate itself is updated daily from Today's rates. */
+export function ProduceSheetView({ sheet, onChange }: { sheet: ProduceSheet; onChange: (sheet: ProduceSheet) => void }) {
+  return (
+    <Card>
+      <SectionLabel>Rate</SectionLabel>
+      <View style={styles.line}>
+        <Text v="cardTitle" style={styles.flex}>
+          {`Price per ${sheet.unit}`}
+        </Text>
+        <VariantInput
+          value={sheet.rate ? String(sheet.rate) : ''}
+          onChangeText={t => onChange({ ...sheet, rate: Number(t.replace(/\D/g, '').slice(0, 5)) || 0 })}
+          placeholder="0"
+          keyboardType="number-pad"
+          prefix="₹"
+          style={styles.priceField}
+        />
+        <Text v="body" muted>{`/${sheet.unit}`}</Text>
+      </View>
+      <Text v="caption" muted style={styles.caption}>
+        You can change this every day from Today's rates.
+      </Text>
+    </Card>
+  );
+}
+
 // ─── Bakery ───────────────────────────────────────────────────────────────────
 
 export function BakerySheetView({ sheet, onChange }: { sheet: BakerySheet; onChange: (sheet: BakerySheet) => void }) {
@@ -267,17 +295,47 @@ export function BakerySheetView({ sheet, onChange }: { sheet: BakerySheet; onCha
     <>
       <Card>
         <SectionLabel>Sold as</SectionLabel>
-        {sheet.soldAs.map((s, i) => (
-          <View key={s.name}>
-            {i > 0 ? <Divider style={styles.divider} /> : null}
-            <View style={styles.line}>
-              <Text v="cardTitle" style={styles.flex}>
-                {s.name}
-              </Text>
-              <Text v="cardTitle">{formatAmount(s.price)}</Text>
+        {sheet.soldAs.map((v, i) => {
+          const edit = (patch: Partial<(typeof sheet.soldAs)[number]>) =>
+            onChange({ ...sheet, soldAs: sheet.soldAs.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+          return (
+            // Indexed, not keyed by name: the name is editable and may be blank.
+            <View key={`size-${i}`}>
+              {i > 0 ? <Divider style={styles.divider} /> : null}
+              <View style={styles.line}>
+                <VariantInput value={v.name} onChangeText={name => edit({ name })} placeholder="1 kg" style={styles.flex} />
+                <VariantInput
+                  value={v.price ? String(v.price) : ''}
+                  onChangeText={t => edit({ price: Number(t.replace(/\D/g, '')) || 0 })}
+                  placeholder="0"
+                  keyboardType="number-pad"
+                  prefix="₹"
+                  style={styles.priceField}
+                />
+                <Pressable onPress={() => edit({ on: !v.on })} hitSlop={8}>
+                  <Text v="bodyStrong" color={v.on ? palette.greenDeep : palette.inkSubtle} style={styles.onOff}>
+                    {v.on ? 'On' : 'Off'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete ${v.name || 'size'}`}
+                  onPress={() => onChange({ ...sheet, soldAs: sheet.soldAs.filter((_, j) => j !== i) })}
+                  hitSlop={8}
+                >
+                  <X size={18} color={palette.inkSubtle} strokeWidth={2.4} />
+                </Pressable>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
+        <ChipRow scroll={false}>
+          <Chip
+            label="+ Add size"
+            dashed
+            onPress={() => onChange({ ...sheet, soldAs: [...sheet.soldAs, { name: '', price: 0, on: true }] })}
+          />
+        </ChipRow>
       </Card>
 
       <Card>

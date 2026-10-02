@@ -2,14 +2,14 @@
  * Backend: D:\projects\multivendor_backend — Express + MySQL, with
  * the app's routes mounted at /partner_app.
  *
- * Pointed at a colleague's hosted instance (godavariwave.in) instead of a local
+ * Pointed at a colleague's hosted instance (ekart360.in) instead of a local
  * server, so no emulator/LAN address juggling is needed. Still editable from
  * the sign-in screen ("Server") and stored on the device.
  */
 /** The backend's port (PORT in its .env). Change it here only. */
-export const API_PORT = 2407;
+export const API_PORT = 2477;
 
-export const DEFAULT_API_BASE_URL = `https://godavariwave.in:${API_PORT}`;
+export const DEFAULT_API_BASE_URL = `https://ekart360.in:${API_PORT}`;
 
 /**
  * The address of the machine the backend was built against, tried on first run

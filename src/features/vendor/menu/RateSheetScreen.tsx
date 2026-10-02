@@ -94,6 +94,8 @@ export function RateSheetScreen() {
         ) : null,
       )}
 
+      <Button label="+ Add item" variant="outline" onPress={() => nav.navigate('ProductEdit', {})} />
+
       <Card>
         <View style={styles.row}>
           <View style={styles.flex}>

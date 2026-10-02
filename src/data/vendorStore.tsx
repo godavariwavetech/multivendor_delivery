@@ -35,6 +35,7 @@ import {
   vendorNotifications,
 } from './demo/vendorMisc';
 import { useSession } from './session';
+import type { PickedPhoto } from '@/utils/photo';
 
 const LIVE = !USE_MOCK_DATA;
 const DEMO_PRODUCTS_STORAGE_KEY = 'partner.demo.products.v1';
@@ -577,14 +578,25 @@ function useVendorValue() {
           dispatch({ type: 'setAvailable', id, available });
           send(endpoints.vendor.productAvailability, { product_id: Number(id), is_available: available });
         },
-        saveProduct: async (product: Product): Promise<boolean> => {
+        saveProduct: async (product: Product, photo?: PickedPhoto | null): Promise<boolean> => {
           if (!USE_MOCK_DATA) {
             if (!active) {
               toast('Sign in to save this item');
               return false;
             }
             try {
-              await apiClient.post(endpoints.vendor.saveProduct, { product: productPayload(product) });
+              const result = await apiClient.post<{ product_id?: number }>(endpoints.vendor.saveProduct, {
+                product: productPayload(product),
+              });
+              if (photo) {
+                // The photo hangs off a product row, so a new item is saved before it is uploaded.
+                const productId = result?.product_id ?? Number(product.id);
+                try {
+                  await apiClient.upload(endpoints.vendor.uploadProductImage, photo, { product_id: String(productId) });
+                } catch (error) {
+                  toast(error instanceof Error ? `Item saved, but the photo failed: ${error.message}` : 'Item saved, but the photo failed');
+                }
+              }
               await refresh();
               return true;
             } catch (error) {

@@ -108,7 +108,7 @@ export function MenuScreen() {
           <NoteBox>Today's rates aren't published yet. Items stay hidden from customers until you publish.</NoteBox>
         ) : null}
       </Screen>
-      <Fab label={addLabel} onPress={() => (produce ? nav.navigate('RateSheet') : nav.navigate('ProductEdit', {}))} />
+      <Fab label={addLabel} onPress={() => nav.navigate('ProductEdit', {})} />
     </View>
   );
 }

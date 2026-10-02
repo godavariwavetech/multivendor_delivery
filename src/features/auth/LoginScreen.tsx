@@ -8,6 +8,7 @@ import { useSession } from '@/data/session';
 import type { Role } from '@/domain/types';
 import { useAuthNav } from '@/navigation/types';
 import { ThemeProvider, fonts, palette, radius, roleColorsFrom, space } from '@/theme';
+import { formatMobile, mobileDigits, mobileHasExtraDigits, mobileIssue } from '@/utils/mobile';
 
 const WORKSPACE_HINT: Record<Role, string> = {
   vendor: 'Store, menu, orders, coupons and settlements.',
@@ -28,11 +29,22 @@ export function LoginScreen() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Set while the last keystroke or paste had more than 10 digits.
+  const [extraDigits, setExtraDigits] = useState(false);
 
-  const digits = mobile.replace(/\D/g, '');
+  const digits = mobileDigits(mobile);
+  const mobileMessage = mobileIssue(digits, extraDigits);
+
+  /** Why this number cannot be used yet, for the sign-in and OTP buttons. */
+  const mobileBlocker = () => mobileMessage ?? (digits.length !== 10 ? 'Enter your 10-digit mobile number.' : null);
 
   const submit = async () => {
     if (busy) {
+      return;
+    }
+    const blocker = mobileBlocker();
+    if (blocker) {
+      setError(blocker);
       return;
     }
     setBusy(true);
@@ -42,8 +54,9 @@ export function LoginScreen() {
   };
 
   const useOtp = async () => {
-    if (digits.length !== 10) {
-      setError('Enter your 10-digit mobile number.');
+    const blocker = mobileBlocker();
+    if (blocker) {
+      setError(blocker);
       return;
     }
     setBusy(true);
@@ -55,11 +68,6 @@ export function LoginScreen() {
     }
     setError(null);
     nav.navigate('Otp', { mobile: digits, purpose: 'login', role });
-  };
-
-  const formatMobile = (value: string) => {
-    const d = value.replace(/\D/g, '').slice(0, 10);
-    return d.length > 5 ? `${d.slice(0, 5)} ${d.slice(5)}` : d;
   };
 
   // Everything accent-coloured on this screen follows the selected workspace
@@ -97,21 +105,40 @@ export function LoginScreen() {
         <Text v="bodyStrong" style={styles.fieldLabel}>
           Mobile number
         </Text>
-        <View style={styles.field}>
+        <View style={[styles.field, mobileMessage ? styles.fieldInvalid : null]}>
           <Text v="body" muted style={styles.prefix}>
             +91
           </Text>
           <View style={styles.prefixDivider} />
           <TextInput
             value={mobile}
-            onChangeText={v => setMobile(formatMobile(v))}
+            onChangeText={v => {
+              setMobile(formatMobile(v));
+              setExtraDigits(mobileHasExtraDigits(v));
+              setError(null);
+            }}
             keyboardType="number-pad"
+            // Once the 10 digits are in, the field itself refuses more (11 = "98407 21536"),
+            // so no extra digit flashes up before being taken out. Until then a pasted
+            // "+91 …" is not cut short.
+            maxLength={digits.length >= 10 ? 11 : undefined}
+            onKeyPress={e => {
+              // A refused digit raises no text change, so the key press is how the message is shown.
+              if (digits.length >= 10 && /^\d$/.test(e.nativeEvent.key)) {
+                setExtraDigits(true);
+              }
+            }}
             style={styles.input}
             placeholder="98407 21536"
             placeholderTextColor={palette.inkSubtle}
-            maxLength={11}
           />
         </View>
+
+        {mobileMessage ? (
+          <Text v="caption" color={palette.alert} style={styles.fieldError}>
+            {mobileMessage}
+          </Text>
+        ) : null}
 
         <Text v="bodyStrong" style={styles.fieldLabel}>
           Password
@@ -201,6 +228,8 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: palette.ink, paddingVertical: 0 },
   hint: { marginTop: space.sm, marginBottom: space.xl, paddingHorizontal: 6 },
   error: { marginTop: -6, marginBottom: space.md },
+  fieldInvalid: { borderColor: palette.alert },
+  fieldError: { marginTop: -8, marginBottom: space.md, paddingHorizontal: 6 },
   links: {
     flexDirection: 'row',
     justifyContent: 'space-between',

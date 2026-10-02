@@ -1,6 +1,6 @@
-import { Pencil } from 'lucide-react-native';
+import { Pencil, X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   BackHeader,
@@ -9,6 +9,8 @@ import {
   Dropdown,
   IconCircle,
   PhotoBox,
+  PhotoCropper,
+  PhotoSourceSheet,
   Pill,
   Screen,
   SectionLabel,
@@ -16,16 +18,15 @@ import {
   TextField,
   useToast,
 } from '@/components';
-import { apiClient, endpoints } from '@/api';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORY_LABEL } from '@/domain/labels';
 import type { Category, CategoryOption, Product, Store } from '@/domain/types';
 import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
-import { photoUrl, pickPhoto } from '@/utils/photo';
+import { getPhoto, photoUrl, type PhotoSource, type PickedPhoto } from '@/utils/photo';
 import { productPriceLine } from '@/utils/productPrice';
 
-import { BakerySheetView, FoodSheetView, GrocerySheetView, MeatSheetView } from './sheets';
+import { BakerySheetView, FoodSheetView, GrocerySheetView, MeatSheetView, ProduceSheetView } from './sheets';
 
 const TITLES: Record<Category, { edit: string; add: string; save: string }> = {
   food: { edit: 'Edit item', add: 'New dish', save: 'Save item' },
@@ -69,6 +70,15 @@ const blankProduct = (category: Category, first?: CategoryOption): Product => {
         stockLine: 'Stock 0',
         sheet: { kind: 'grocery', brand: '—', ean: 'EAN —', packs: [{ name: '1 unit', mrp: 0, price: 0, on: true }], stock: 0, lowStockAlert: 5, batchExpiry: '—', hsnGst: '— · 5%', maxPerOrder: 5 },
       };
+    case 'produce':
+      return {
+        ...base,
+        name: 'New item',
+        veg: true,
+        priceLine: 'Set rate',
+        stockLine: 'Available',
+        sheet: { kind: 'produce', unit: 'kg', rate: 0, note: '', tags: [] },
+      };
     case 'bakery':
       return {
         ...base,
@@ -100,6 +110,23 @@ const blankProduct = (category: Category, first?: CategoryOption): Product => {
 };
 
 /**
+ * The item's photo: the stored one, or a freshly chosen one with an × that drops
+ * it again. A photo already on the server has no ×, as there is no call to delete it.
+ */
+function ItemPhoto({ uri, removable, onPress, onRemove }: { uri?: string | null; removable: boolean; onPress: () => void; onRemove: () => void }) {
+  return (
+    <View style={styles.photoWrap}>
+      <PhotoBox size={92} uri={uri ?? undefined} onPress={onPress} label="ADD PHOTO" />
+      {uri && removable ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Remove photo" hitSlop={8} onPress={onRemove} style={styles.photoRemove}>
+          <X size={14} color={palette.white} strokeWidth={2.8} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/**
  * The details the vendor types: what the item is called, its category and sub
  * category, and — for food and bakery only — whether it is veg, and how long it
  * takes to make. Everything below this on the screen is priced per store type,
@@ -112,6 +139,10 @@ function DetailsForm({
   onChange,
   onDone,
   isNew,
+  photoUri,
+  photoRemovable,
+  onPickPhoto,
+  onRemovePhoto,
 }: {
   draft: Product;
   categories: CategoryOption[];
@@ -120,6 +151,10 @@ function DetailsForm({
   onChange: (p: Product) => void;
   onDone: () => void;
   isNew: boolean;
+  photoUri?: string | null;
+  photoRemovable: boolean;
+  onPickPhoto: () => void;
+  onRemovePhoto: () => void;
 }) {
   const sheet = draft.sheet;
   const selected = categoryOf(categories, draft);
@@ -133,6 +168,16 @@ function DetailsForm({
   return (
     <Card>
       <SectionLabel>{isNew ? 'New item' : 'Item details'}</SectionLabel>
+
+      <View style={styles.photoRow}>
+        <ItemPhoto uri={photoUri} removable={photoRemovable} onPress={onPickPhoto} onRemove={onRemovePhoto} />
+        <View style={styles.flex}>
+          <Text v="bodyStrong">Item photo</Text>
+          <Text v="body" muted>
+            {photoUri ? 'Tap the photo to change it' : 'Tap to take or choose a photo of the dish'}
+          </Text>
+        </View>
+      </View>
 
       <TextField
         label="Name"
@@ -211,13 +256,17 @@ export function ProductEditScreen() {
   const nav = useVendorNav();
   const toast = useToast();
   const { params } = useVendorRoute<'ProductEdit'>();
-  const { store, product, actions, refresh } = useVendor();
+  const { store, product, actions } = useVendor();
   const existing = params.id ? product(params.id) : undefined;
   const categories = categoryOptions(store);
   const [draft, setDraft] = useState<Product>(() => existing ?? blankProduct(store.category, categories[0]));
   // A new item has nothing to show yet, so it opens straight into the form.
   const [editing, setEditing] = useState(!existing);
-  const [uploading, setUploading] = useState(false);
+  // A chosen photo waits here, and goes up with the item when it is saved.
+  const [pendingPhoto, setPendingPhoto] = useState<PickedPhoto | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  // The photo just taken or chosen, while it is on the crop screen.
+  const [cropping, setCropping] = useState<PickedPhoto | null>(null);
   const titles = TITLES[store.category];
 
   const returnToMenu = () => {
@@ -228,32 +277,23 @@ export function ProductEditScreen() {
     }
   };
 
-  /**
-   * The upload is keyed on the product id, so a brand-new item has to be saved
-   * before it can carry a photo — there is no row to attach it to yet.
-   */
-  const addPhoto = async () => {
-    if (!existing) {
-      toast('Save the item first, then add a photo');
-      return;
-    }
-    const picked = await pickPhoto('Item photo');
-    if (!picked) {
-      return;
-    }
-    setUploading(true);
+  const choosePhoto = async (source: PhotoSource) => {
+    setSheetOpen(false);
+    // Let the sheet finish closing: the system picker will not open over a dismissing modal.
+    await new Promise<void>(resolve => setTimeout(resolve, 250));
     try {
-      const res = await apiClient.upload<{ image: string }>(endpoints.vendor.uploadProductImage, picked, {
-        product_id: draft.id,
-      });
-      setDraft(d => ({ ...d, image: res.image }));
-      await refresh();
-      toast('Photo saved');
+      const picked = await getPhoto(source);
+      if (picked) {
+        setCropping(picked);
+      }
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'The photo could not be saved.');
-    } finally {
-      setUploading(false);
+      toast(error instanceof Error ? error.message : 'The photo could not be opened.');
     }
+  };
+
+  const removePhoto = () => {
+    setPendingPhoto(null);
+    setSheetOpen(false);
   };
 
   const save = async () => {
@@ -274,8 +314,27 @@ export function ProductEditScreen() {
       toast('Add at least one variant before saving');
       return;
     }
+    if (draft.sheet.kind === 'produce' && !(draft.sheet.rate > 0)) {
+      toast(`Set the price per ${draft.sheet.unit} before saving`);
+      return;
+    }
+    if (draft.sheet.kind === 'bakery') {
+      const sizes = draft.sheet.soldAs;
+      if (sizes.length === 0) {
+        toast('Add at least one size before saving');
+        return;
+      }
+      if (sizes.some(s => !s.name.trim())) {
+        toast('Give every size a name');
+        return;
+      }
+      if (!sizes.some(s => s.on && s.price > 0)) {
+        toast('Set a price for at least one size');
+        return;
+      }
+    }
     const updated = { ...draft, name };
-    const saved = await actions.saveProduct({ ...updated, priceLine: productPriceLine(updated) });
+    const saved = await actions.saveProduct({ ...updated, priceLine: productPriceLine(updated) }, pendingPhoto);
     if (!saved) {
       return;
     }
@@ -288,7 +347,9 @@ export function ProductEditScreen() {
   const subline = (
     sheet.kind === 'grocery'
       ? [`Brand ${sheet.brand}`, where]
-      : [where, sheet.kind === 'food' ? `Prep ${sheet.prepMin} min` : sheet.kind === 'bakery' ? 'Eggless option' : 'Bone-in']
+      : sheet.kind === 'produce'
+        ? [where, `Per ${sheet.unit}`]
+        : [where, sheet.kind === 'food' ? `Prep ${sheet.prepMin} min` : sheet.kind === 'bakery' ? 'Eggless option' : 'Bone-in']
   )
     .filter(Boolean)
     .join(' · ');
@@ -312,10 +373,19 @@ export function ProductEditScreen() {
           onChange={setDraft}
           onDone={() => setEditing(false)}
           isNew={!existing}
+          photoUri={pendingPhoto?.uri ?? photoUrl(draft.image)}
+          photoRemovable={Boolean(pendingPhoto)}
+          onPickPhoto={() => setSheetOpen(true)}
+          onRemovePhoto={removePhoto}
         />
       ) : (
         <View style={styles.head}>
-          <PhotoBox size={92} uri={photoUrl(draft.image)} busy={uploading} onPress={addPhoto} />
+          <ItemPhoto
+            uri={pendingPhoto?.uri ?? photoUrl(draft.image)}
+            removable={Boolean(pendingPhoto)}
+            onPress={() => setSheetOpen(true)}
+            onRemove={removePhoto}
+          />
           <View style={styles.flex}>
             <View style={styles.nameRow}>
               <Text v="headline" style={styles.flex}>
@@ -350,17 +420,56 @@ export function ProductEditScreen() {
       {sheet.kind === 'grocery' ? (
         <GrocerySheetView sheet={sheet} available={draft.available} onChange={(s, available) => setDraft(d => ({ ...d, sheet: s, available: available ?? d.available }))} />
       ) : null}
+      {sheet.kind === 'produce' ? (
+        <ProduceSheetView sheet={sheet} onChange={s => setDraft(d => ({ ...d, sheet: s }))} />
+      ) : null}
       {sheet.kind === 'bakery' ? (
         <BakerySheetView sheet={sheet} onChange={s => setDraft(d => ({ ...d, sheet: s }))} />
       ) : null}
       {sheet.kind === 'meat' ? (
         <MeatSheetView sheet={sheet} onChange={s => setDraft(d => ({ ...d, sheet: s }))} />
       ) : null}
+
+      <PhotoSourceSheet
+        visible={sheetOpen}
+        hasPhoto={Boolean(pendingPhoto)}
+        onClose={() => setSheetOpen(false)}
+        onCamera={() => choosePhoto('camera')}
+        onGallery={() => choosePhoto('gallery')}
+        onRemove={removePhoto}
+      />
+      <PhotoCropper
+        photo={cropping}
+        onCancel={() => setCropping(null)}
+        onDone={cropped => {
+          setPendingPhoto(cropped);
+          setCropping(null);
+        }}
+        onError={message => {
+          setCropping(null);
+          toast(message);
+        }}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  photoWrap: { width: 92, height: 92 },
+  photoRemove: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: palette.ink,
+    borderWidth: 2,
+    borderColor: palette.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoRow: { flexDirection: 'row', gap: space.lg, alignItems: 'center', marginTop: space.md },
   head: { flexDirection: 'row', gap: space.lg, alignItems: 'center', marginBottom: space.xs },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   field: { marginTop: space.md },

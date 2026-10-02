@@ -23,3 +23,5 @@ export type { SegmentOption } from './Segmented';
 export { ToastProvider, useToast } from './Toast';
 export { TabBar } from './TabBar';
 export { DateRangePicker } from './DateRangePicker';
+export { PhotoSourceSheet } from './PhotoSourceSheet';
+export { PhotoCropper } from './PhotoCropper';

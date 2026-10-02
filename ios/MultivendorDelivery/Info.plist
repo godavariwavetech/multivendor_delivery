@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to take photos of your menu items and delivery proof.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photos are used to add pictures to your menu items.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

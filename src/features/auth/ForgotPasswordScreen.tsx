@@ -5,6 +5,7 @@ import { BackButton, Button, Screen, Text } from '@/components';
 import { useSession } from '@/data/session';
 import { useAuthNav } from '@/navigation/types';
 import { fonts, palette, radius, space } from '@/theme';
+import { mobileDigits, mobileHasExtraDigits, mobileIssue } from '@/utils/mobile';
 
 /** Vendor SRS 1 / Delivery SRS 1 — verify the number before a new password is set. */
 export function ForgotPasswordScreen() {
@@ -13,11 +14,13 @@ export function ForgotPasswordScreen() {
   const [mobile, setMobile] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const digits = mobile.replace(/\D/g, '');
+  const [extraDigits, setExtraDigits] = useState(false);
+  const digits = mobileDigits(mobile);
+  const mobileMessage = mobileIssue(digits, extraDigits);
 
   const send = async () => {
-    if (digits.length !== 10) {
-      setError('Enter your 10-digit mobile number.');
+    if (mobileMessage || digits.length !== 10) {
+      setError(mobileMessage ?? 'Enter your 10-digit mobile number.');
       return;
     }
     setBusy(true);
@@ -50,17 +53,28 @@ export function ForgotPasswordScreen() {
         <TextInput
           autoFocus
           value={mobile}
-          onChangeText={v => setMobile(v.replace(/\D/g, '').slice(0, 10))}
+          onChangeText={v => {
+            setMobile(mobileDigits(v));
+            setExtraDigits(mobileHasExtraDigits(v));
+            setError(null);
+          }}
           keyboardType="number-pad"
+          // Full: the field refuses more instead of showing a digit and taking it out again.
+          maxLength={digits.length >= 10 ? 10 : undefined}
+          onKeyPress={e => {
+            if (digits.length >= 10 && /^\d$/.test(e.nativeEvent.key)) {
+              setExtraDigits(true);
+            }
+          }}
           style={styles.input}
           placeholder="10-digit number"
           placeholderTextColor={palette.inkSubtle}
           onSubmitEditing={send}
         />
       </View>
-      {error ? (
+      {mobileMessage || error ? (
         <Text v="caption" color={palette.alert}>
-          {error}
+          {mobileMessage ?? error}
         </Text>
       ) : null}
     </Screen>

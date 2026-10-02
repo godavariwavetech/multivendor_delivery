@@ -4,6 +4,9 @@ import { formatAmount } from '@/utils/currency';
 /** Keep food menu summaries in sync with the editable variant prices. */
 export const productPriceLine = (product: Product): string => {
   const sheet = product.sheet;
+  if (sheet.kind === 'produce') {
+    return `${formatAmount(sheet.rate)} / ${sheet.unit}`;
+  }
   if (sheet.kind !== 'food') {
     return product.priceLine;
   }
