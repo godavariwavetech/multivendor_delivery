@@ -1,3 +1,5 @@
+import appConfig from './appConfig.json';
+
 /**
  * Backend: D:\projects\multivendor_backend — Express + MySQL, with
  * the app's routes mounted at /partner_app.
@@ -9,7 +11,11 @@
 /** The backend's port (PORT in its .env). Change it here only. */
 export const API_PORT = 2477;
 
-export const DEFAULT_API_BASE_URL = `https://ekart360.in:${API_PORT}`;
+/**
+ * Build-time config. CI rewrites appConfig.json from the dashboard's form;
+ * the committed file holds the standard eKart360 values.
+ */
+export const DEFAULT_API_BASE_URL: string = appConfig.apiBaseUrl || `https://ekart360.in:${API_PORT}`;
 
 /**
  * The address of the machine the backend was built against, tried on first run

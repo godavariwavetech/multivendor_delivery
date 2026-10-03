@@ -94,6 +94,8 @@ android {
         // CI passes -PVERSION_CODE=<run number> so every Play upload is unique.
         versionCode project.hasProperty('VERSION_CODE') ? VERSION_CODE.toInteger() : 1
         versionName "1.0"
+        // CI passes -PAPP_NAME from the dashboard; the label is generated, not in strings.xml.
+        resValue "string", "app_name", (project.hasProperty('APP_NAME') && APP_NAME.trim()) ? APP_NAME.trim() : "eKart360 Partner"
     }
     signingConfigs {
         debug {

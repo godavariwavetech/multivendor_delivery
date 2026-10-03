@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Dashboard</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b2430; --mute:#667085; --line:#e4e7ec; --accent:#1d5fd1; --ok:#157f3d; --bad:#b42318; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#10141a; --card:#181e27; --ink:#e8ecf2; --mute:#98a2b3; --line:#2a3340; --accent:#5b9bff; --ok:#4ade80; --bad:#f87171; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:24px 16px; }
+  h1 { font-size:22px; margin:0 0 4px; } p.sub { color:var(--mute); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:12px 0 4px; }
+  input { width:100%; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); font:inherit; }
+  button { margin-top:16px; width:100%; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .note { color:var(--mute); font-size:14px; }
+  .err { color:var(--bad); margin-top:12px; }
+  ol { list-style:none; padding:0; margin:8px 0 0; }
+  li { padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  .success { color:var(--ok); } .failure { color:var(--bad); } .in_progress { color:var(--accent); } .pending,.skipped { color:var(--mute); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Build dashboard</h1>
+  <p class="sub">Dummy requirements in, a build on the Play internal track out.</p>
+  <div class="card">
+    <label for="appName">App name</label>
+    <input id="appName" value="eKart360 Test">
+    <label for="apiBaseUrl">API base URL</label>
+    <input id="apiBaseUrl" value="https://ekart360.in:2477">
+    <p class="note">Track is fixed to <b>internal</b>. Package ID stays com.ekart360vendor.</p>
+    <button id="go">Build and publish</button>
+    <div id="err" class="err"></div>
+  </div>
+  <div class="card" id="runCard" hidden>
+    <b id="runTitle">Run</b>
+    <ol id="steps"></ol>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let timer;
+async function poll(id) {
+  try {
+    const r = await (await fetch('/api/status?id=' + id)).json();
+    const job = (r.jobs || [])[0];
+    if (job) {
+      $('steps').innerHTML = job.steps.filter(s => !s.name.startsWith('Post ')).map(s =>
+        `<li><span>${s.name}</span><span class="${s.conclusion || s.status}">${s.conclusion || s.status}</span></li>`).join('');
+      if (job.status === 'completed') {
+        $('runTitle').textContent = 'Run ' + id + ' — ' + job.conclusion;
+        $('go').disabled = false;
+        return;
+      }
+    }
+  } catch (e) { $('err').textContent = e.message; }
+  timer = setTimeout(() => poll(id), 15000);
+}
+$('go').onclick = async () => {
+  $('err').textContent = '';
+  $('go').disabled = true;
+  clearTimeout(timer);
+  const res = await fetch('/api/deploy', { method: 'POST', body: JSON.stringify({ appName: $('appName').value.trim(), apiBaseUrl: $('apiBaseUrl').value.trim() }) });
+  const data = await res.json();
+  if (!res.ok) { $('err').textContent = data.error; $('go').disabled = false; return; }
+  $('runCard').hidden = false;
+  $('runTitle').textContent = 'Run ' + data.runId + ' — started';
+  poll(data.runId);
+};
+</script>
+</body>
+</html>

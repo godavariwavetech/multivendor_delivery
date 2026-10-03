@@ -10,6 +10,14 @@ on:
         type: choice
         options: [internal, alpha, beta, production]
         default: internal
+      app_name:
+        description: App name shown on the device (blank keeps the default)
+        type: string
+        default: ''
+      api_base_url:
+        description: Backend base URL (blank keeps the default)
+        type: string
+        default: ''
 
 concurrency:
   group: playstore-deploy
@@ -40,6 +48,21 @@ jobs:
       - name: Install JS dependencies
         run: npm ci
 
+      - name: Apply dashboard config
+        run: |
+          node -e '
+            const fs = require("fs");
+            const f = "src/config/appConfig.json";
+            const c = JSON.parse(fs.readFileSync(f, "utf8"));
+            if (process.env.APP_NAME) c.appName = process.env.APP_NAME;
+            if (process.env.API_BASE_URL) c.apiBaseUrl = process.env.API_BASE_URL;
+            fs.writeFileSync(f, JSON.stringify(c, null, 2) + "\n");
+            console.log(c);
+          '
+        env:
+          APP_NAME: ${{ inputs.app_name }}
+          API_BASE_URL: ${{ inputs.api_base_url }}
+
       - name: Restore upload keystore
         run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
         env:
@@ -50,12 +73,12 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon \
-            -PVERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET )) \
-            -PMYAPP_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.keystore" \
+            -PVERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET )) \            -PMYAPP_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.keystore" \
             -PMYAPP_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
             -PMYAPP_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
             -PMYAPP_UPLOAD_KEY_PASSWORD="$ANDROID_KEY_PASSWORD"
         env:
+          ORG_GRADLE_PROJECT_APP_NAME: ${{ inputs.app_name }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
