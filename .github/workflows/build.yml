@@ -42,6 +42,10 @@ on:
         description: Business location
         type: string
         default: ''
+      package_id:
+        description: Android package ID, e.g. com.mahesh (blank keeps com.ekart360vendor). For Play, the app must already exist in Play Console.
+        type: string
+        default: ''
       logo_base64:
         description: Business logo, a PNG as base64 (blank keeps the default)
         type: string
@@ -55,19 +59,46 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write # lets the job record each Play release as a git tag
     env:
       DELIVER: ${{ inputs.deliver || 'apk' }}
+      PACKAGE_ID: ${{ inputs.package_id || 'com.ekart360vendor' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the release tags below are the version counter
 
-      # The code counts minutes since 2026-01-01 UTC (1767225600), so it only ever
-      # goes up, whatever this workflow's run counter does (it restarts if the
-      # file is renamed) and whatever was uploaded to Play before. Builds are
-      # serialised, so two never share a minute. The name is that day plus the run.
+      # The package ID is typed by a person and ends up in tag names and the Play
+      # upload, so check it (and the other fields) before anything uses it.
+      - name: Validate inputs
+        run: node scripts/dashboard-config.js --validate-only
+        env:
+          BUSINESS_NAME: ${{ inputs.business_name }}
+          DOMAIN: ${{ inputs.domain }}
+          THEME_COLOR: ${{ inputs.theme_color }}
+          PHONE: ${{ inputs.phone }}
+          EMAIL: ${{ inputs.email }}
+          LOCATION: ${{ inputs.location }}
+          LOGO_BASE64: ${{ inputs.logo_base64 }}
+
+      # Name (what people see): the next number after the highest release tag for
+      # this package, release/<package>/1.1 -> 1.2 -> 1.3, so each app counts on its
+      # own. To jump to 2.0, push the tag release/<package>/2.0 yourself. Only a
+      # successful Play upload creates a tag, so an APK-only run previews the
+      # upcoming name without using it up.
+      # Code (hidden integer Play needs): minutes since 2026-01-01 UTC (1767225600),
+      # so it only ever rises whatever was uploaded before. Builds are serialised,
+      # so two never share a minute.
       - name: Compute version
         run: |
           code=$(( ($(date -u +%s) - 1767225600) / 60 ))
-          name="$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}"
+          latest=$(git tag -l "release/$PACKAGE_ID/[0-9]*.[0-9]*" | sed "s#^release/$PACKAGE_ID/##" | sort -V | tail -1)
+          if [ -z "$latest" ]; then
+            name="1.1"   # the first Play upload by hand counted as 1.0
+          else
+            name="${latest%.*}.$(( ${latest##*.} + 1 ))"
+          fi
           echo "VERSION_CODE=$code" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$name" >> "$GITHUB_ENV"
           echo "::notice title=Version::${name} (code ${code})"
@@ -141,6 +172,7 @@ jobs:
             -PMYAPP_UPLOAD_KEY_PASSWORD="$ANDROID_KEY_PASSWORD"
         env:
           ORG_GRADLE_PROJECT_APP_NAME: ${{ inputs.business_name }}
+          ORG_GRADLE_PROJECT_APPLICATION_ID: ${{ env.PACKAGE_ID }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -164,8 +196,12 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.ekart360vendor
+          packageName: ${{ env.PACKAGE_ID }}
           releaseName: ${{ env.VERSION_NAME }}
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: ${{ inputs.track || 'internal' }}
           status: completed
+
+      - name: Record the released version
+        if: ${{ env.DELIVER == 'playstore' }}
+        run: git tag "release/$PACKAGE_ID/$VERSION_NAME" && git push origin "release/$PACKAGE_ID/$VERSION_NAME"

@@ -71,6 +71,7 @@ http
           phone: f.phone || '',
           email: f.email || '',
           location: f.location || '',
+          package_id: f.packageId || '',
           logo_base64: f.logo || '',
         };
         await gh(['workflow', 'run', WORKFLOW, '-R', REPO, '--ref', REF, '--json'], JSON.stringify(inputs));

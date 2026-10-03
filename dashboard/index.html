@@ -26,14 +26,14 @@
   .ver { margin:8px 0 0; font-weight:600; }
   ol { list-style:none; padding:0; margin:8px 0 0; }
   li { padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
-  #download[hidden], #prodBox[hidden], #ver[hidden] { display:none !important; }
+  #download[hidden], #prodBox[hidden], #ver[hidden], #pkgWarn[hidden] { display:none !important; }
   .success { color:var(--ok); } .failure { color:var(--bad); } .in_progress { color:var(--accent); } .pending,.skipped { color:var(--mute); }
 </style>
 </head>
 <body>
 <main>
   <h1>Build dashboard</h1>
-  <p class="sub">Enter the business details. The app is built with the package com.ekart360vendor and delivered where you choose.</p>
+  <p class="sub">Enter the business details. The app is built with the package ID you give and delivered where you choose.</p>
   <div class="card">
     <label for="businessName">Business name</label>
     <input type="text" id="businessName" placeholder="Sri Sai Sweets" autocomplete="off">
@@ -49,6 +49,11 @@
     <label for="domain">Domain</label>
     <input type="text" id="domain" placeholder="shop.example.com" value="ekart360.in" autocomplete="off">
     <p class="note">The backend the app talks to. No https:// or port.</p>
+
+    <label for="packageId">Package ID</label>
+    <input type="text" id="packageId" placeholder="com.mahesh" value="com.ekart360vendor" autocomplete="off">
+    <p class="note">The app's identity. Lowercase, dot-separated, like com.mahesh. Each package ID is a separate app on the phone and in Google Play.</p>
+    <p id="pkgWarn" class="note warn" hidden>This is a different package from your live app. For a Google Play option, the app must already exist in Play Console under this package ID and your upload account must have access to it; otherwise the upload fails after the build. An APK works without that.</p>
 
     <label for="logo">Business logo (PNG)</label>
     <div class="row"><input type="file" id="logo" accept="image/png"><img id="preview" alt="Logo preview"></div>
@@ -87,11 +92,16 @@ function showError(message) {
   $('err').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+const DEFAULT_PACKAGE = 'com.ekart360vendor';
 $('themeColor').oninput = () => ($('hex').textContent = $('themeColor').value.toUpperCase());
-$('destination').onchange = () => {
+function refreshWarnings() {
   $('prodBox').hidden = $('destination').value !== 'play-production';
   if ($('prodBox').hidden) $('confirmProd').checked = false;
-};
+  const custom = $('packageId').value.trim() !== '' && $('packageId').value.trim() !== DEFAULT_PACKAGE;
+  $('pkgWarn').hidden = !(custom && $('destination').value !== 'apk');
+}
+$('destination').onchange = refreshWarnings;
+$('packageId').oninput = refreshWarnings;
 
 // GitHub caps a workflow input at 65,535 characters, so shrink until the base64 fits.
 async function shrink(file) {
@@ -162,6 +172,7 @@ $('go').onclick = async () => {
     email: $('email').value.trim(),
     location: $('location').value.trim(),
     domain: $('domain').value.trim(),
+    packageId: $('packageId').value.trim() === DEFAULT_PACKAGE ? '' : $('packageId').value.trim(),
     themeColor: $('themeColor').value.toUpperCase() === '#1D44B5' ? '' : $('themeColor').value,
     logo: logoBase64,
     destination,

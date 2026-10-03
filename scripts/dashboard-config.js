@@ -3,6 +3,15 @@
 const fs = require('fs');
 const path = require('path');
 
+// Android rejects a package segment that is a Java keyword (com.new, com.class, ...).
+const JAVA_KEYWORDS = new Set(('abstract assert boolean break byte case catch char class const continue default do double else enum ' +
+  'extends final finally float for goto if implements import instanceof int interface long native new package private protected ' +
+  'public return short static strictfp super switch synchronized this throw throws transient try void volatile while true false null').split(' '));
+
+function validPackageId(id) {
+  return /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(id) && id.length <= 150 && !id.split('.').some(s => JAVA_KEYWORDS.has(s));
+}
+
 const RULES = {
   version: [/^\d+(\.\d+){1,4}$/, 'Version: dot-separated numbers, like 2026.10.03.5.'],
   businessName: [/^[A-Za-z0-9][A-Za-z0-9 \-]{1,29}$/, 'Business name: 2-30 letters, numbers, spaces or dashes.'],
@@ -20,6 +29,10 @@ function validate(fields) {
   for (const [key, [re, message]] of Object.entries(RULES)) {
     const value = (fields[key] || '').trim();
     if (value && !re.test(value)) return message;
+  }
+  const packageId = (fields.packageId || '').trim();
+  if (packageId && !validPackageId(packageId)) {
+    return 'Package ID: lowercase letters, digits and underscores in dot-separated parts, like com.mahesh (no part may be a Java word such as "new" or "class").';
   }
   const logo = (fields.logo || '').trim();
   if (logo) {
@@ -59,6 +72,7 @@ if (require.main === module) {
   const e = process.env;
   const fields = {
     version: e.VERSION_NAME,
+    packageId: e.PACKAGE_ID,
     businessName: e.BUSINESS_NAME, domain: e.DOMAIN, themeColor: e.THEME_COLOR,
     phone: e.PHONE, email: e.EMAIL, location: e.LOCATION, logo: e.LOGO_BASE64,
   };
@@ -67,5 +81,6 @@ if (require.main === module) {
     console.error('Invalid dashboard input: ' + problem);
     process.exit(1);
   }
+  if (process.argv.includes('--validate-only')) process.exit(0);
   console.log(apply(fields, path.resolve(__dirname, '..')));
 }
