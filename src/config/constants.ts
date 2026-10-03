@@ -1,3 +1,6 @@
+import packageJson from '../../package.json';
+import appConfig from './appConfig.json';
+
 /**
  * Backend: D:\projects\multivendor_backend — Express + MySQL, with
  * the app's routes mounted at /partner_app.
@@ -9,7 +12,13 @@
 /** The backend's port (PORT in its .env). Change it here only. */
 export const API_PORT = 2477;
 
-export const DEFAULT_API_BASE_URL = `https://ekart360.in:${API_PORT}`;
+/**
+ * Build-time config. CI rewrites appConfig.json from the dashboard's form;
+ * the committed file holds the standard eKart360 values.
+ */
+export const APP_CONFIG = appConfig;
+
+export const DEFAULT_API_BASE_URL = `https://${appConfig.domain}:${API_PORT}`;
 
 /**
  * The address of the machine the backend was built against, tried on first run
@@ -39,8 +48,11 @@ export const USE_MOCK_HISTORY = true;
 /** How often a signed-in workspace refetches its state. */
 export const POLL_INTERVAL_MS = 15000;
 
-/** Shown in Profile. Keep in step with android/app/build.gradle versionName. */
-export const APP_VERSION = '1.0';
+/**
+ * Shown in Profile. CI writes its build version into appConfig.json (the same
+ * value as the Android versionName); without it, package.json's version is used.
+ */
+export const APP_VERSION: string = appConfig.version || packageJson.version;
 
 /**
  * Map tiles.

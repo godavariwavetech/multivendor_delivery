@@ -1,3 +1,3 @@
 <resources>
-    <string name="app_name">eKart360 Partner</string>
+    <!-- app_name is generated in app/build.gradle (resValue) so CI can override it. -->
 </resources>

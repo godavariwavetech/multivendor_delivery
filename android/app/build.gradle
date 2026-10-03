@@ -88,11 +88,21 @@ android {
 
     namespace "com.ekart360vendor"
     defaultConfig {
-        applicationId "com.ekart360vendor"
+        // CI passes -PAPPLICATION_ID from the dashboard so each business ships as its
+        // own app. `namespace` above only names the code's package and stays put.
+        def appId = (project.hasProperty('APPLICATION_ID') && APPLICATION_ID.trim()) ? APPLICATION_ID.trim() : "com.ekart360vendor"
+        applicationId appId
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // CI passes -PVERSION_CODE=<run number> so every Play upload is unique.
+        versionCode project.hasProperty('VERSION_CODE') ? VERSION_CODE.toInteger() : 1
+        // CI passes -PVERSION_NAME (<date>.<run number>) in step with VERSION_CODE;
+        // a local build falls back to the version in package.json.
+        versionName project.hasProperty('VERSION_NAME')
+            ? VERSION_NAME
+            : new groovy.json.JsonSlurper().parse(file("$rootDir/../package.json")).version
+        // CI passes -PAPP_NAME from the dashboard; the label is generated, not in strings.xml.
+        resValue "string", "app_name", (project.hasProperty('APP_NAME') && APP_NAME.trim()) ? APP_NAME.trim() : "eKart360 Partner"
     }
     signingConfigs {
         debug {

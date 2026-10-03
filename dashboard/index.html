@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Dashboard</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b2430; --mute:#667085; --line:#e4e7ec; --accent:#1d5fd1; --ok:#157f3d; --bad:#b42318; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#10141a; --card:#181e27; --ink:#e8ecf2; --mute:#98a2b3; --line:#2a3340; --accent:#5b9bff; --ok:#4ade80; --bad:#f87171; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:24px 16px; }
+  h1 { font-size:22px; margin:0 0 4px; } p.sub { color:var(--mute); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:14px 0 4px; }
+  input[type=text], input[type=tel], input[type=email], select { width:100%; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); font:inherit; }
+  input[type=color] { width:56px; height:40px; padding:2px; border:1px solid var(--line); border-radius:8px; background:var(--bg); }
+  .row { display:flex; gap:12px; align-items:center; }
+  .check { display:flex; gap:8px; align-items:flex-start; font-weight:400; margin-top:12px; }
+  .check input { margin-top:5px; }
+  #preview { max-width:120px; max-height:80px; border:1px solid var(--line); border-radius:8px; display:none; background:#fff; }
+  button { margin-top:20px; width:100%; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .note { color:var(--mute); font-size:14px; margin:6px 0 0; }
+  .err { color:var(--bad); margin-top:12px; }
+  .warn { color:var(--bad); font-size:14px; }
+  .ver { margin:8px 0 0; font-weight:600; }
+  ol { list-style:none; padding:0; margin:8px 0 0; }
+  li { padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  #download[hidden], #prodBox[hidden], #ver[hidden], #pkgWarn[hidden] { display:none !important; }
+  .success { color:var(--ok); } .failure { color:var(--bad); } .in_progress { color:var(--accent); } .pending,.skipped { color:var(--mute); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Build dashboard</h1>
+  <p class="sub">Enter the business details. The app is built with the package ID you give and delivered where you choose.</p>
+  <div class="card">
+    <label for="businessName">Business name</label>
+    <input type="text" id="businessName" placeholder="Sri Sai Sweets" autocomplete="off">
+
+    <label for="phone">Contact phone</label>
+    <input type="tel" id="phone" placeholder="+91 98765 43210" autocomplete="off">
+    <label for="email">Contact email</label>
+    <input type="email" id="email" placeholder="owner@example.com" autocomplete="off">
+
+    <label for="location">Location</label>
+    <input type="text" id="location" placeholder="Kakinada, Andhra Pradesh" autocomplete="off">
+
+    <label for="domain">Domain</label>
+    <input type="text" id="domain" placeholder="shop.example.com" value="ekart360.in" autocomplete="off">
+    <p class="note">The backend the app talks to. No https:// or port.</p>
+
+    <label for="packageId">Package ID</label>
+    <input type="text" id="packageId" placeholder="com.mahesh" value="com.ekart360vendor" autocomplete="off">
+    <p class="note">The app's identity. Lowercase, dot-separated, like com.mahesh. Each package ID is a separate app on the phone and in Google Play.</p>
+    <p id="pkgWarn" class="note warn" hidden>This is a different package from your live app. For a Google Play option, the app must already exist in Play Console under this package ID and your upload account must have access to it; otherwise the upload fails after the build. An APK works without that.</p>
+
+    <label for="logo">Business logo (PNG)</label>
+    <div class="row"><input type="file" id="logo" accept="image/png"><img id="preview" alt="Logo preview"></div>
+    <p class="note">Shown on the sign-in screen and used as the app icon. Resized in your browser.</p>
+
+    <label for="themeColor">Theme colour (optional)</label>
+    <div class="row"><input type="color" id="themeColor" value="#1d44b5"><span id="hex" class="note">#1D44B5 (default)</span></div>
+
+    <label for="destination">Deliver to</label>
+    <select id="destination">
+      <option value="apk">APK only (nothing goes to Google Play)</option>
+      <option value="play-internal">Google Play — internal testing + APK download</option>
+      <option value="play-production">Google Play — Production (live to users) + APK download</option>
+    </select>
+    <div id="prodBox" hidden>
+      <label class="check"><input type="checkbox" id="confirmProd"> <span class="warn">I understand this publishes to real users on Google Play and cannot be deleted afterwards.</span></label>
+    </div>
+    <p class="note">The version name and code are generated by the build (date + build number) and shown below once it starts.</p>
+
+    <button id="go">Build</button>
+    <div id="err" class="err"></div>
+  </div>
+  <div class="card" id="runCard" hidden>
+    <b id="runTitle">Run</b>
+    <p id="ver" class="ver" hidden></p>
+    <ol id="steps"></ol>
+    <a id="download" hidden style="display:block;margin-top:16px;padding:12px;text-align:center;border-radius:8px;background:var(--ok);color:#fff;font-weight:600;text-decoration:none">Download APK</a>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let timer, logoBase64 = '', chosen = 'apk';
+
+function showError(message) {
+  $('err').textContent = message;
+  $('err').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+const DEFAULT_PACKAGE = 'com.ekart360vendor';
+$('themeColor').oninput = () => ($('hex').textContent = $('themeColor').value.toUpperCase());
+function refreshWarnings() {
+  $('prodBox').hidden = $('destination').value !== 'play-production';
+  if ($('prodBox').hidden) $('confirmProd').checked = false;
+  const custom = $('packageId').value.trim() !== '' && $('packageId').value.trim() !== DEFAULT_PACKAGE;
+  $('pkgWarn').hidden = !(custom && $('destination').value !== 'apk');
+}
+$('destination').onchange = refreshWarnings;
+$('packageId').oninput = refreshWarnings;
+
+// GitHub caps a workflow input at 65,535 characters, so shrink until the base64 fits.
+async function shrink(file) {
+  const bitmap = await createImageBitmap(file);
+  for (let width = 512; width >= 64; width = Math.round(width * 0.75)) {
+    const scale = Math.min(1, width / bitmap.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const url = canvas.toDataURL('image/png');
+    const b64 = url.split(',')[1];
+    if (b64.length <= 60000) return { url, b64 };
+  }
+  throw new Error('Logo is too detailed to shrink; try a simpler image.');
+}
+
+$('logo').onchange = async () => {
+  $('err').textContent = '';
+  logoBase64 = '';
+  $('preview').style.display = 'none';
+  const file = $('logo').files[0];
+  if (!file) return;
+  try {
+    const { url, b64 } = await shrink(file);
+    logoBase64 = b64;
+    $('preview').src = url;
+    $('preview').style.display = 'block';
+  } catch (e) { showError(e.message); }
+};
+
+async function poll(id) {
+  try {
+    const r = await (await fetch('/api/status?id=' + id)).json();
+    if (r.version) { $('ver').textContent = 'Version: ' + r.version; $('ver').hidden = false; }
+    const job = (r.jobs || [])[0];
+    if (job) {
+      $('steps').innerHTML = job.steps.filter(s => !s.name.startsWith('Post ')).map(s =>
+        `<li><span>${s.name}</span><span class="${s.conclusion || s.status}">${s.conclusion || s.status}</span></li>`).join('');
+      if (job.status === 'completed') {
+        const done = job.conclusion === 'success' && chosen !== 'apk'
+          ? ' — uploaded to Google Play, APK ready' : ' — ' + job.conclusion;
+        $('runTitle').textContent = 'Run ' + id + done;
+        $('go').disabled = false;
+        if (job.conclusion === 'success') {
+          $('download').href = '/api/apk?id=' + id;
+          $('download').hidden = false;
+        }
+        return;
+      }
+    }
+  } catch (e) { showError(e.message); }
+  timer = setTimeout(() => poll(id), 15000);
+}
+
+$('go').onclick = async () => {
+  $('err').textContent = '';
+  const destination = $('destination').value;
+  if (destination === 'play-production' && !$('confirmProd').checked) {
+    return showError('Tick the confirmation box to publish to Production.');
+  }
+  if (destination !== 'apk' && !confirm('Upload this build to Google Play (' + $('destination').selectedOptions[0].text + ')?')) return;
+  $('go').disabled = true;
+  clearTimeout(timer);
+  const body = {
+    businessName: $('businessName').value.trim(),
+    phone: $('phone').value.trim(),
+    email: $('email').value.trim(),
+    location: $('location').value.trim(),
+    domain: $('domain').value.trim(),
+    packageId: $('packageId').value.trim() === DEFAULT_PACKAGE ? '' : $('packageId').value.trim(),
+    themeColor: $('themeColor').value.toUpperCase() === '#1D44B5' ? '' : $('themeColor').value,
+    logo: logoBase64,
+    destination,
+    confirmProduction: $('confirmProd').checked,
+  };
+  let res, data;
+  try {
+    res = await fetch('/api/deploy', { method: 'POST', body: JSON.stringify(body) });
+    data = await res.json();
+  } catch (e) { showError('Could not reach the dashboard server: ' + e.message); $('go').disabled = false; return; }
+  if (!res.ok) { showError(data.error); $('go').disabled = false; return; }
+  chosen = destination;
+  $('download').hidden = true;
+  $('ver').hidden = true;
+  $('runCard').hidden = false;
+  $('runTitle').textContent = 'Run ' + data.runId + ' — started';
+  poll(data.runId);
+};
+</script>
+</body>
+</html>
