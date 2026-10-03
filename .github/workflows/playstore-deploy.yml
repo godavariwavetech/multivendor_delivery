@@ -10,12 +10,32 @@ on:
         type: choice
         options: [internal, alpha, beta, production]
         default: internal
-      app_name:
-        description: App name shown on the device (blank keeps the default)
+      business_name:
+        description: Business name, shown as the app name (blank keeps the default)
         type: string
         default: ''
-      api_base_url:
-        description: Backend base URL (blank keeps the default)
+      domain:
+        description: Backend domain, e.g. shop.example.com (blank keeps the default)
+        type: string
+        default: ''
+      theme_color:
+        description: Theme colour as #RRGGBB (blank keeps the default)
+        type: string
+        default: ''
+      phone:
+        description: Contact phone
+        type: string
+        default: ''
+      email:
+        description: Contact email
+        type: string
+        default: ''
+      location:
+        description: Business location
+        type: string
+        default: ''
+      logo_base64:
+        description: Business logo, a PNG as base64 (blank keeps the default)
         type: string
         default: ''
 
@@ -49,19 +69,28 @@ jobs:
         run: npm ci
 
       - name: Apply dashboard config
-        run: |
-          node -e '
-            const fs = require("fs");
-            const f = "src/config/appConfig.json";
-            const c = JSON.parse(fs.readFileSync(f, "utf8"));
-            if (process.env.APP_NAME) c.appName = process.env.APP_NAME;
-            if (process.env.API_BASE_URL) c.apiBaseUrl = process.env.API_BASE_URL;
-            fs.writeFileSync(f, JSON.stringify(c, null, 2) + "\n");
-            console.log(c);
-          '
+        run: node scripts/dashboard-config.js
         env:
-          APP_NAME: ${{ inputs.app_name }}
-          API_BASE_URL: ${{ inputs.api_base_url }}
+          BUSINESS_NAME: ${{ inputs.business_name }}
+          DOMAIN: ${{ inputs.domain }}
+          THEME_COLOR: ${{ inputs.theme_color }}
+          PHONE: ${{ inputs.phone }}
+          EMAIL: ${{ inputs.email }}
+          LOCATION: ${{ inputs.location }}
+          LOGO_BASE64: ${{ inputs.logo_base64 }}
+
+      - name: Generate launcher icons from the logo
+        if: ${{ inputs.logo_base64 != '' }}
+        run: |
+          sudo apt-get install -y imagemagick >/dev/null
+          IM=$(command -v magick || command -v convert)
+          res=android/app/src/main/res
+          for pair in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+            dir=$res/mipmap-${pair%%:*}; px=${pair##*:}
+            for name in ic_launcher ic_launcher_round; do
+              $IM build-logo.png -background white -gravity center -resize ${px}x${px} -extent ${px}x${px} "$dir/$name.png"
+            done
+          done
 
       - name: Restore upload keystore
         run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
@@ -73,12 +102,13 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon \
-            -PVERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET )) \            -PMYAPP_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.keystore" \
+            -PVERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET )) \
+            -PMYAPP_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.keystore" \
             -PMYAPP_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
             -PMYAPP_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
             -PMYAPP_UPLOAD_KEY_PASSWORD="$ANDROID_KEY_PASSWORD"
         env:
-          ORG_GRADLE_PROJECT_APP_NAME: ${{ inputs.app_name }}
+          ORG_GRADLE_PROJECT_APP_NAME: ${{ inputs.business_name }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}

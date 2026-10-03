@@ -15,7 +15,9 @@ export const API_PORT = 2477;
  * Build-time config. CI rewrites appConfig.json from the dashboard's form;
  * the committed file holds the standard eKart360 values.
  */
-export const DEFAULT_API_BASE_URL: string = appConfig.apiBaseUrl || `https://ekart360.in:${API_PORT}`;
+export const APP_CONFIG = appConfig;
+
+export const DEFAULT_API_BASE_URL = `https://${appConfig.domain}:${API_PORT}`;
 
 /**
  * The address of the machine the backend was built against, tried on first run

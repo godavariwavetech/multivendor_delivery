@@ -1,20 +1,24 @@
-// Dummy dashboard: collects build requirements and starts the Play Store
+// Dummy dashboard: collects a business's requirements and starts the Play Store
 // workflow through the local `gh` login. Local only; no token reaches the page.
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
+const { validate } = require('../scripts/dashboard-config');
 
 const REPO = 'godavariwavetech/multivendor_delivery';
 const WORKFLOW = 'playstore-deploy.yml';
 const REF = 'deployment';
-const PORT = 4000;
+const PORT = 4747;
 const GH = process.env.GH_PATH || `${process.env.ProgramFiles}\\GitHub CLI\\gh.exe`;
 
-const gh = args =>
-  new Promise((resolve, reject) =>
-    execFile(GH, args, { windowsHide: true }, (err, out, errOut) => (err ? reject(new Error(errOut || err.message)) : resolve(out))),
-  );
+const gh = (args, stdin) =>
+  new Promise((resolve, reject) => {
+    const child = execFile(GH, args, { windowsHide: true }, (err, out, errOut) =>
+      err ? reject(new Error(errOut || err.message)) : resolve(out),
+    );
+    if (stdin) child.stdin.end(stdin);
+  });
 
 const send = (res, code, body, type = 'application/json') => {
   res.writeHead(code, { 'Content-Type': type });
@@ -28,16 +32,10 @@ const readBody = req =>
     req.on('end', () => resolve(data));
   });
 
-// Values go straight into a build, so only accept plain, safe shapes.
-function validate({ appName, apiBaseUrl }) {
-  if (!/^[A-Za-z0-9][A-Za-z0-9 \-]{1,29}$/.test(appName || '')) {
-    return 'App name: 2-30 letters, numbers, spaces or dashes.';
-  }
-  if (!/^https:\/\/[A-Za-z0-9.\-]+(:\d{2,5})?$/.test(apiBaseUrl || '')) {
-    return 'API URL must be https://host or https://host:port (no path).';
-  }
-  return null;
-}
+const latestRunId = async () => {
+  const runs = JSON.parse(await gh(['run', 'list', '-R', REPO, '-w', WORKFLOW, '-L', '1', '--json', 'databaseId']));
+  return runs[0] && runs[0].databaseId;
+};
 
 http
   .createServer(async (req, res) => {
@@ -47,23 +45,27 @@ http
         return send(res, 200, fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'), 'text/html; charset=utf-8');
       }
       if (req.method === 'POST' && url.pathname === '/api/deploy') {
-        const body = JSON.parse((await readBody(req)) || '{}');
-        const problem = validate(body);
+        const f = JSON.parse((await readBody(req)) || '{}');
+        const problem = validate(f);
         if (problem) return send(res, 400, { error: problem });
-        const before = JSON.parse(await gh(['run', 'list', '-R', REPO, '-w', WORKFLOW, '-L', '1', '--json', 'databaseId']));
-        await gh([
-          'workflow', 'run', WORKFLOW, '-R', REPO, '--ref', REF,
-          '-f', 'track=internal', // the dummy dashboard can never reach Production
-          '-f', `app_name=${body.appName}`,
-          '-f', `api_base_url=${body.apiBaseUrl}`,
-        ]);
+        if (!f.businessName || !f.domain) return send(res, 400, { error: 'Business name and domain are required.' });
+        const before = await latestRunId();
+        const inputs = {
+          track: 'internal', // the dummy dashboard can never reach Production
+          business_name: f.businessName || '',
+          domain: f.domain || '',
+          theme_color: f.themeColor || '',
+          phone: f.phone || '',
+          email: f.email || '',
+          location: f.location || '',
+          logo_base64: f.logo || '',
+        };
+        await gh(['workflow', 'run', WORKFLOW, '-R', REPO, '--ref', REF, '--json'], JSON.stringify(inputs));
         // dispatch returns no run id, so wait for the new run to appear
         for (let i = 0; i < 10; i++) {
           await new Promise(r => setTimeout(r, 2000));
-          const now = JSON.parse(await gh(['run', 'list', '-R', REPO, '-w', WORKFLOW, '-L', '1', '--json', 'databaseId']));
-          if (now[0] && now[0].databaseId !== (before[0] && before[0].databaseId)) {
-            return send(res, 200, { runId: now[0].databaseId });
-          }
+          const now = await latestRunId();
+          if (now && now !== before) return send(res, 200, { runId: now });
         }
         return send(res, 504, { error: 'Workflow was dispatched but the run did not appear yet; check GitHub Actions.' });
       }

@@ -1,3 +1,4 @@
+import appConfig from '../config/appConfig.json';
 import { palette } from './palette';
 
 export type Role = 'vendor' | 'delivery';
@@ -16,15 +17,35 @@ export type RoleColors = {
   wash: string; // tinted callout backgrounds
 };
 
+/** Blend a #RRGGBB colour toward another by `amount` (0 = unchanged, 1 = fully `toward`). */
+const mix = (hex: string, toward: string, amount: number): string => {
+  const channel = (value: string, i: number) => parseInt(value.slice(1 + i * 2, 3 + i * 2), 16);
+  const out = [0, 1, 2].map(i => Math.round(channel(hex, i) + (channel(toward, i) - channel(hex, i)) * amount));
+  return `#${out.map(c => c.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+};
+
+/** The vendor workspace's colours for a business-chosen theme colour (set in the build dashboard). */
+const vendorFromTheme = (accent: string): RoleColors => ({
+  accent,
+  accentDeep: mix(accent, '#000000', 0.3),
+  onAccent: palette.white,
+  soft: mix(accent, '#FFFFFF', 0.88),
+  line: mix(accent, '#FFFFFF', 0.7),
+  wash: mix(accent, '#FFFFFF', 0.94),
+});
+
+const boardVendor: RoleColors = {
+  accent: palette.blue,
+  accentDeep: palette.blueDeep,
+  onAccent: palette.white,
+  soft: palette.sky,
+  line: palette.skyLine,
+  wash: palette.skyWash,
+};
+
 export const roleColors: Record<Role, RoleColors> = {
-  vendor: {
-    accent: palette.blue,
-    accentDeep: palette.blueDeep,
-    onAccent: palette.white,
-    soft: palette.sky,
-    line: palette.skyLine,
-    wash: palette.skyWash,
-  },
+  vendor:
+    appConfig.themeColor.toUpperCase() === palette.blue.toUpperCase() ? boardVendor : vendorFromTheme(appConfig.themeColor),
   delivery: {
     accent: palette.green,
     accentDeep: palette.greenDeep,
