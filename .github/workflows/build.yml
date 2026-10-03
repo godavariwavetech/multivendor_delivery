@@ -116,20 +116,22 @@ jobs:
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
-      # APK: arm64 only, which covers current phones and builds much faster.
-      # Play bundle: every architecture, so no device is dropped.
+      # Download-only: an arm64 APK, which covers current phones and builds fast.
+      # Play: the bundle for every architecture (no device is dropped), plus an
+      # APK from the same build so it can be downloaded too. That APK carries all
+      # architectures, so it is larger than the arm64-only one.
       - name: Build signed release
         working-directory: android
         run: |
           chmod +x gradlew
           if [ "$DELIVER" = "playstore" ]; then
-            TASK=bundleRelease
+            TASKS="bundleRelease assembleRelease"
             ARCH=armeabi-v7a,arm64-v8a,x86,x86_64
           else
-            TASK=assembleRelease
+            TASKS="assembleRelease"
             ARCH=arm64-v8a
           fi
-          ./gradlew "$TASK" --no-daemon \
+          ./gradlew $TASKS --no-daemon \
             -PreactNativeArchitectures="$ARCH" \
             -PVERSION_CODE="$VERSION_CODE" \
             -PVERSION_NAME="$VERSION_NAME" \
@@ -144,7 +146,6 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Upload APK for download
-        if: ${{ env.DELIVER == 'apk' }}
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk

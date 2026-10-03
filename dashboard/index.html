@@ -59,9 +59,9 @@
 
     <label for="destination">Deliver to</label>
     <select id="destination">
-      <option value="apk">Download an APK (nothing goes to Google Play)</option>
-      <option value="play-internal">Google Play — internal testing</option>
-      <option value="play-production">Google Play — Production (live to users)</option>
+      <option value="apk">APK only (nothing goes to Google Play)</option>
+      <option value="play-internal">Google Play — internal testing + APK download</option>
+      <option value="play-production">Google Play — Production (live to users) + APK download</option>
     </select>
     <div id="prodBox" hidden>
       <label class="check"><input type="checkbox" id="confirmProd"> <span class="warn">I understand this publishes to real users on Google Play and cannot be deleted afterwards.</span></label>
@@ -133,10 +133,10 @@ async function poll(id) {
         `<li><span>${s.name}</span><span class="${s.conclusion || s.status}">${s.conclusion || s.status}</span></li>`).join('');
       if (job.status === 'completed') {
         const done = job.conclusion === 'success' && chosen !== 'apk'
-          ? ' — uploaded to Google Play' : ' — ' + job.conclusion;
+          ? ' — uploaded to Google Play, APK ready' : ' — ' + job.conclusion;
         $('runTitle').textContent = 'Run ' + id + done;
         $('go').disabled = false;
-        if (job.conclusion === 'success' && chosen === 'apk') {
+        if (job.conclusion === 'success') {
           $('download').href = '/api/apk?id=' + id;
           $('download').hidden = false;
         }
