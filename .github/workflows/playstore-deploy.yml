@@ -48,6 +48,7 @@ jobs:
       - name: Build signed release bundle
         working-directory: android
         run: |
+          chmod +x gradlew
           ./gradlew bundleRelease --no-daemon \
             -PVERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET )) \
             -PMYAPP_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.keystore" \
