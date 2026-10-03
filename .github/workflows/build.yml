@@ -56,16 +56,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      # Offset keeps versionCode above anything already uploaded by hand.
-      VERSION_CODE_OFFSET: 100
       DELIVER: ${{ inputs.deliver || 'apk' }}
     steps:
       - uses: actions/checkout@v4
 
+      # The code counts minutes since 2026-01-01 UTC (1767225600), so it only ever
+      # goes up, whatever this workflow's run counter does (it restarts if the
+      # file is renamed) and whatever was uploaded to Play before. Builds are
+      # serialised, so two never share a minute. The name is that day plus the run.
       - name: Compute version
         run: |
-          echo "VERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET ))" >> "$GITHUB_ENV"
-          echo "VERSION_NAME=$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          code=$(( ($(date -u +%s) - 1767225600) / 60 ))
+          name="$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}"
+          echo "VERSION_CODE=$code" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$name" >> "$GITHUB_ENV"
+          echo "::notice title=Version::${name} (code ${code})"
 
       - uses: actions/setup-node@v4
         with:

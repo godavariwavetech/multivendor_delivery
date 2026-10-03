@@ -50,9 +50,21 @@ http
         const problem = validate(f);
         if (problem) return send(res, 400, { error: problem });
         if (!f.businessName || !f.domain) return send(res, 400, { error: 'Business name and domain are required.' });
+        // destination: a downloadable APK, or Google Play (internal testing / production)
+        const DESTINATIONS = {
+          apk: { deliver: 'apk', track: 'internal' },
+          'play-internal': { deliver: 'playstore', track: 'internal' },
+          'play-production': { deliver: 'playstore', track: 'production' },
+        };
+        const destination = DESTINATIONS[f.destination];
+        if (!destination) return send(res, 400, { error: 'Choose where to deliver the build.' });
+        if (f.destination === 'play-production' && f.confirmProduction !== true) {
+          return send(res, 400, { error: 'Production releases need the confirmation box ticked.' });
+        }
         const before = await latestRunId();
         const inputs = {
-          deliver: 'apk', // the dashboard builds a downloadable APK; it never uploads to Play
+          deliver: destination.deliver,
+          track: destination.track,
           business_name: f.businessName || '',
           domain: f.domain || '',
           theme_color: f.themeColor || '',
@@ -73,8 +85,19 @@ http
       if (req.method === 'GET' && url.pathname === '/api/status') {
         const id = url.searchParams.get('id') || '';
         if (!/^\d+$/.test(id)) return send(res, 400, { error: 'bad id' });
-        const out = await gh(['api', `repos/${REPO}/actions/runs/${id}/jobs`, '--jq', '{jobs:[.jobs[]|{status,conclusion,steps:[.steps[]|{name,status,conclusion}]}]}']);
-        return send(res, 200, out);
+        const jobs = JSON.parse(
+          await gh(['api', `repos/${REPO}/actions/runs/${id}/jobs`, '--jq', '{jobs:[.jobs[]|{id,status,conclusion,steps:[.steps[]|{name,status,conclusion}]}]}']),
+        );
+        // the workflow prints the version it computed as a "Version" notice annotation
+        let version = null;
+        if (jobs.jobs[0]) {
+          try {
+            const notes = JSON.parse(await gh(['api', `repos/${REPO}/check-runs/${jobs.jobs[0].id}/annotations`]));
+            const note = notes.find(n => n.title === 'Version');
+            if (note) version = note.message;
+          } catch (e) { /* annotations appear a moment after the step; try again next poll */ }
+        }
+        return send(res, 200, { ...jobs, version });
       }
       if (req.method === 'GET' && url.pathname === '/api/apk') {
         const id = url.searchParams.get('id') || '';
