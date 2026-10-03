@@ -65,6 +65,11 @@
 const $ = id => document.getElementById(id);
 let timer, logoBase64 = '';
 
+function showError(message) {
+  $('err').textContent = message;
+  $('err').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 $('themeColor').oninput = () => ($('hex').textContent = $('themeColor').value.toUpperCase());
 
 // GitHub caps a workflow input at 65,535 characters, so shrink until the base64 fits.
@@ -127,9 +132,12 @@ $('go').onclick = async () => {
     themeColor: $('themeColor').value,
     logo: logoBase64,
   };
-  const res = await fetch('/api/deploy', { method: 'POST', body: JSON.stringify(body) });
-  const data = await res.json();
-  if (!res.ok) { $('err').textContent = data.error; $('go').disabled = false; return; }
+  let res, data;
+  try {
+    res = await fetch('/api/deploy', { method: 'POST', body: JSON.stringify(body) });
+    data = await res.json();
+  } catch (e) { showError('Could not reach the dashboard server: ' + e.message); $('go').disabled = false; return; }
+  if (!res.ok) { showError(data.error); $('go').disabled = false; return; }
   $('runCard').hidden = false;
   $('runTitle').textContent = 'Run ' + data.runId + ' — started';
   poll(data.runId);

@@ -53,6 +53,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Compute version
+        run: |
+          echo "VERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET ))" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -102,7 +107,8 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon \
-            -PVERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET )) \
+            -PVERSION_CODE="$VERSION_CODE" \
+            -PVERSION_NAME="$VERSION_NAME" \
             -PMYAPP_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.keystore" \
             -PMYAPP_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
             -PMYAPP_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
@@ -123,6 +129,7 @@ jobs:
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.ekart360vendor
+          releaseName: ${{ env.VERSION_NAME }}
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: ${{ inputs.track || 'internal' }}
           status: completed

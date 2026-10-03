@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RULES = {
+  version: [/^\d{1,3}\.\d{1,3}\.\d{1,6}$/, 'Version: like 1.0.5.'],
   businessName: [/^[A-Za-z0-9][A-Za-z0-9 \-]{1,29}$/, 'Business name: 2-30 letters, numbers, spaces or dashes.'],
   domain: [/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/i, 'Domain: like shop.example.com (no https://, port or path).'],
   themeColor: [/^#[0-9a-f]{6}$/i, 'Theme colour: a #RRGGBB hex value.'],
@@ -34,6 +35,7 @@ function apply(fields, root) {
   const file = path.join(root, 'src/config/appConfig.json');
   const config = JSON.parse(fs.readFileSync(file, 'utf8'));
   const pick = key => (fields[key] || '').trim();
+  if (pick('version')) config.version = pick('version');
   if (pick('businessName')) config.businessName = pick('businessName');
   if (pick('domain')) config.domain = pick('domain').toLowerCase();
   if (pick('themeColor')) config.themeColor = pick('themeColor').toUpperCase();
@@ -56,6 +58,7 @@ module.exports = { validate };
 if (require.main === module) {
   const e = process.env;
   const fields = {
+    version: e.VERSION_NAME,
     businessName: e.BUSINESS_NAME, domain: e.DOMAIN, themeColor: e.THEME_COLOR,
     phone: e.PHONE, email: e.EMAIL, location: e.LOCATION, logo: e.LOGO_BASE64,
   };

@@ -47,8 +47,8 @@ export const USE_MOCK_HISTORY = true;
 /** How often a signed-in workspace refetches its state. */
 export const POLL_INTERVAL_MS = 15000;
 
-/** Shown in Profile. Keep in step with android/app/build.gradle versionName. */
-export const APP_VERSION = '1.0';
+/** Shown in Profile. CI writes the same value into appConfig.json and the Android versionName. */
+export const APP_VERSION: string = appConfig.version;
 
 /**
  * Map tiles.

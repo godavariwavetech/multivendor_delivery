@@ -4,7 +4,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Chip, ChipRow, SectionLabel, Text } from '@/components';
 import { useSession } from '@/data/session';
-import { APP_VERSION } from '@config/constants';
+import { APP_CONFIG, APP_VERSION } from '@config/constants';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORIES, CATEGORY_LONG_LABEL } from '@/domain/labels';
 import { palette, space, useTheme } from '@/theme';
@@ -77,7 +77,7 @@ export function LogoutBlock({ onDeleteAccount }: { onDeleteAccount: () => void }
       />
       <Pressable onPress={onDeleteAccount} hitSlop={8}>
         <Text v="caption" subtle center>
-          {`eKart360 Partner v${APP_VERSION} · delete account`}
+          {`${APP_CONFIG.businessName} v${APP_VERSION} · delete account`}
         </Text>
       </Pressable>
     </View>
