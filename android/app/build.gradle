@@ -91,7 +91,8 @@ android {
         applicationId "com.ekart360vendor"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        // CI passes -PVERSION_CODE=<run number> so every Play upload is unique.
+        versionCode project.hasProperty('VERSION_CODE') ? VERSION_CODE.toInteger() : 1
         versionName "1.0"
     }
     signingConfigs {
