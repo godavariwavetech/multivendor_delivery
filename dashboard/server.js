@@ -2,12 +2,13 @@
 // workflow through the local `gh` login. Local only; no token reaches the page.
 const http = require('http');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
 const { validate } = require('../scripts/dashboard-config');
 
 const REPO = 'godavariwavetech/multivendor_delivery';
-const WORKFLOW = 'playstore-deploy.yml';
+const WORKFLOW = 'build.yml';
 const REF = 'deployment';
 const PORT = 4747;
 const GH = process.env.GH_PATH || `${process.env.ProgramFiles}\\GitHub CLI\\gh.exe`;
@@ -51,7 +52,7 @@ http
         if (!f.businessName || !f.domain) return send(res, 400, { error: 'Business name and domain are required.' });
         const before = await latestRunId();
         const inputs = {
-          track: 'internal', // the dummy dashboard can never reach Production
+          deliver: 'apk', // the dashboard builds a downloadable APK; it never uploads to Play
           business_name: f.businessName || '',
           domain: f.domain || '',
           theme_color: f.themeColor || '',
@@ -74,6 +75,24 @@ http
         if (!/^\d+$/.test(id)) return send(res, 400, { error: 'bad id' });
         const out = await gh(['api', `repos/${REPO}/actions/runs/${id}/jobs`, '--jq', '{jobs:[.jobs[]|{status,conclusion,steps:[.steps[]|{name,status,conclusion}]}]}']);
         return send(res, 200, out);
+      }
+      if (req.method === 'GET' && url.pathname === '/api/apk') {
+        const id = url.searchParams.get('id') || '';
+        if (!/^\d+$/.test(id)) return send(res, 400, { error: 'bad id' });
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'apk-'));
+        try {
+          await gh(['run', 'download', id, '-R', REPO, '-n', 'app-release-apk', '-D', dir]);
+          const file = path.join(dir, 'app-release.apk');
+          res.writeHead(200, {
+            'Content-Type': 'application/vnd.android.package-archive',
+            'Content-Length': fs.statSync(file).size,
+            'Content-Disposition': `attachment; filename="app-${id}.apk"`,
+          });
+          return fs.createReadStream(file).on('close', () => fs.rmSync(dir, { recursive: true, force: true })).pipe(res);
+        } catch (e) {
+          fs.rmSync(dir, { recursive: true, force: true });
+          throw e;
+        }
       }
       send(res, 404, { error: 'not found' });
     } catch (e) {

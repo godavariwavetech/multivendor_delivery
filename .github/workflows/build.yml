@@ -1,12 +1,20 @@
-name: Deploy to Play Store
+name: Build app
 
+# A push to `deployment` (or a dashboard request) builds a signed APK you can
+# download. Nothing reaches Google Play unless you run this by hand from the
+# Actions tab and pick deliver = playstore.
 on:
   push:
     branches: [deployment]
   workflow_dispatch:
     inputs:
+      deliver:
+        description: apk = downloadable APK only; playstore = also upload to Google Play
+        type: choice
+        options: [apk, playstore]
+        default: apk
       track:
-        description: Play Store track
+        description: Play Store track (only used when deliver = playstore)
         type: choice
         options: [internal, alpha, beta, production]
         default: internal
@@ -40,16 +48,17 @@ on:
         default: ''
 
 concurrency:
-  group: playstore-deploy
+  group: build-app
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
       # Offset keeps versionCode above anything already uploaded by hand.
       VERSION_CODE_OFFSET: 100
+      DELIVER: ${{ inputs.deliver || 'apk' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -102,11 +111,21 @@ jobs:
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
-      - name: Build signed release bundle
+      # APK: arm64 only, which covers current phones and builds much faster.
+      # Play bundle: every architecture, so no device is dropped.
+      - name: Build signed release
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew bundleRelease --no-daemon \
+          if [ "$DELIVER" = "playstore" ]; then
+            TASK=bundleRelease
+            ARCH=armeabi-v7a,arm64-v8a,x86,x86_64
+          else
+            TASK=assembleRelease
+            ARCH=arm64-v8a
+          fi
+          ./gradlew "$TASK" --no-daemon \
+            -PreactNativeArchitectures="$ARCH" \
             -PVERSION_CODE="$VERSION_CODE" \
             -PVERSION_NAME="$VERSION_NAME" \
             -PMYAPP_UPLOAD_STORE_FILE="$RUNNER_TEMP/upload.keystore" \
@@ -119,12 +138,23 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK for download
+        if: ${{ env.DELIVER == 'apk' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 14
+
+      - name: Upload bundle artifact
+        if: ${{ env.DELIVER == 'playstore' }}
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Upload to Google Play
+        if: ${{ env.DELIVER == 'playstore' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}

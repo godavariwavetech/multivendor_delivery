@@ -22,13 +22,14 @@
   .err { color:var(--bad); margin-top:12px; }
   ol { list-style:none; padding:0; margin:8px 0 0; }
   li { padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  #download[hidden] { display:none !important; }
   .success { color:var(--ok); } .failure { color:var(--bad); } .in_progress { color:var(--accent); } .pending,.skipped { color:var(--mute); }
 </style>
 </head>
 <body>
 <main>
   <h1>Build dashboard</h1>
-  <p class="sub">Enter the business details; the app is built and sent to the Play internal track.</p>
+  <p class="sub">Enter the business details; the app is built as an APK you can download and install.</p>
   <div class="card">
     <label for="businessName">Business name</label>
     <input type="text" id="businessName" placeholder="Sri Sai Sweets">
@@ -52,13 +53,14 @@
     <div class="row"><input type="file" id="logo" accept="image/png"><img id="preview" alt="Logo preview"></div>
     <p class="note">Shown on the sign-in screen and used as the app icon. Resized in your browser.</p>
 
-    <p class="note">Track is fixed to <b>internal</b>. Package ID stays com.ekart360vendor.</p>
-    <button id="go">Build and publish</button>
+    <p class="note">Builds a signed APK you download here. Nothing is sent to Google Play. Package ID stays com.ekart360vendor.</p>
+    <button id="go">Build APK</button>
     <div id="err" class="err"></div>
   </div>
   <div class="card" id="runCard" hidden>
     <b id="runTitle">Run</b>
     <ol id="steps"></ol>
+    <a id="download" hidden style="display:block;margin-top:16px;padding:12px;text-align:center;border-radius:8px;background:var(--ok);color:#fff;font-weight:600;text-decoration:none">Download APK</a>
   </div>
 </main>
 <script>
@@ -112,6 +114,10 @@ async function poll(id) {
       if (job.status === 'completed') {
         $('runTitle').textContent = 'Run ' + id + ' — ' + job.conclusion;
         $('go').disabled = false;
+        if (job.conclusion === 'success') {
+          $('download').href = '/api/apk?id=' + id;
+          $('download').hidden = false;
+        }
         return;
       }
     }
@@ -138,6 +144,7 @@ $('go').onclick = async () => {
     data = await res.json();
   } catch (e) { showError('Could not reach the dashboard server: ' + e.message); $('go').disabled = false; return; }
   if (!res.ok) { showError(data.error); $('go').disabled = false; return; }
+  $('download').hidden = true;
   $('runCard').hidden = false;
   $('runTitle').textContent = 'Run ' + data.runId + ' — started';
   poll(data.runId);
