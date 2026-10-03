@@ -93,8 +93,11 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // CI passes -PVERSION_CODE=<run number> so every Play upload is unique.
         versionCode project.hasProperty('VERSION_CODE') ? VERSION_CODE.toInteger() : 1
-        // CI passes -PVERSION_NAME (1.0.<run number>) in step with VERSION_CODE.
-        versionName project.hasProperty('VERSION_NAME') ? VERSION_NAME : "1.0"
+        // CI passes -PVERSION_NAME (<date>.<run number>) in step with VERSION_CODE;
+        // a local build falls back to the version in package.json.
+        versionName project.hasProperty('VERSION_NAME')
+            ? VERSION_NAME
+            : new groovy.json.JsonSlurper().parse(file("$rootDir/../package.json")).version
         // CI passes -PAPP_NAME from the dashboard; the label is generated, not in strings.xml.
         resValue "string", "app_name", (project.hasProperty('APP_NAME') && APP_NAME.trim()) ? APP_NAME.trim() : "eKart360 Partner"
     }

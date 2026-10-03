@@ -56,7 +56,7 @@ jobs:
       - name: Compute version
         run: |
           echo "VERSION_CODE=$(( GITHUB_RUN_NUMBER + VERSION_CODE_OFFSET ))" >> "$GITHUB_ENV"
-          echo "VERSION_NAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:

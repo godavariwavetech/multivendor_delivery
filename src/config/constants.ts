@@ -1,3 +1,4 @@
+import packageJson from '../../package.json';
 import appConfig from './appConfig.json';
 
 /**
@@ -47,8 +48,11 @@ export const USE_MOCK_HISTORY = true;
 /** How often a signed-in workspace refetches its state. */
 export const POLL_INTERVAL_MS = 15000;
 
-/** Shown in Profile. CI writes the same value into appConfig.json and the Android versionName. */
-export const APP_VERSION: string = appConfig.version;
+/**
+ * Shown in Profile. CI writes its build version into appConfig.json (the same
+ * value as the Android versionName); without it, package.json's version is used.
+ */
+export const APP_VERSION: string = appConfig.version || packageJson.version;
 
 /**
  * Map tiles.

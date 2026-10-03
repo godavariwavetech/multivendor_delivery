@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RULES = {
-  version: [/^\d{1,3}\.\d{1,3}\.\d{1,6}$/, 'Version: like 1.0.5.'],
+  version: [/^\d+(\.\d+){1,4}$/, 'Version: dot-separated numbers, like 2026.10.03.5.'],
   businessName: [/^[A-Za-z0-9][A-Za-z0-9 \-]{1,29}$/, 'Business name: 2-30 letters, numbers, spaces or dashes.'],
   domain: [/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/i, 'Domain: like shop.example.com (no https://, port or path).'],
   themeColor: [/^#[0-9a-f]{6}$/i, 'Theme colour: a #RRGGBB hex value.'],
