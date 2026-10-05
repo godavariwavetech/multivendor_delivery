@@ -35,7 +35,7 @@ const apiDate = (date: Date) =>
 export function VendorHomeScreen() {
   const nav = useVendorNav();
   const now = useNow();
-  const { store, state, newOrders, cookingOrders, readyOrders, unread, actions } = useVendor();
+  const { store, state, newOrders, cookingOrders, readyOrders, unread, refresh, actions } = useVendor();
   const { r } = useTheme();
   const first = newOrders[0];
   const [historyRange, setHistoryRange] = useState<HistoryRange>({ from: null, to: null });
@@ -53,7 +53,7 @@ export function VendorHomeScreen() {
   const goOrders = (tab: 'new' | 'cooking' | 'ready') => nav.navigate('VendorTabs', { screen: 'Orders', params: { tab } });
 
   return (
-    <Screen tab contentStyle={styles.screen} gap={0}>
+    <Screen tab contentStyle={styles.screen} gap={0} onRefresh={refresh}>
       <View style={[styles.hero, { backgroundColor: r.accent }]}>
         <View pointerEvents="none" style={styles.pattern}>
           <ShoppingBag style={styles.patternOne} size={86} color={palette.white} strokeWidth={1} />

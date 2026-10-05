@@ -39,7 +39,7 @@ import { PICKUP_COPY, PickupHandling, categoryPill, requiredChecks } from './han
  * to the store → pickup (2b, per category) → code → on the way → OTP → complete.
  */
 export function ActiveScreen() {
-  const { state, activeRequest } = useDelivery();
+  const { state, activeRequest, refresh } = useDelivery();
   const trip = state.active;
 
   if (!trip || !activeRequest) {
@@ -62,7 +62,7 @@ function NoTrip() {
   const nav = useDeliveryNav();
   const { state, openRequests, actions } = useDelivery();
   return (
-    <Screen tab>
+    <Screen tab onRefresh={refresh}>
       <TitleHeader title="Active" />
       {state.online ? (
         <EmptyState

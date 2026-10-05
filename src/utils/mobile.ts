@@ -30,11 +30,14 @@ export const formatMobile = (value: string): string => {
 
 /**
  * What to tell the person about the number as it stands, or null while it is
- * fine or still being typed. A full 10 digits must also be a real mobile number.
+ * fine or empty. Fewer than 10 digits is short; a full 10 must also be a real mobile number.
  */
 export const mobileIssue = (digits: string, extraDigits: boolean): string | null => {
   if (extraDigits) {
     return 'A mobile number has 10 digits. Please enter a correct number.';
+  }
+  if (digits.length > 0 && digits.length < 10) {
+    return 'Phone number must be at least 10 numbers';
   }
   if (digits.length === 10 && !isValidMobile(digits)) {
     return 'Please enter a correct mobile number. It starts with 6, 7, 8 or 9.';

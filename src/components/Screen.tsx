@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Package, ShoppingBag, Store } from 'lucide-react-native';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, RefreshControl, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import { Edge, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette, radius, space, useTheme } from '@/theme';
@@ -23,11 +23,29 @@ type ScreenProps = {
   bleed?: boolean;
   edges?: Edge[];
   gap?: number;
+  /** Enables native pull-to-refresh for screens backed by live data. */
+  onRefresh?: () => Promise<void> | void;
 };
 
-export function Screen({ children, tab, scroll = true, footer, overlay, contentStyle, bleed, edges, gap = 12 }: ScreenProps) {
+export function Screen({ children, tab, scroll = true, footer, overlay, contentStyle, bleed, edges, gap = 12, onRefresh }: ScreenProps) {
+  const [refreshing, setRefreshing] = useState(false);
   const safeEdges: Edge[] = edges ?? (tab || footer ? ['top'] : ['top', 'bottom']);
   const body = [styles.content, { gap }, bleed && styles.bleed, contentStyle];
+  const refreshControl = onRefresh ? (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={async () => {
+        if (refreshing) return;
+        setRefreshing(true);
+        try {
+          await onRefresh();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+      tintColor={palette.inkMuted}
+    />
+  ) : undefined;
   return (
     <SafeAreaView edges={safeEdges} style={styles.root}>
       {/*
@@ -44,6 +62,7 @@ export function Screen({ children, tab, scroll = true, footer, overlay, contentS
             style={styles.flex}
             contentContainerStyle={[body, styles.scrollPad]}
             keyboardShouldPersistTaps="handled"
+            refreshControl={refreshControl}
             showsVerticalScrollIndicator={false}>
             {children}
           </ScrollView>
