@@ -4,13 +4,13 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { palette, radius, useTheme } from '@/theme';
+import { palette, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
 /**
- * The shared 5-slot tab bar. The active tab gets a soft pill behind its icon in the
- * role colour — peach for vendors, mint for partners.
+ * The shared 5-slot tab bar. The active tab is marked by a bar on the top edge and an
+ * accent-coloured icon and label in the role colour — blue for vendors, green for partners.
  */
 export function TabBar({
   state,
@@ -39,7 +39,8 @@ export function TabBar({
                 navigation.navigate(route.name, route.params);
               }
             }}>
-            <View style={[styles.iconPill, focused && { backgroundColor: r.soft, borderColor: r.line, borderWidth: 1 }]}>
+            <View style={[styles.indicator, focused && { backgroundColor: r.accent }]} />
+            <View style={styles.icon}>
               {Icon ? (
                 <Icon size={24} color={focused ? r.accent : palette.inkSubtle} strokeWidth={focused ? 2.4 : 2} />
               ) : null}
@@ -63,5 +64,7 @@ const styles = StyleSheet.create({
     paddingTop: 7,
   },
   item: { flex: 1, alignItems: 'center', gap: 2 },
-  iconPill: { width: 54, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  // A short rounded bar, set a few px below the bar's top border, marks the active tab.
+  indicator: { width: 32, height: 4, borderRadius: 2, marginTop: -3 },
+  icon: { height: 32, alignItems: 'center', justifyContent: 'center' },
 });

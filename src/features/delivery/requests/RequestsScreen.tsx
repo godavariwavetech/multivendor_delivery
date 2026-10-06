@@ -26,7 +26,7 @@ export function RequestsScreen() {
   const nav = useDeliveryNav();
   const toast = useToast();
   const now = useNow();
-  const { state, openRequests, activeRequest, actions } = useDelivery();
+  const { state, openRequests, activeRequest, refresh, actions } = useDelivery();
   const [offer, setOffer] = useState<{ id: string; at: number } | null>(null);
 
   const first = openRequests[0];
@@ -61,7 +61,7 @@ export function RequestsScreen() {
   const others = state.requests.filter(r => r.id !== first?.id && (r.status === 'open' || r.status === 'taken'));
 
   return (
-    <Screen tab>
+    <Screen tab onRefresh={refresh}>
       <TitleHeader
         title="Requests"
         right={

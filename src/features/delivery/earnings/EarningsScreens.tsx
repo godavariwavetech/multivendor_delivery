@@ -56,10 +56,10 @@ export function TripRow({ trip, onPress }: { trip: Trip; onPress: () => void }) 
 /** Board 4b·4 / 1c·5 — weekly earnings, how it adds up, payout status, today's trips. */
 export function PartnerEarningsScreen() {
   const nav = useDeliveryNav();
-  const { week, today, state } = useDelivery();
+  const { week, today, state, refresh } = useDelivery();
 
   return (
-    <Screen tab>
+    <Screen tab onRefresh={refresh}>
       <TitleHeader title="Earnings" right={<LinkButton label="Statement" color={palette.greenDeep} onPress={() => nav.navigate('Statement')} />} />
 
       <Card tone="green" style={styles.hero}>

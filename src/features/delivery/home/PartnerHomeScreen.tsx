@@ -17,12 +17,12 @@ export function PartnerHomeScreen() {
   const nav = useDeliveryNav();
   const toast = useToast();
   const now = useNow(15_000);
-  const { state, profile, activeRequest, openRequests, today, unread, actions } = useDelivery();
+  const { state, profile, activeRequest, openRequests, today, unread, refresh, actions } = useDelivery();
   const trip = state.active;
   const foodOnly = openRequests.every(r => r.category === 'food');
 
   return (
-    <Screen tab>
+    <Screen tab onRefresh={refresh}>
       <HomeHeader
         initials={profile.initials}
         name={profile.name}

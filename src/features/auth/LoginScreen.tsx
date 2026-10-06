@@ -1,5 +1,5 @@
-import { Bike, Store } from 'lucide-react-native';
-import React, { useState } from 'react';
+import { Bike, CircleAlert, Store } from 'lucide-react-native';
+import React, { useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, LinkButton, Screen, SegmentOption, SegmentedTabs, Text } from '@/components';
@@ -29,6 +29,7 @@ export function LoginScreen() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const passwordRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   // Set while the last keystroke or paste had more than 10 digits.
   const [extraDigits, setExtraDigits] = useState(false);
 
@@ -106,16 +107,17 @@ export function LoginScreen() {
           Mobile number
         </Text>
         <View style={[styles.field, mobileMessage ? styles.fieldInvalid : null]}>
-          <Text v="body" muted style={styles.prefix}>
-            +91
-          </Text>
-          <View style={styles.prefixDivider} />
           <TextInput
             value={mobile}
             onChangeText={v => {
               setMobile(formatMobile(v));
               setExtraDigits(mobileHasExtraDigits(v));
               setError(null);
+              // The 10th digit completes a usable number, so carry on to the password.
+              const next = mobileDigits(v);
+              if (digits.length < 10 && next.length === 10 && !mobileIssue(next, mobileHasExtraDigits(v))) {
+                passwordRef.current?.focus();
+              }
             }}
             keyboardType="number-pad"
             // Once the 10 digits are in, the field itself refuses more (11 = "98407 21536"),
@@ -128,10 +130,13 @@ export function LoginScreen() {
                 setExtraDigits(true);
               }
             }}
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
             style={styles.input}
             placeholder="98407 21536"
             placeholderTextColor={palette.inkSubtle}
           />
+          {mobileMessage ? <CircleAlert size={20} color={palette.alert} /> : null}
         </View>
 
         {mobileMessage ? (
@@ -145,6 +150,7 @@ export function LoginScreen() {
         </Text>
         <View style={styles.field}>
           <TextInput
+            ref={passwordRef}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!show}
@@ -223,12 +229,10 @@ const styles = StyleSheet.create({
     marginBottom: space.lg,
     gap: space.sm,
   },
-  prefix: { fontSize: 15 },
-  prefixDivider: { width: 1, height: 22, backgroundColor: palette.line, marginHorizontal: 4 },
   input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: palette.ink, paddingVertical: 0 },
   hint: { marginTop: space.sm, marginBottom: space.xl, paddingHorizontal: 6 },
   error: { marginTop: -6, marginBottom: space.md },
-  fieldInvalid: { borderColor: palette.alert },
+  fieldInvalid: { borderColor: palette.alert, borderRadius: radius.sm },
   fieldError: { marginTop: -8, marginBottom: space.md, paddingHorizontal: 6 },
   links: {
     flexDirection: 'row',

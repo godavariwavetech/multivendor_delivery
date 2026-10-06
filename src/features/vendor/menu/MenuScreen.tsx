@@ -14,7 +14,7 @@ import { ProductCard } from './ProductCard';
 export function MenuScreen() {
   const nav = useVendorNav();
   const toast = useToast();
-  const { store, products, state, actions } = useVendor();
+  const { store, products, state, refresh, actions } = useVendor();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<string | null>(null);
 
@@ -36,7 +36,7 @@ export function MenuScreen() {
 
   return (
     <View style={styles.root}>
-      <Screen tab>
+      <Screen tab onRefresh={refresh}>
         <WorkspaceHero
           title="Menu"
           subtitle={`${pluralise(products.length, noun)} · ${unavailable} unavailable`}

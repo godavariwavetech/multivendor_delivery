@@ -22,7 +22,7 @@ export function OrdersScreen() {
   const route = useRoute<RouteProp<VendorTabParams, 'Orders'>>();
   const now = useNow();
   const toast = useToast();
-  const { store, newOrders, cookingOrders, readyOrders, pastOrders, actions } = useVendor();
+  const { store, newOrders, cookingOrders, readyOrders, pastOrders, refresh, actions } = useVendor();
   const [tab, setTab] = useState<TabKey>(route.params?.tab ?? 'new');
   const work = workLabel(store.category);
 
@@ -45,7 +45,7 @@ export function OrdersScreen() {
   const open = (id: string) => nav.navigate('OrderDetail', { id });
 
   return (
-    <Screen tab>
+    <Screen tab onRefresh={refresh}>
       <WorkspaceHero
         title="Orders"
         subtitle={tab === 'cooking' && cooking.length ? `${cooking.length} tickets in progress` : 'Manage incoming and active orders'}

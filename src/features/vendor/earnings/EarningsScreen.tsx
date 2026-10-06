@@ -25,14 +25,14 @@ type Period = 'month' | 'lastMonth' | 'custom';
 /** Board 4a·4 / 1b·5 — earnings after deductions, settlement history, refunds. */
 export function EarningsScreen() {
   const nav = useVendorNav();
-  const { store, state } = useVendor();
+  const { store, state, refresh } = useVendor();
   const [period, setPeriod] = useState<Period>('month');
   const e = state.earnings[period];
   const salesLabel = store.category === 'food' ? 'Food sales' : 'Sales';
   const commission = state.details?.commission;
 
   return (
-    <Screen tab>
+    <Screen tab onRefresh={refresh}>
       <WorkspaceHero title="Earnings" subtitle="Payouts, sales and settlement history" right={<LinkButton label="Reports" onPress={() => nav.navigate('Reports')} color={palette.white} />} />
 
       <Card tone="accent" style={styles.hero}>
