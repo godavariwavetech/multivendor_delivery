@@ -16,8 +16,8 @@ on:
       track:
         description: Play Store track (only used when deliver = playstore)
         type: choice
-        options: [internal, alpha, beta, production]
-        default: internal
+        options: [production, beta, alpha, internal]
+        default: production
       business_name:
         description: Business name, shown as the app name (blank keeps the default)
         type: string
@@ -199,7 +199,7 @@ jobs:
           packageName: ${{ env.PACKAGE_ID }}
           releaseName: ${{ env.VERSION_NAME }}
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          track: ${{ inputs.track || 'internal' }}
+          track: ${{ inputs.track || 'production' }}
           status: completed
 
       - name: Record the released version
