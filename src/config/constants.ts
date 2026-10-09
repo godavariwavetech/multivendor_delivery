@@ -40,7 +40,7 @@ export const UPLOAD_TIMEOUT_MS = 60000;
  * Use the partner API so menu changes are stored in the database. Set true only
  * when intentionally previewing the seeded offline demo screens.
  */
-export const USE_MOCK_DATA = true;
+export const USE_MOCK_DATA = false;
 
 /** Temporary development data for the history-period card while its API is deployed. */
 export const USE_MOCK_HISTORY = true;
