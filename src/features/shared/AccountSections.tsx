@@ -69,7 +69,7 @@ export function LogoutBlock({ onDeleteAccount }: { onDeleteAccount: () => void }
         variant="outline"
         size="lg"
         onPress={() =>
-          appAlert('Log out?', 'You will need your mobile number and password or OTP to sign in again.', [
+          appAlert('Are you sure you want to log out?', undefined, [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Log out', style: 'destructive', onPress: signOut },
           ])

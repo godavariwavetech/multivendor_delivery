@@ -103,7 +103,8 @@ export function MenuScreen() {
             <ProductCard
               key={p.id}
               product={p}
-              onPress={() => (produce ? nav.navigate('RateSheet') : nav.navigate('ProductEdit', { id: p.id }))}
+              // An out-of-stock dish stays closed; switch it back on to edit it.
+              onPress={p.available ? () => (produce ? nav.navigate('RateSheet') : nav.navigate('ProductEdit', { id: p.id })) : undefined}
               onToggle={available => {
                 actions.setAvailable(p.id, available);
                 toast(available ? `${p.name} is available` : `${p.name} marked out of stock`);
