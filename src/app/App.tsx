@@ -3,7 +3,7 @@ import { StatusBar, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { ToastProvider } from '@/components';
+import { DialogHost, ToastProvider } from '@/components';
 import { DeliveryStoreProvider } from '@/data/deliveryStore';
 import { SessionProvider, useSession } from '@/data/session';
 import { SupportProvider } from '@/data/support';
@@ -39,6 +39,7 @@ export default function App() {
               <VendorStoreProvider>
                 <DeliveryStoreProvider>
                   <RootNavigator />
+                  <DialogHost />
                 </DeliveryStoreProvider>
               </VendorStoreProvider>
             </SignedInServices>

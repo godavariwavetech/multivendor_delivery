@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     gap: space.sm,
     height: 50,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: palette.line,
     backgroundColor: palette.paper,
     paddingHorizontal: space.lg,

@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -108,6 +109,7 @@ export function IncomingRequestScreen() {
         <View style={styles.actions}>
           <Button
             label="Reject"
+            icon={X}
             variant="outline"
             size="lg"
             flex={1}
@@ -116,7 +118,7 @@ export function IncomingRequestScreen() {
               nav.goBack();
             }}
           />
-          <Button label="Accept delivery" variant="green" size="lg" flex={1.8} onPress={accept} />
+          <Button label="Accept delivery" icon={Check} variant="green" size="lg" flex={1.8} onPress={accept} />
         </View>
         <Text v="caption" subtle center>
           Rejected requests are reassigned automatically.

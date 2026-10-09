@@ -1,6 +1,6 @@
 import { Phone } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   Avatar,
@@ -16,6 +16,7 @@ import {
   SectionLabel,
   Text,
   useToast,
+  appAlert,
 } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import { useVendorNav, useVendorRoute } from '@/navigation/types';
@@ -56,7 +57,7 @@ export function HandoverScreen() {
       done();
       return;
     }
-    Alert.alert('Checklist not complete', 'Some items are not ticked. Hand over anyway?', [
+    appAlert('Checklist not complete', 'Some items are not ticked. Hand over anyway?', [
       { text: 'Go back', style: 'cancel' },
       { text: 'Hand over', onPress: done },
     ]);

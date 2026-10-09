@@ -1,4 +1,4 @@
-import { Inbox, WifiOff } from 'lucide-react-native';
+import { Check, Inbox, WifiOff, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -96,6 +96,7 @@ export function RequestsScreen() {
               <View style={styles.actions}>
                 <Button
                   label="Skip"
+                  icon={X}
                   variant="outline"
                   flex={1}
                   onPress={() => {
@@ -104,6 +105,7 @@ export function RequestsScreen() {
                   }}
                 />
                 <Button
+                  icon={Check}
                   label={busy ? 'Accept' : `Accept · ${formatCountdown(Math.max(0, left))}`}
                   flex={1.8}
                   disabled={busy}

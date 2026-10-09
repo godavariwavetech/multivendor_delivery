@@ -1,15 +1,15 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 
-import { palette, radius, shadow, space, useTheme } from '@/theme';
+import { palette, pastelCard, radius, shadow, space, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
 export type CardTone =
   | 'paper' // standard card with the dark bottom edge
   | 'highlight' // paper + role-coloured border (new order, active trip)
-  | 'sky' // blue wash + blue border (pending payout, warnings)
-  | 'leaf' // green fill, no border (instructions, "food ready" banners)
+  | 'sky' // white with a soft blue border (pending payout, warnings)
+  | 'leaf' // white with a soft green border (instructions, "food ready" banners)
   | 'accent' // solid role colour (hero cards)
   | 'blue'
   | 'green'
@@ -29,14 +29,14 @@ export function Card({ children, tone = 'paper', padded = true, onPress, style }
 
   const toneStyle: ViewStyle = {
     paper: { backgroundColor: palette.paper, ...shadow.card },
-    highlight: { backgroundColor: palette.paper, borderWidth: 1.5, borderColor: r.line },
-    sky: { backgroundColor: palette.skyWash, borderWidth: 1, borderColor: palette.skyLine },
-    leaf: { backgroundColor: palette.leaf },
+    highlight: { backgroundColor: palette.paper, borderWidth: 1, borderColor: r.line },
+    sky: pastelCard('sky'),
+    leaf: pastelCard('mint'),
     accent: { backgroundColor: r.accent },
     blue: { backgroundColor: palette.blue },
     green: { backgroundColor: palette.green },
-    sunken: { backgroundColor: palette.sunken },
-    selected: { backgroundColor: palette.skyWash, borderWidth: 1.5, borderColor: palette.blue },
+    sunken: { backgroundColor: palette.paper, borderWidth: 1, borderColor: palette.line },
+    selected: { backgroundColor: palette.paper, borderWidth: 1, borderColor: r.accent },
   }[tone];
 
   const body = (

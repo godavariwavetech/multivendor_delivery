@@ -59,10 +59,10 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   codeTag: {
     alignSelf: 'flex-start',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: palette.skyLine,
-    backgroundColor: palette.skyWash,
+    backgroundColor: palette.paper,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,

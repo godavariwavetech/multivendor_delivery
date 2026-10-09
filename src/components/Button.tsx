@@ -3,7 +3,7 @@ import { Bell, ChevronLeft } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 
-import { palette, radius, shadow, useTheme } from '@/theme';
+import { palette, radius, roleColors, shadow, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
@@ -29,8 +29,8 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon:
   const delivery = brand?.delivery;
   const scheme = {
     primary: { bg: r.accent, fg: r.onAccent, border: r.accent },
-    blue: { bg: vendor?.button ?? palette.blue, fg: vendor?.onAccent ?? palette.white, border: vendor?.button ?? palette.blue },
-    green: { bg: delivery?.button ?? palette.green, fg: delivery?.onAccent ?? palette.white, border: delivery?.button ?? palette.green },
+    blue: { bg: vendor?.button ?? roleColors.vendor.accent, fg: vendor?.onAccent ?? roleColors.vendor.onAccent, border: vendor?.button ?? roleColors.vendor.accent },
+    green: { bg: delivery?.button ?? roleColors.delivery.accent, fg: delivery?.onAccent ?? roleColors.delivery.onAccent, border: delivery?.button ?? roleColors.delivery.accent },
     outline: { bg: 'transparent', fg: palette.ink, border: palette.line },
     light: { bg: palette.white, fg: palette.ink, border: palette.white },
   }[variant];
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: palette.line,
     alignItems: 'center',
     justifyContent: 'center',

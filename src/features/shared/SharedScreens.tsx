@@ -1,8 +1,8 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
-import { BellOff, ChevronDown, ChevronUp, Headset, Mail, MessageCircle } from 'lucide-react-native';
+import { BellOff, ChevronDown, ChevronRight, ChevronUp, Headset, Mail, MessageCircle } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import {
   BackHeader,
@@ -20,6 +20,7 @@ import {
   SectionLabel,
   Text,
   useToast,
+  appAlert,
 } from '@/components';
 import { useDelivery } from '@/data/deliveryStore';
 import { useVendor } from '@/data/vendorStore';
@@ -27,6 +28,8 @@ import { useSupport } from '@/data/support';
 import { SharedParams, useSharedNav } from '@/navigation/types';
 import { fonts, palette, radius, space, useTheme } from '@/theme';
 import { ago } from '@/utils/datetime';
+
+import { BotIcon } from './assistant/BotIcon';
 
 /** The shared screens read settings from whichever role is active. */
 function useRoleStore() {
@@ -105,7 +108,7 @@ const FAQS = {
 
 export function HelpScreen() {
   const nav = useSharedNav();
-  const { role } = useTheme();
+  const { r, role } = useTheme();
   const support = useSupport();
   const [open, setOpen] = useState<number | null>(0);
 
@@ -132,6 +135,19 @@ export function HelpScreen() {
           No support phone or email is set up for this store yet. Messages still reach support.
         </Text>
       ) : null}
+
+      <Card tone="sky" onPress={() => nav.navigate('Assistant')}>
+        <View style={styles.faqHead}>
+          <BotIcon size={34} color={r.accent} />
+          <View style={styles.flex}>
+            <Text v="bodyStrong">Ask the assistant</Text>
+            <Text v="caption" muted>
+              Get quick answers about orders, menu and payouts
+            </Text>
+          </View>
+          <ChevronRight size={20} color={palette.inkSubtle} />
+        </View>
+      </Card>
 
       <SectionLabel style={styles.label}>Common questions</SectionLabel>
       <ListGroup>
@@ -297,7 +313,7 @@ export function PrivacyScreen() {
           disabled={Boolean(pendingDeletion) || busy}
           style={styles.deleteBtn}
           onPress={() =>
-            Alert.alert('Delete account?', 'Your store admin must approve this. Open orders have to be finished first.', [
+            appAlert('Delete account?', 'Your store admin must approve this. Open orders have to be finished first.', [
               { text: 'Cancel', style: 'cancel' },
               { text: 'Request deletion', style: 'destructive', onPress: requestDeletion },
             ])

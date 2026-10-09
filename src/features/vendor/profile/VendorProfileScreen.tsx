@@ -23,7 +23,7 @@ export function VendorProfileScreen() {
 
       <Card style={styles.storeCard}>
         <View style={styles.row}>
-          <Avatar initials={store.initials} size={76} />
+          <Avatar initials={store.initials} size={76} tone="sky" />
           <View style={styles.flex}>
             <Text v="headline">{store.name}</Text>
             <Text v="body" muted>

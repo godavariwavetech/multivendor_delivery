@@ -18,7 +18,7 @@ export type RoleColors = {
 };
 
 /** Blend a #RRGGBB colour toward another by `amount` (0 = unchanged, 1 = fully `toward`). */
-const mix = (hex: string, toward: string, amount: number): string => {
+export const mix = (hex: string, toward: string, amount: number): string => {
   const channel = (value: string, i: number) => parseInt(value.slice(1 + i * 2, 3 + i * 2), 16);
   const out = [0, 1, 2].map(i => Math.round(channel(hex, i) + (channel(toward, i) - channel(hex, i)) * amount));
   return `#${out.map(c => c.toString(16).padStart(2, '0')).join('')}`.toUpperCase();

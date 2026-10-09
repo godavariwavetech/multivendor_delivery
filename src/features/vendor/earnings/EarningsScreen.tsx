@@ -17,7 +17,7 @@ import {
 import { useVendor } from '@/data/vendorStore';
 import type { Settlement } from '@/domain/types';
 import { useVendorNav } from '@/navigation/types';
-import { palette, space } from '@/theme';
+import { palette, pastel, pastelCard, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 
 type Period = 'month' | 'lastMonth' | 'custom';
@@ -35,12 +35,13 @@ export function EarningsScreen() {
     <Screen tab onRefresh={refresh}>
       <WorkspaceHero title="Earnings" subtitle="Payouts, sales and settlement history" right={<LinkButton label="Reports" onPress={() => nav.navigate('Reports')} color={palette.white} />} />
 
-      <Card tone="accent" style={styles.hero}>
-        <Text v="body" color="rgba(255, 255, 255, 0.85)">{`Net payable · ${e.label}`}</Text>
-        <Text v="hero" color={palette.canvas} style={styles.heroAmount}>
+      <Card style={{ ...pastelCard('lavender'), ...styles.hero }}>
+        <Text v="body" color={pastel.lavender.ink}>{`Net payable · ${e.label}`}</Text>
+        <Text v="hero" color={pastel.lavender.ink} style={styles.heroAmount}>
           {formatAmount(e.net)}
         </Text>
         <HeroSegment
+          tone="lavender"
           tabs={[
             { key: 'month', label: 'This month' },
             { key: 'lastMonth', label: 'Last month' },
@@ -84,8 +85,10 @@ export function SettlementCard({ settlement: s, onPress }: { settlement: Settlem
       : s.status === 'settled'
         ? { label: 'Settled', tone: 'leaf' as const }
         : { label: 'Refund', tone: 'neutral' as const };
+  // Every row is a pastel by status, so it reads the same whatever the theme colour is.
+  const tint = pastelCard(s.status === 'pending' ? 'butter' : s.status === 'settled' ? 'mint' : 'rose');
   return (
-    <Card tone={s.status === 'pending' ? 'sky' : 'paper'} onPress={onPress}>
+    <Card style={tint} onPress={onPress}>
       <View style={styles.row}>
         <View style={styles.flex}>
           <Text v="cardTitle">{s.title}</Text>

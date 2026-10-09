@@ -2,16 +2,19 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { palette, radius, space, useTheme } from '@/theme';
+import { mix, palette, pastel, type PastelName, radius, space, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
 /** The small rising bars on the vendor "Today" card. */
-export function MiniBars({ values, height = 52 }: { values: number[]; height?: number }) {
+export function MiniBars({ values, height = 52, tone }: { values: number[]; height?: number; tone?: PastelName }) {
+  const { r } = useTheme();
+  // On a pastel card the bars use that pastel's accent, so they match the card, not the theme.
+  const base = tone ? pastel[tone].accent : r.accent;
   return (
     <View style={[styles.miniBars, { height }]}>
       {values.map((v, i) => {
-        const color = i >= values.length - 1 ? palette.blue : i >= values.length - 3 ? palette.blueMid : palette.skyLine;
+        const color = i >= values.length - 1 ? base : i >= values.length - 3 ? mix(base, '#FFFFFF', 0.3) : mix(base, '#FFFFFF', 0.6);
         return <View key={i} style={[styles.miniBar, { height: Math.max(8, v * height), backgroundColor: color }]} />;
       })}
     </View>
@@ -39,7 +42,8 @@ export function DayBars({
   data: { day: string; value: number; tone: 'light' | 'mid' | 'dark' }[];
   height?: number;
 }) {
-  const tone = { light: palette.skyLine, mid: palette.blueMid, dark: palette.blue };
+  const { r } = useTheme();
+  const tone = { light: r.line, mid: mix(r.accent, '#FFFFFF', 0.25), dark: r.accent };
   return (
     <View style={styles.dayBars}>
       {data.map(d => (

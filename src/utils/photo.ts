@@ -1,9 +1,19 @@
-import { Alert, Linking, PermissionsAndroid, Platform } from 'react-native';
+import { Linking, PermissionsAndroid, Platform } from 'react-native';
 import { launchCamera, launchImageLibrary, type Asset } from 'react-native-image-picker';
 
 import { getBaseUrl } from '@/api';
+import { appAlert } from '@/components/Dialog';
 
 export type PickedPhoto = { uri: string; name: string; type: string };
+
+/**
+ * A dish photo is 500 KB to 1 MB. Anything smaller is refused as too low quality;
+ * anything larger is compressed by the cropper until it fits.
+ */
+export const MIN_PHOTO_BYTES = 500 * 1024;
+export const MAX_PHOTO_BYTES = 1024 * 1024;
+
+export const formatKb = (bytes: number) => `${Math.round(bytes / 1024)} KB`;
 
 const toPicked = (asset: Asset | undefined): PickedPhoto | null => {
   if (!asset?.uri) {
@@ -26,7 +36,7 @@ const OPTIONS = { mediaType: 'photo', maxWidth: 1280, maxHeight: 1280, quality: 
 /** Asks camera or gallery, and resolves to null if the person backs out. */
 export const pickPhoto = (title = 'Add a photo'): Promise<PickedPhoto | null> =>
   new Promise(resolve => {
-    Alert.alert(title, undefined, [
+    appAlert(title, undefined, [
       {
         text: 'Take a photo',
         onPress: async () => {
@@ -53,7 +63,8 @@ export const photoUrl = (stored?: string | null) => {
   if (!stored) {
     return undefined;
   }
-  return /^https?:\/\//i.test(stored) ? stored : `${getBaseUrl()}${stored}`;
+  // A server path gets the server's address; a full URL or a photo still on this phone is used as it is.
+  return /^(https?|file|content):\/\//i.test(stored) ? stored : `${getBaseUrl()}${stored}`;
 };
 
 export type PhotoSource = 'camera' | 'gallery';
@@ -67,12 +78,11 @@ const ensureCameraPermission = async (): Promise<boolean> => {
   if (result === PermissionsAndroid.RESULTS.GRANTED) {
     return true;
   }
-  if (result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-    Alert.alert('Camera access is off', 'Allow the camera for this app in Settings to take a photo.', [
-      { text: 'Not now', style: 'cancel' },
-      { text: 'Open settings', onPress: () => Linking.openSettings() },
-    ]);
-  }
+  // Denied once or for good, say why nothing happened and where to turn it back on.
+  appAlert('Camera access is off', 'Allow the camera for this app in Settings to take a photo.', [
+    { text: 'Not now', style: 'cancel' },
+    { text: 'Open settings', onPress: () => Linking.openSettings() },
+  ]);
   return false;
 };
 
@@ -95,9 +105,13 @@ export const getPhoto = async (source: PhotoSource): Promise<PickedPhoto | null>
       result.errorCode === 'camera_unavailable' ? 'No camera is available on this device.' : result.errorMessage || 'The photo could not be opened.',
     );
   }
-  const picked = toPicked(result.assets?.[0]);
+  const asset = result.assets?.[0];
+  const picked = toPicked(asset);
   if (!picked) {
     throw new Error('That file is not a usable photo.');
+  }
+  if (asset?.fileSize && asset.fileSize < MIN_PHOTO_BYTES) {
+    throw new Error(`Photo is too small (${formatKb(asset.fileSize)}). Use a photo between 500 KB and 1 MB.`);
   }
   return picked;
 };

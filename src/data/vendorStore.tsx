@@ -527,7 +527,11 @@ function useVendorValue() {
 
   return useMemo(() => {
     const store = state.store;
-    const products = LIVE ? state.products : state.products.filter(p => p.category === state.category);
+    const inCategory = LIVE ? state.products : state.products.filter(p => p.category === state.category);
+    // Newest dish first: a saved item has a numeric id, an unsynced demo one is `new-<timestamp>`.
+    // Seeded demo items have neither and keep their order (the sort is stable).
+    const recency = (id: string) => Number(id.replace(/^new-/, '')) || 0;
+    const products = [...inCategory].sort((a, b) => recency(b.id) - recency(a.id));
     const byStatus = (s: Order['status'][]) => state.orders.filter(o => s.includes(o.status));
     const orderIdOf = (id: string) => state.orders.find(o => o.id === id)?.orderId;
     const couponIdOf = (code: string) => state.coupons.find(c => c.code === code)?.couponId;
@@ -604,11 +608,13 @@ function useVendorValue() {
               return false;
             }
           }
-          const exists = state.products.some(p => p.id === product.id);
+          // Demo mode has no server to upload to, so the chosen photo is kept by its local address.
+          const saved = photo ? { ...product, image: photo.uri } : product;
+          const exists = state.products.some(p => p.id === saved.id);
           const next = exists
-            ? state.products.map(p => (p.id === product.id ? product : p))
-            : [product, ...state.products];
-          dispatch({ type: 'saveProduct', product });
+            ? state.products.map(p => (p.id === saved.id ? saved : p))
+            : [saved, ...state.products];
+          dispatch({ type: 'saveProduct', product: saved });
           if (USE_MOCK_DATA) {
             persistDemoProducts(next);
           }

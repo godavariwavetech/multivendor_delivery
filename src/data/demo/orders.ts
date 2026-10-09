@@ -106,6 +106,10 @@ type Spec = {
 const SPECS: Spec[] = [
   { id: 'VK-2841', status: 'new', ageSec: 42, lines: [0, 1], coupon: true, note: 'Less oil please, pack gravy separately.', customer: ['Meera S.', 'Thiru Vi Ka Nagar', 3.4], parcels: 2 },
   { id: 'VK-2840', status: 'new', ageSec: 80, lines: [2, 3], customer: ['Arun P.', 'Kilpauk', 2.6] },
+  { id: 'VK-2843', status: 'new', ageSec: 25, lines: [4, 5], payment: 'cod', customer: ['Sanjay R.', 'Anna Nagar West', 1.8] },
+  { id: 'VK-2842', status: 'new', ageSec: 55, lines: [6], customer: ['Divya K.', 'Mogappair', 3.9] },
+  { id: 'VK-2845', status: 'new', ageSec: 95, lines: [8, 9], coupon: true, customer: ['Farhan A.', 'Villivakkam', 2.9] },
+  { id: 'VK-2844', status: 'new', ageSec: 130, lines: [10, 11], customer: ['Pooja N.', 'Shenoy Nagar', 2.1] },
   { id: 'VK-2835', status: 'cooking', ageSec: 1500, lines: [6, 7], prep: 15, cookedSec: 15 * 60 + 200, partner: KARTHIK, customer: ['Kavitha R.', 'Aminjikarai', 1.9] },
   { id: 'VK-2839', status: 'cooking', ageSec: 700, lines: [4, 5], payment: 'cod', prep: 15, cookedSec: 15 * 60 - 372, customer: ['Joseph D.', 'Shenoy Nagar', 2.2] },
   { id: 'VK-2837', status: 'cooking', ageSec: 520, lines: [2, 3], prep: 25, cookedSec: 25 * 60 - 700, customer: ['Priya V.', 'Anna Nagar East', 1.4] },

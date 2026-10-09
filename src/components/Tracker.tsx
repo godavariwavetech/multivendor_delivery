@@ -11,8 +11,8 @@ import { Text } from './Text';
  * of the furthest step reached.
  */
 export function StageTracker({ steps, current }: { steps: string[]; current: number }) {
-  const { r, role } = useTheme();
-  const doneLine = role === 'delivery' ? palette.leafLine : palette.skyLine;
+  const { r } = useTheme();
+  const doneLine = r.line;
   return (
     <View style={styles.tracker}>
       <View style={styles.dotsRow}>

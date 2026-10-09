@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 
-import { palette, radius, useTheme } from '@/theme';
+import { palette, pastel, pastelEdge, type PastelName, radius, useTheme } from '@/theme';
 
 import { Text } from './Text';
 
@@ -60,7 +60,7 @@ export function TabPills<K extends string>({
   value,
   onChange,
 }: {
-  tabs: { key: K; label: string }[];
+  tabs: { key: K; label: string; tone?: PastelName }[];
   value: K;
   onChange: (key: K) => void;
 }) {
@@ -75,9 +75,13 @@ export function TabPills<K extends string>({
             onPress={() => onChange(t.key)}
             style={[
               styles.pill,
-              selected ? { backgroundColor: r.accent, borderColor: r.accent } : styles.pillOff,
+              selected
+                ? { backgroundColor: r.accent, borderColor: r.accent }
+                : t.tone
+                  ? { backgroundColor: palette.paper, borderColor: pastelEdge(t.tone) }
+                  : styles.pillOff,
             ]}>
-            <Text v="bodyStrong" color={selected ? r.onAccent : palette.ink} style={styles.pillText}>
+            <Text v="bodyStrong" color={selected ? r.onAccent : t.tone ? pastel[t.tone].ink : palette.ink} style={styles.pillText}>
               {t.label}
             </Text>
           </Pressable>
@@ -92,7 +96,10 @@ export function HeroSegment<K extends string>({
   tabs,
   value,
   onChange,
+  tone,
 }: {
+  /** On a pastel card the segments take that pastel's ink instead of white. */
+  tone?: PastelName;
   tabs: { key: K; label: string }[];
   value: K;
   onChange: (key: K) => void;
@@ -102,10 +109,10 @@ export function HeroSegment<K extends string>({
       {tabs.map(t => {
         const selected = t.key === value;
         return (
-          <Pressable key={t.key} onPress={() => onChange(t.key)} style={[styles.heroPill, selected && styles.heroOn]}>
+          <Pressable key={t.key} onPress={() => onChange(t.key)} style={[styles.heroPill, selected && (tone ? { backgroundColor: pastel[tone].bubble } : styles.heroOn)]}>
             <Text
               v="bodyStrong"
-              color={selected ? palette.canvas : 'rgba(255, 255, 255, 0.85)'}
+              color={tone ? pastel[tone].ink : selected ? palette.canvas : 'rgba(255, 255, 255, 0.85)'}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.8}>
@@ -170,13 +177,13 @@ const styles = StyleSheet.create({
   },
   segLabel: { fontSize: 15, flexShrink: 1 },
   row: { gap: 8, paddingVertical: 2, paddingRight: 8 },
-  pill: { height: 42, paddingHorizontal: 18, borderRadius: radius.pill, borderWidth: 1.5, justifyContent: 'center' },
+  pill: { height: 42, paddingHorizontal: 18, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   pillOff: { backgroundColor: palette.paper, borderColor: palette.line },
   pillText: { fontSize: 15 },
   heroRow: { flexDirection: 'row', gap: 6, marginTop: 14 },
   heroPill: { flexShrink: 1, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill },
   heroOn: { backgroundColor: 'rgba(255, 255, 255, 0.2)' },
   choiceRow: { flexDirection: 'row', gap: 8 },
-  choice: { flex: 1, height: 46, borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  choice: { flex: 1, height: 46, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   choiceOff: { backgroundColor: 'transparent', borderColor: palette.line },
 });

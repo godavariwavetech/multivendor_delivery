@@ -8,6 +8,7 @@ import { useVendorNav } from '@/navigation/types';
 import { fonts, palette, radius, space } from '@/theme';
 import { pluralise } from '@/utils/format';
 
+import { DietSwitch, type Diet } from './DietSwitch';
 import { ProductCard } from './ProductCard';
 
 /** Board 4a·3 / 3a·5 (Food, with day parts) and 1b·4 (products, variants & stock). */
@@ -17,18 +18,25 @@ export function MenuScreen() {
   const { store, products, state, refresh, actions } = useVendor();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<string | null>(null);
+  const [diet, setDiet] = useState<Diet>('veg');
 
   const food = store.category === 'food';
   const produce = store.category === 'produce';
+  // Veg / non-veg only splits a menu that can hold both: food and bakery. Produce and groceries
+  // are all veg and meat is all non-veg, so those lists are shown whole, with no toggle.
+  const dietSplit = store.category === 'food' || store.category === 'bakery';
   const activeDaypart = state.dayparts.find(d => d.active);
   const unavailable = products.filter(p => !p.available).length;
 
   const visible = useMemo(
     () =>
       products.filter(
-        p => (!group || p.group === group) && p.name.toLowerCase().includes(query.trim().toLowerCase()),
+        p =>
+          (!group || p.group === group) &&
+          (!dietSplit || p.veg === (diet === 'veg')) &&
+          p.name.toLowerCase().includes(query.trim().toLowerCase()),
       ),
-    [group, products, query],
+    [diet, dietSplit, group, products, query],
   );
 
   const noun = store.itemNoun;
@@ -62,6 +70,12 @@ export function MenuScreen() {
           />
         </View>
 
+        {dietSplit ? (
+          <View style={styles.diet}>
+            <DietSwitch value={diet} onChange={setDiet} />
+          </View>
+        ) : null}
+
         <View style={styles.actions}>
           <Text v="caption" muted>
             {pluralise(products.length, noun)}
@@ -71,6 +85,7 @@ export function MenuScreen() {
             onPress={() => nav.navigate('OutOfStock')}
           />
         </View>
+
 
         <ChipRow>
           <Chip
@@ -121,11 +136,12 @@ const styles = StyleSheet.create({
     gap: space.sm,
     height: 52,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: palette.line,
     backgroundColor: palette.paper,
     paddingHorizontal: space.lg,
   },
   input: { flex: 1, fontFamily: fonts.regular, fontSize: 15, color: palette.ink, paddingVertical: 0 },
+  diet: { alignItems: 'flex-end', paddingHorizontal: 4 },
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
 });

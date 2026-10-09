@@ -1,8 +1,8 @@
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { createNavigationContainerRef, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Bell, House, Package, ReceiptText, Scooter, User, Wallet } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { TabBar } from '@/components';
@@ -26,6 +26,8 @@ import {
   PrivacyScreen,
   ReportProblemScreen,
 } from '@/features/shared/SharedScreens';
+import { AssistantFab } from '@/features/shared/assistant/AssistantFab';
+import { AssistantScreen } from '@/features/shared/assistant/AssistantScreen';
 import { CouponEditScreen } from '@/features/vendor/coupons/CouponEditScreen';
 import { CouponsScreen } from '@/features/vendor/coupons/CouponsScreen';
 import { EarningsScreen } from '@/features/vendor/earnings/EarningsScreen';
@@ -114,6 +116,7 @@ function VendorNavigator() {
       <VendorStack.Screen name="BankAccount" component={BankAccountScreen} />
       <VendorStack.Screen name="Notifications" component={NotificationsScreen} />
       <VendorStack.Screen name="Help" component={HelpScreen} />
+      <VendorStack.Screen name="Assistant" component={AssistantScreen} />
       <VendorStack.Screen name="ReportProblem" component={ReportProblemScreen} />
       <VendorStack.Screen name="Privacy" component={PrivacyScreen} />
     </VendorStack.Navigator>
@@ -162,6 +165,7 @@ function DeliveryNavigator() {
       <DeliveryStack.Screen name="ZoneShift" component={ZoneShiftScreen} />
       <DeliveryStack.Screen name="Notifications" component={NotificationsScreen} />
       <DeliveryStack.Screen name="Help" component={HelpScreen} />
+      <DeliveryStack.Screen name="Assistant" component={AssistantScreen} />
       <DeliveryStack.Screen name="ReportProblem" component={ReportProblemScreen} />
       <DeliveryStack.Screen name="Privacy" component={PrivacyScreen} />
     </DeliveryStack.Navigator>
@@ -174,9 +178,12 @@ function DeliveryNavigator() {
  * Board 1d: "Nothing role-specific is decided in the app." The session carries the
  * role; this picks the matching shell and accent. Switching role remounts the tree.
  */
+const navigationRef = createNavigationContainerRef<Record<string, object | undefined>>();
+
 export function RootNavigator() {
   const { session, restoring, branding } = useSession();
   const role = session?.activeRole;
+  const [routeName, setRouteName] = useState<string | undefined>();
 
   // A saved token is checked with the server before the first screen appears.
   if (restoring) {
@@ -191,19 +198,27 @@ export function RootNavigator() {
 
   return (
     <ThemeProvider role={role ?? 'vendor'} brand={branding}>
-      <NavigationContainer theme={navTheme}>
-        {role === 'vendor' ? (
-          <VendorNavigator key="vendor" />
-        ) : role === 'delivery' ? (
-          <DeliveryNavigator key="delivery" />
-        ) : (
-          <AuthNavigator />
-        )}
-      </NavigationContainer>
+      <View style={splashStyles.root}>
+        <NavigationContainer
+          ref={navigationRef}
+          theme={navTheme}
+          onStateChange={() => setRouteName(navigationRef.getCurrentRoute()?.name)}>
+          {role === 'vendor' ? (
+            <VendorNavigator key="vendor" />
+          ) : role === 'delivery' ? (
+            <DeliveryNavigator key="delivery" />
+          ) : (
+            <AuthNavigator />
+          )}
+        </NavigationContainer>
+        {/* One chat button for every signed-in screen; the chat itself has no need for it. */}
+        {role && routeName !== 'Assistant' ? <AssistantFab lifted={routeName === 'Menu'} onPress={() => navigationRef.navigate('Assistant')} /> : null}
+      </View>
     </ThemeProvider>
   );
 }
 
 const splashStyles = StyleSheet.create({
+  root: { flex: 1 },
   screen: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.canvas },
 });

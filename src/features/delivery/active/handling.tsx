@@ -1,6 +1,6 @@
 import { Camera, Check } from 'lucide-react-native';
 import React from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   Banner,
@@ -16,6 +16,7 @@ import {
   Text,
   TileRow,
   useToast,
+  appAlert,
 } from '@/components';
 import type {
   ActiveTrip,
@@ -127,7 +128,7 @@ function GroceryHandling({ request: r, pickup, trip, onToggle }: HandlingProps<G
               onPress={() => {
                 const short = pickup.shortSupply;
                 if (short) {
-                  Alert.alert(short.title, short.body);
+                  appAlert(short.title, short.body);
                 }
               }}>
               View

@@ -1,8 +1,8 @@
 import { ArrowLeftRight } from 'lucide-react-native';
 import React from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Chip, ChipRow, SectionLabel, Text } from '@/components';
+import { Button, Card, Chip, ChipRow, SectionLabel, Text, appAlert } from '@/components';
 import { useSession } from '@/data/session';
 import { APP_CONFIG, APP_VERSION } from '@config/constants';
 import { useVendor } from '@/data/vendorStore';
@@ -69,7 +69,7 @@ export function LogoutBlock({ onDeleteAccount }: { onDeleteAccount: () => void }
         variant="outline"
         size="lg"
         onPress={() =>
-          Alert.alert('Log out?', 'You will need your mobile number and password or OTP to sign in again.', [
+          appAlert('Log out?', 'You will need your mobile number and password or OTP to sign in again.', [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Log out', style: 'destructive', onPress: signOut },
           ])

@@ -1,6 +1,6 @@
 import { Check, Navigation, Phone, Scooter } from 'lucide-react-native';
 import React from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -21,6 +21,7 @@ import {
   TileRow,
   TitleHeader,
   useToast,
+  appAlert,
 } from '@/components';
 import { useDelivery } from '@/data/deliveryStore';
 import type { ActiveTrip, DeliveryRequest } from '@/domain/types';
@@ -161,11 +162,11 @@ function PickupView({ trip, request: r }: { trip: ActiveTrip; request: DeliveryR
   const slide = () => {
     const missing = requiredChecks(r).filter(i => !trip.checks[i.key]);
     if (missing.length) {
-      Alert.alert('Finish the checklist', `Tick ${missing.map(m => `"${m.label}"`).join(', ')} before you leave the store.`);
+      appAlert('Finish the checklist', `Tick ${missing.map(m => `"${m.label}"`).join(', ')} before you leave the store.`);
       return;
     }
     if (r.pickup.kind === 'bakery' && !trip.proofPhoto) {
-      Alert.alert('Photo required', 'Take a photo of the box before leaving with a fragile order.');
+      appAlert('Photo required', 'Take a photo of the box before leaving with a fragile order.');
       return;
     }
     nav.navigate('PickupCode');

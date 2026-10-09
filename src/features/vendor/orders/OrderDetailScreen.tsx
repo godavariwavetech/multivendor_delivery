@@ -1,6 +1,6 @@
-import { Phone } from 'lucide-react-native';
+import { Check, Phone, Share2, X } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Share, StyleSheet, View } from 'react-native';
 
 import {
   AmountRow,
@@ -25,6 +25,7 @@ import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { dayClock } from '@/utils/datetime';
+import { invoiceText } from '@/utils/invoice';
 import { itemsLabel } from '@/utils/orders';
 import { SearchX } from 'lucide-react-native';
 
@@ -58,13 +59,22 @@ export function OrderDetailScreen() {
   }
 
   const work = workLabel(store.category);
+  // An invoice only makes sense for an order the store has taken on.
+  const canShareInvoice = order.status !== 'new' && order.status !== 'rejected' && order.status !== 'cancelled';
+  const shareInvoice = async () => {
+    try {
+      await Share.share({ title: `Invoice #${order.id}`, message: invoiceText(order, store) });
+    } catch {
+      toast('Could not open sharing');
+    }
+  };
   const pillTone = order.status === 'new' || order.status === 'ready' ? 'sky' : order.status === 'cooking' ? 'leaf' : 'neutral';
 
   const footer =
     order.status === 'new' ? (
       <>
-        <Button label="Reject" variant="outline" flex={1} onPress={() => nav.navigate('RejectOrder', { id: order.id })} />
-        <Button label="Accept & start preparing" flex={2.2} onPress={() => nav.navigate('AcceptOrder', { id: order.id })} />
+        <Button label="Reject" icon={X} variant="outline" flex={1} onPress={() => nav.navigate('RejectOrder', { id: order.id })} />
+        <Button label="Accept & start preparing" icon={Check} flex={2.2} onPress={() => nav.navigate('AcceptOrder', { id: order.id })} />
       </>
     ) : order.status === 'cooking' ? (
       <>
@@ -182,6 +192,8 @@ export function OrderDetailScreen() {
           <IconCircle icon={Phone} onPress={() => toast(`Calling ${order.customer.name} via masked number…`)} />
         </View>
       </Card>
+
+      {canShareInvoice ? <Button label="Share invoice" variant="outline" icon={Share2} onPress={shareInvoice} /> : null}
 
       {state.busyMode && order.status === 'new' ? (
         <Text v="caption" muted center>

@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   field: {
     height: 54,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: palette.line,
     backgroundColor: palette.paper,
     paddingHorizontal: space.xl,
