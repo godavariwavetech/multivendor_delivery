@@ -1,3 +1,4 @@
+import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 
@@ -8,10 +9,10 @@ import { Text } from './Text';
 export type PillTone = 'sky' | 'leaf' | 'neutral' | 'soft' | 'blue' | 'green' | 'outline';
 
 /** Status chips: "42s ago", "Preparing · 6 min", "Settled", "Verified". */
-export function Pill({ label, tone = 'neutral', style, strong }: { label: string; tone?: PillTone; style?: ViewStyle; strong?: boolean }) {
+export function Pill({ label, tone = 'neutral', style, strong, icon: Icon }: { label: string; tone?: PillTone; style?: ViewStyle; strong?: boolean; icon?: LucideIcon }) {
   const { r } = useTheme();
   const scheme = {
-    sky: { bg: palette.sky, fg: palette.blueDeep, border: palette.sky },
+    sky: { bg: r.soft, fg: r.accentDeep, border: r.soft },
     leaf: { bg: palette.leaf, fg: palette.greenDarkest, border: palette.leaf },
     neutral: { bg: palette.sunken, fg: palette.inkSoft, border: palette.sunken },
     soft: { bg: r.soft, fg: r.accentDeep, border: r.soft },
@@ -21,6 +22,7 @@ export function Pill({ label, tone = 'neutral', style, strong }: { label: string
   }[tone];
   return (
     <View style={[styles.pill, { backgroundColor: scheme.bg, borderColor: scheme.border }, style]}>
+      {Icon ? <Icon size={14} color={scheme.fg} strokeWidth={2.4} /> : null}
       <Text v={strong ? 'captionStrong' : 'captionStrong'} color={scheme.fg} numberOfLines={1}>
         {label}
       </Text>
@@ -46,7 +48,7 @@ export function Chip({
 }) {
   const { r } = useTheme();
   const bg = selected ? r.accent : tone === 'sky' ? palette.paper : 'transparent';
-  const border = selected ? r.accent : tone === 'sky' ? palette.skyLine : palette.line;
+  const border = selected ? r.accent : tone === 'sky' ? r.line : palette.line;
   const fg = selected ? r.onAccent : dashed ? palette.inkMuted : palette.ink;
   return (
     <Pressable
@@ -78,6 +80,9 @@ export function ChipRow({ children, scroll = true }: { children: React.ReactNode
 const styles = StyleSheet.create({
   pill: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: radius.pill,
@@ -87,7 +92,7 @@ const styles = StyleSheet.create({
     height: 40,
     paddingHorizontal: 18,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

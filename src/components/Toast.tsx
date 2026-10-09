@@ -24,7 +24,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
       timer.current = setTimeout(() => {
         Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setMessage(null));
-      }, 2200);
+      // Long messages (an error with a reason) need time to be read: ~60 ms a character, 2.2–7 s.
+      }, Math.min(7000, Math.max(2200, text.length * 60)));
     },
     [opacity],
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, ShoppingBag, Store, UtensilsCrossed } from 'lucide-react-native';
+import { CalendarClock, ChartColumn, CircleCheck, ClipboardList, CookingPot, MapPin, ShoppingBag, Store, UtensilsCrossed } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import {
@@ -7,6 +7,7 @@ import {
   DateRangePicker,
   Avatar,
   BellButton,
+  IconBubble,
   LinkButton,
   MiniBars,
   Screen,
@@ -21,7 +22,7 @@ import { useVendor } from '@/data/vendorStore';
 import { workLabel } from '@/domain/labels';
 import { useNow } from '@/hooks/useNow';
 import { useVendorNav } from '@/navigation/types';
-import { palette, radius, space, useTheme } from '@/theme';
+import { palette, pastelCard, radius, space, useTheme } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 
 import { NewOrderCard } from '../orders/OrderCards';
@@ -38,6 +39,7 @@ export function VendorHomeScreen() {
   const { store, state, newOrders, cookingOrders, readyOrders, unread, refresh, actions } = useVendor();
   const { r } = useTheme();
   const first = newOrders[0];
+  const shownNewOrders = newOrders.slice(0, 5);
   const [historyRange, setHistoryRange] = useState<HistoryRange>({ from: null, to: null });
   const openHistory = (range: HistoryRange) => {
     setHistoryRange(range);
@@ -53,7 +55,7 @@ export function VendorHomeScreen() {
   const goOrders = (tab: 'new' | 'cooking' | 'ready') => nav.navigate('VendorTabs', { screen: 'Orders', params: { tab } });
 
   return (
-    <Screen tab contentStyle={styles.screen} gap={0} onRefresh={refresh}>
+    <Screen tab bottomPad={0} contentStyle={styles.screen} gap={0} onRefresh={refresh}>
       <View style={[styles.hero, { backgroundColor: r.accent }]}>
         <View pointerEvents="none" style={styles.pattern}>
           <ShoppingBag style={styles.patternOne} size={86} color={palette.white} strokeWidth={1} />
@@ -92,8 +94,9 @@ export function VendorHomeScreen() {
         </View>
         <DateRangePicker value={historyRange} onChange={openHistory} />
 
-      <Card>
+      <Card style={pastelCard('sky')}>
         <View style={styles.row}>
+          <IconBubble icon={CalendarClock} tone="sky" size={46} />
           <View style={styles.flex}>
             <Text v="cardTitle">{state.open ? 'Accepting orders' : 'Not accepting orders'}</Text>
             <Text v="body" muted>
@@ -105,13 +108,14 @@ export function VendorHomeScreen() {
       </Card>
 
       <TileRow>
-        <StatTile value={String(newOrders.length)} label="New" onPress={() => goOrders('new')} />
-        <StatTile value={String(cookingOrders.length)} label={workLabel(store.category)} onPress={() => goOrders('cooking')} />
-        <StatTile value={String(readyOrders.length)} label="Ready" onPress={() => goOrders('ready')} />
+        <StatTile tone="sky" icon={ClipboardList} value={String(newOrders.length)} label="New" onPress={() => goOrders('new')} />
+        <StatTile tone="peach" icon={CookingPot} value={String(cookingOrders.length)} label={workLabel(store.category)} onPress={() => goOrders('cooking')} />
+        <StatTile tone="mint" icon={CircleCheck} value={String(readyOrders.length)} label="Ready" onPress={() => goOrders('ready')} />
       </TileRow>
 
-      <Card onPress={() => nav.navigate('VendorTabs', { screen: 'Earnings' })}>
+      <Card style={pastelCard('lavender')} onPress={() => nav.navigate('VendorTabs', { screen: 'Earnings' })}>
         <View style={styles.row}>
+          <IconBubble icon={ChartColumn} tone="lavender" size={46} />
           <View style={styles.flex}>
             <Text v="body" muted>
               Today
@@ -121,24 +125,27 @@ export function VendorHomeScreen() {
               {`${state.today.orders} orders · avg ${formatAmount(state.today.avg)}`}
             </Text>
           </View>
-          <MiniBars values={state.today.bars} />
+          <MiniBars values={state.today.bars} tone="lavender" />
         </View>
       </Card>
 
       {newOrders.length > 1 ? (
-        <SectionHeader title="New order" action={`See all ${newOrders.length}`} onAction={() => goOrders('new')} />
+        <SectionHeader title="New order" action="See all" onAction={() => goOrders('new')} />
       ) : null}
 
       {first ? (
-        <NewOrderCard
-          order={first}
-          now={now}
-          highlight
-          showCountdown="ago"
-          onOpen={() => nav.navigate('AcceptOrder', { id: first.id })}
-          onAccept={() => nav.navigate('AcceptOrder', { id: first.id })}
-          onReject={() => nav.navigate('RejectOrder', { id: first.id })}
-        />
+        shownNewOrders.map((order, i) => (
+          <NewOrderCard
+            key={order.id}
+            order={order}
+            now={now}
+            highlight={i === 0}
+            showCountdown="ago"
+            onOpen={() => nav.navigate('AcceptOrder', { id: order.id })}
+            onAccept={() => nav.navigate('AcceptOrder', { id: order.id })}
+            onReject={() => nav.navigate('RejectOrder', { id: order.id })}
+          />
+        ))
       ) : (
         <Card>
           <Text v="cardTitle">No new orders</Text>
@@ -174,7 +181,7 @@ const styles = StyleSheet.create({
     marginTop: -12,
     paddingHorizontal: space.gutter,
     paddingTop: space.lg,
-    paddingBottom: space.xxl + 60,
+    paddingBottom: space.lg,
     backgroundColor: palette.canvas,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,

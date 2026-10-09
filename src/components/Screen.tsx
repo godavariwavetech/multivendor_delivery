@@ -14,6 +14,8 @@ type ScreenProps = {
   children: React.ReactNode;
   /** Screens inside a tab navigator sit above the tab bar, so they skip the bottom inset. */
   tab?: boolean;
+  /** Bottom padding of the scrolling content; the default leaves room for a floating button. */
+  bottomPad?: number;
   scroll?: boolean;
   /** Sticky action bar under the content: "Accept & start preparing", "Save item". */
   footer?: React.ReactNode;
@@ -27,7 +29,7 @@ type ScreenProps = {
   onRefresh?: () => Promise<void> | void;
 };
 
-export function Screen({ children, tab, scroll = true, footer, overlay, contentStyle, bleed, edges, gap = 12, onRefresh }: ScreenProps) {
+export function Screen({ children, tab, bottomPad, scroll = true, footer, overlay, contentStyle, bleed, edges, gap = 12, onRefresh }: ScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const safeEdges: Edge[] = edges ?? (tab || footer ? ['top'] : ['top', 'bottom']);
   const body = [styles.content, { gap }, bleed && styles.bleed, contentStyle];
@@ -60,7 +62,7 @@ export function Screen({ children, tab, scroll = true, footer, overlay, contentS
         {scroll ? (
           <ScrollView
             style={styles.flex}
-            contentContainerStyle={[body, styles.scrollPad]}
+            contentContainerStyle={[body, styles.scrollPad, bottomPad !== undefined && { paddingBottom: bottomPad }]}
             keyboardShouldPersistTaps="handled"
             refreshControl={refreshControl}
             showsVerticalScrollIndicator={false}>

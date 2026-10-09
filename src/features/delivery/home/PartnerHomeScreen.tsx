@@ -57,9 +57,9 @@ export function PartnerHomeScreen() {
       </Card>
 
       <TileRow>
-        <StatTile value={String(today.deliveries)} label="Deliveries" />
-        <StatTile value={String(today.km)} unit="km" label="Distance" />
-        <StatTile value={formatAmount(today.earned)} label="Today" onPress={() => nav.navigate('DeliveryTabs', { screen: 'Earnings' })} />
+        <StatTile tone="sky" value={String(today.deliveries)} label="Deliveries" />
+        <StatTile tone="lavender" value={String(today.km)} unit="km" label="Distance" />
+        <StatTile tone="mint" value={formatAmount(today.earned)} label="Today" onPress={() => nav.navigate('DeliveryTabs', { screen: 'Earnings' })} />
       </TileRow>
 
       {trip && activeRequest && trip.stage !== 'complete' ? (

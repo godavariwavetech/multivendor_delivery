@@ -16,13 +16,14 @@ export type AuthParams = {
 export type SharedParams = {
   Notifications: undefined;
   Help: undefined;
+  Assistant: undefined;
   ReportProblem: { context?: string } | undefined;
   Privacy: undefined;
 };
 
 export type VendorTabParams = {
   Home: undefined;
-  Orders: { tab?: 'new' | 'cooking' | 'ready' | 'past' } | undefined;
+  Orders: { tab?: 'new' | 'cooking' | 'ready' | 'delivered' | 'past' } | undefined;
   Menu: undefined;
   Earnings: undefined;
   Profile: undefined;

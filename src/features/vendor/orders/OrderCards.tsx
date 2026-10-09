@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react-native';
+import { Check, ChevronRight, Clock, X } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -45,7 +45,7 @@ export function NewOrderCard({
     <Card tone={highlight ? 'highlight' : 'paper'} onPress={onOpen}>
       <View style={styles.head}>
         <Text v="cardTitle">{showCountdown === 'ago' ? `#${order.id} · ${itemsLabel(order)}` : `#${order.id}`}</Text>
-        <Pill label={chip} tone="sky" />
+        <Pill label={chip} tone="sky" icon={showCountdown ? Clock : undefined} />
       </View>
       <Text v="body" muted style={styles.gapTop}>
         {showCountdown === 'ago'
@@ -58,8 +58,10 @@ export function NewOrderCard({
         </Text>
       ) : null}
       <View style={styles.actions}>
-        <Button label="Reject" variant="outline" flex={1} onPress={onReject} />
+        <Button label="Reject" icon={X} variant="outline" size="sm" flex={1} onPress={onReject} />
         <Button
+          icon={Check}
+          size="sm"
           label={quickAcceptMinutes ? `Accept · ${quickAcceptMinutes} min` : 'Accept order'}
           flex={1.8}
           onPress={onAccept}

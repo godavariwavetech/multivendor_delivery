@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -65,8 +66,8 @@ export function AcceptOrderScreen() {
     <Screen
       footer={
         <>
-          <Button label="Reject" variant="outline" flex={1} onPress={() => nav.navigate('RejectOrder', { id: order.id })} />
-          <Button label={`Accept · ${effective} min`} flex={2} onPress={accept} />
+          <Button label="Reject" icon={X} variant="outline" flex={1} onPress={() => nav.navigate('RejectOrder', { id: order.id })} />
+          <Button label={`Accept · ${effective} min`} icon={Check} flex={2} onPress={accept} />
         </>
       }>
       <BackHeader

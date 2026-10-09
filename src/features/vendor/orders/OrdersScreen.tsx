@@ -14,7 +14,7 @@ import { prepSecondsLeft } from '@/utils/orders';
 
 import { CookingCard, NewOrderCard, OrderRow } from './OrderCards';
 
-type TabKey = 'new' | 'cooking' | 'ready' | 'past';
+type TabKey = 'new' | 'cooking' | 'ready' | 'delivered' | 'past';
 
 /** Board 4a·2 (orders by status) with 3a·3 (the cooking queue) as the middle tab. */
 export function OrdersScreen() {
@@ -25,6 +25,8 @@ export function OrdersScreen() {
   const { store, newOrders, cookingOrders, readyOrders, pastOrders, refresh, actions } = useVendor();
   const [tab, setTab] = useState<TabKey>(route.params?.tab ?? 'new');
   const work = workLabel(store.category);
+  const deliveredOrders = pastOrders.filter(o => o.status === 'delivered');
+  const oldOrders = pastOrders.filter(o => o.status !== 'delivered');
 
   useEffect(() => {
     if (route.params?.tab) {
@@ -36,10 +38,11 @@ export function OrdersScreen() {
   const cooking = [...cookingOrders].sort((a, b) => prepSecondsLeft(a, now) - prepSecondsLeft(b, now));
 
   const tabs = [
-    { key: 'new' as const, label: `New · ${newOrders.length}` },
-    { key: 'cooking' as const, label: `${work} · ${cookingOrders.length}` },
-    { key: 'ready' as const, label: `Ready · ${readyOrders.length}` },
-    { key: 'past' as const, label: 'Past' },
+    { key: 'new' as const, label: `New · ${newOrders.length}`, tone: 'sky' as const },
+    { key: 'cooking' as const, label: `${work} · ${cookingOrders.length}`, tone: 'peach' as const },
+    { key: 'ready' as const, label: `Ready · ${readyOrders.length}`, tone: 'mint' as const },
+    { key: 'delivered' as const, label: `Delivered · ${deliveredOrders.length}`, tone: 'lavender' as const },
+    { key: 'past' as const, label: 'Old', tone: 'butter' as const },
   ];
 
   const open = (id: string) => nav.navigate('OrderDetail', { id });
@@ -110,11 +113,18 @@ export function OrdersScreen() {
           <EmptyState icon={PackageCheck} title="No orders waiting" body="Orders marked ready wait here until the partner collects them." />
         ))}
 
-      {tab === 'past' &&
-        (pastOrders.length ? (
-          pastOrders.map(o => <OrderRow key={o.id} order={o} workLabel={work} onPress={() => open(o.id)} />)
+      {tab === 'delivered' &&
+        (deliveredOrders.length ? (
+          deliveredOrders.map(o => <OrderRow key={o.id} order={o} workLabel={work} onPress={() => open(o.id)} />)
         ) : (
-          <EmptyState icon={ClipboardCheck} title="No past orders" body="Completed, cancelled and rejected orders are listed here." />
+          <EmptyState icon={PackageCheck} title="No delivered orders" body="Orders handed over to customers are listed here." />
+        ))}
+
+      {tab === 'past' &&
+        (oldOrders.length ? (
+          oldOrders.map(o => <OrderRow key={o.id} order={o} workLabel={work} onPress={() => open(o.id)} />)
+        ) : (
+          <EmptyState icon={ClipboardCheck} title="No old orders" body="Picked up, cancelled and rejected orders are listed here." />
         ))}
     </Screen>
   );

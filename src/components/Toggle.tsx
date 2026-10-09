@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   track: { width: TRACK_W, height: TRACK_H, borderRadius: TRACK_H / 2, justifyContent: 'center' },
   knob: { width: KNOB, height: KNOB, borderRadius: KNOB / 2 },
   box: { width: 24, height: 24, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  boxOff: { borderWidth: 1.5, borderColor: palette.line, backgroundColor: palette.paper },
+  boxOff: { borderWidth: 1, borderColor: palette.line, backgroundColor: palette.paper },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   pressed: { opacity: 0.7 },
   flex: { flex: 1 },

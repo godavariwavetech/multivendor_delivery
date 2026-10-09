@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Image, Modal, PanResponder, Pressable, StatusBar, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { palette, space } from '@/theme';
-import type { PickedPhoto } from '@/utils/photo';
+import { MAX_PHOTO_BYTES, type PickedPhoto } from '@/utils/photo';
 
 import { Text } from './Text';
 
@@ -14,6 +14,17 @@ type Grip = 'move' | 'tl' | 'tr' | 'bl' | 'br';
 const MIN = 72; // smallest crop edge on screen, in dp
 const HANDLE = 44; // touch target of a corner
 const OUTPUT_EDGE = 1280; // longest edge of the saved photo; the server caps an upload at 8 MB
+
+/** Quality, then size, stepped down until the saved photo fits in 1 MB. */
+const ATTEMPTS = [
+  { quality: 0.85, shrink: 1 },
+  { quality: 0.7, shrink: 1 },
+  { quality: 0.55, shrink: 0.85 },
+  { quality: 0.45, shrink: 0.7 },
+  { quality: 0.4, shrink: 0.5 },
+];
+
+const fileBytes = async (uri: string) => (await (await fetch(uri)).blob()).size;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
@@ -155,15 +166,27 @@ export function PhotoCropper({
       const sw = frame.w / fit.scale;
       const sh = frame.h / fit.scale;
       const down = Math.min(1, OUTPUT_EDGE / Math.max(sw, sh));
-      const result = await ImageEditor.cropImage(photo.uri, {
-        offset: { x: Math.max(0, Math.round(sx)), y: Math.max(0, Math.round(sy)) },
-        size: { width: Math.round(sw), height: Math.round(sh) },
-        displaySize: { width: Math.round(sw * down), height: Math.round(sh * down) },
-        resizeMode: 'contain',
-        format: 'jpeg',
-        quality: 0.85,
-      });
-      onDone({ uri: result.uri, name: result.name || `photo-${Date.now()}.jpg`, type: result.type || 'image/jpeg' });
+      // Try the best quality first and step down until the file is at most 1 MB.
+      let result: { uri: string; name?: string; type?: string } | null = null;
+      for (const { quality, shrink } of ATTEMPTS) {
+        result = await ImageEditor.cropImage(photo.uri, {
+          offset: { x: Math.max(0, Math.round(sx)), y: Math.max(0, Math.round(sy)) },
+          size: { width: Math.round(sw), height: Math.round(sh) },
+          displaySize: { width: Math.round(sw * down * shrink), height: Math.round(sh * down * shrink) },
+          resizeMode: 'contain',
+          format: 'jpeg',
+          quality,
+        });
+        if ((await fileBytes(result.uri)) <= MAX_PHOTO_BYTES) {
+          break;
+        }
+        result = null;
+      }
+      if (!result) {
+        throw new Error('This photo could not be reduced below 1 MB. Try a simpler photo.');
+      }
+      const saved = result;
+      onDone({ uri: saved.uri, name: saved.name || `photo-${Date.now()}.jpg`, type: saved.type || 'image/jpeg' });
     } catch (error) {
       setSaving(false);
       onError(error instanceof Error ? error.message : 'The photo could not be cropped.');

@@ -17,6 +17,7 @@ import {
   Text,
   TextField,
   useToast,
+  appAlert,
 } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORY_LABEL } from '@/domain/labels';
@@ -277,6 +278,9 @@ export function ProductEditScreen() {
     }
   };
 
+  // A dialog, not a toast: a toast vanishes in two seconds and is drawn behind the crop screen.
+  const showPhotoProblem = (message: string) => appAlert('Photo problem', message);
+
   const choosePhoto = async (source: PhotoSource) => {
     setSheetOpen(false);
     // Let the sheet finish closing: the system picker will not open over a dismissing modal.
@@ -287,7 +291,7 @@ export function ProductEditScreen() {
         setCropping(picked);
       }
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'The photo could not be opened.');
+      showPhotoProblem(error instanceof Error ? error.message : 'The photo could not be opened.');
     }
   };
 
@@ -447,7 +451,7 @@ export function ProductEditScreen() {
         }}
         onError={message => {
           setCropping(null);
-          toast(message);
+          showPhotoProblem(message);
         }}
       />
     </Screen>
