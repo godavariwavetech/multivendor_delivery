@@ -16,7 +16,7 @@ export function ProductCard({
   right,
 }: {
   product: Product;
-  onPress: () => void;
+  onPress?: () => void;
   onToggle?: (available: boolean) => void;
   right?: React.ReactNode;
 }) {
