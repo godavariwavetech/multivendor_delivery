@@ -44,7 +44,6 @@ export const USE_MOCK_DATA = false;
 
 /** Temporary development data for the history-period card while its API is deployed. */
 export const USE_MOCK_HISTORY = true;
-
 /** How often a signed-in workspace refetches its state. */
 export const POLL_INTERVAL_MS = 15000;
 
