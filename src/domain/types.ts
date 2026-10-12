@@ -86,6 +86,10 @@ export type Store = {
   category: Category;
   name: string;
   initials: string;
+  /** `vendors.shop_image` as a fetchable address; absent from an older backend or when none is set. */
+  logo?: string | null;
+  /** `tenants.tenant_name`: the business the store belongs to, printed on its invoices. */
+  tenantName?: string | null;
   area: string;
   address: string;
   /** `vendors.latitude` / `longitude`, for the map on Store details. */

@@ -22,6 +22,7 @@ export const endpoints = {
     requestExport: '/requestdataexport',
     registerDevice: '/registerdevice',
     unregisterDevice: '/unregisterdevice',
+    uploadImage: '/uploadimage',
   },
   vendor: {
     state: '/getvendorstate',
