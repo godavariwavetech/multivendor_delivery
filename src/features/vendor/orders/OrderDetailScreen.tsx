@@ -1,6 +1,7 @@
 import { Check, Phone, Share2, X } from 'lucide-react-native';
-import React from 'react';
-import { Share, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Share from 'react-native-share';
 
 import {
   AmountRow,
@@ -25,8 +26,11 @@ import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { dayClock } from '@/utils/datetime';
-import { invoiceText } from '@/utils/invoice';
+import { type InvoiceContent, type InvoiceLogo, invoiceContent, invoicePdfBase64 } from '@/utils/invoice';
+import { loadInvoiceLogo } from '@/utils/invoiceLogo';
 import { itemsLabel } from '@/utils/orders';
+
+import { InvoicePreview } from './InvoicePreview';
 import { SearchX } from 'lucide-react-native';
 
 const STEP: Record<OrderStatus, number> = {
@@ -46,6 +50,9 @@ export function OrderDetailScreen() {
   const now = useNow();
   const { params } = useVendorRoute<'OrderDetail'>();
   const { order: find, store, state, actions } = useVendor();
+  const [preview, setPreview] = useState<{ content: InvoiceContent; logo: InvoiceLogo | null } | null>(null);
+  const [opening, setOpening] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const commission = state.details?.commission;
   const order = find(params.id);
 
@@ -61,11 +68,33 @@ export function OrderDetailScreen() {
   const work = workLabel(store.category);
   // An invoice only makes sense for an order the store has taken on.
   const canShareInvoice = order.status !== 'new' && order.status !== 'rejected' && order.status !== 'cancelled';
-  const shareInvoice = async () => {
+  const gstin = state.details?.documents.find(d => /gst/i.test(d.title))?.detail;
+  // Builds the invoice and shows it first; the PDF is only shared from the preview.
+  const previewInvoice = async () => {
+    setOpening(true);
     try {
-      await Share.share({ title: `Invoice #${order.id}`, message: invoiceText(order, store) });
+      const logo = await loadInvoiceLogo(store.logo);
+      setPreview({ content: invoiceContent(order, store, gstin), logo });
+    } finally {
+      setOpening(false);
+    }
+  };
+  const shareInvoice = async () => {
+    setSharing(true);
+    try {
+      await Share.open({
+        title: `Invoice #${order.id}`,
+        url: `data:application/pdf;base64,${invoicePdfBase64(order, store, { gstin, logo: preview?.logo })}`,
+        type: 'application/pdf',
+        filename: `Invoice-${order.id}`,
+        failOnCancel: false,
+        // The library's file provider only covers the internal cache, not the external one it defaults to.
+        useInternalStorage: true,
+      });
     } catch {
-      toast('Could not open sharing');
+      toast('Could not share the invoice');
+    } finally {
+      setSharing(false);
     }
   };
   const pillTone = order.status === 'new' || order.status === 'ready' ? 'sky' : order.status === 'cooking' ? 'leaf' : 'neutral';
@@ -193,13 +222,14 @@ export function OrderDetailScreen() {
         </View>
       </Card>
 
-      {canShareInvoice ? <Button label="Share invoice" variant="outline" icon={Share2} onPress={shareInvoice} /> : null}
+      {canShareInvoice ? <Button label={opening ? 'Preparing invoice…' : 'Share invoice'} variant="outline" icon={Share2} disabled={opening} onPress={previewInvoice} /> : null}
 
       {state.busyMode && order.status === 'new' ? (
         <Text v="caption" muted center>
           Busy mode is on — 10 minutes will be added to the prep time you choose.
         </Text>
       ) : null}
+      <InvoicePreview content={preview?.content ?? null} logo={preview?.logo ?? null} sharing={sharing} onShare={shareInvoice} onClose={() => setPreview(null)} />
     </Screen>
   );
 }
