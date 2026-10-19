@@ -60,6 +60,14 @@ export const palette = {
   leafLine: '#A3DCA7',
   leafLineSoft: '#C6E9C9',
   leafWash: '#EFFBF0',
+
+  // violet — franchise. The brand artwork has no third hue; this one sits apart from
+  // the vendor blue and delivery green so an area franchisee's workspace reads as its own.
+  violet: '#5B3FB5',
+  violetDeep: '#3A2780',
+  lilac: '#E6DFF7',
+  lilacLine: '#C9BCEC',
+  lilacWash: '#F4F1FB',
 } as const;
 
 export type PaletteColor = keyof typeof palette;

@@ -33,14 +33,14 @@ type SessionApi = {
   requestOtp: (mobile: string, role: Role | undefined, purpose: 'login' | 'reset') => Promise<SignInResult>;
   verifyOtp: (mobile: string, code: string, role: Role) => Promise<SignInResult>;
   resetPassword: (mobile: string, otp: string, password: string) => Promise<SignInResult>;
-  /** Dual-role accounts can move between workspaces from Profile. */
-  switchRole: () => Promise<void>;
+  /** Multi-role accounts can move between workspaces from Profile. Without `to`, goes to the next role held. */
+  switchRole: (to?: Role) => Promise<void>;
   signOut: () => void;
 };
 
 const SessionContext = createContext<SessionApi | null>(null);
 
-const ROLE_NAME: Record<Role, string> = { vendor: 'a vendor', delivery: 'a delivery partner' };
+const ROLE_NAME: Record<Role, string> = { vendor: 'a vendor', delivery: 'a delivery partner', franchise: 'a franchise' };
 
 const failed = (error: unknown): SignInResult => ({
   ok: false,
@@ -197,11 +197,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const switchRole = useCallback(async () => {
+  const switchRole = useCallback(async (to?: Role) => {
     if (!session || session.account.roles.length < 2) {
       return;
     }
-    const next: Role = session.activeRole === 'vendor' ? 'delivery' : 'vendor';
+    const next = to ?? session.account.roles.find(role => role !== session.activeRole);
+    if (!next || next === session.activeRole || !session.account.roles.includes(next)) {
+      return;
+    }
     if (USE_MOCK_DATA) {
       setSession({ ...session, activeRole: next });
       return;

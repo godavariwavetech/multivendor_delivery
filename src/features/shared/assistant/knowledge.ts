@@ -140,7 +140,38 @@ const delivery: Topic[] = [
   },
 ];
 
-const TOPICS: Record<Role, Topic[]> = { vendor, delivery };
+const franchise: Topic[] = [
+  {
+    keywords: ['commission', 'earn', 'earning', 'paid', 'payout', 'money', 'percent'],
+    question: 'How is my commission calculated?',
+    answer:
+      'You earn your commission rate on the sub-total of every order your vendors deliver, counted on the day of delivery. Open Earnings to see each week.',
+  },
+  {
+    keywords: ['block', 'unblock', 'suspend', 'disable'],
+    question: 'How do I block a vendor or partner?',
+    answer: 'Open Vendors or Partners, find the account and tap Block. They are signed out straight away and can be unblocked the same way.',
+  },
+  {
+    keywords: ['add vendor', 'new vendor', 'add partner', 'new partner', 'onboard', 'link'],
+    question: 'How do I add a vendor or partner?',
+    answer: 'Vendors and partners are linked to your franchise by the platform admin. Contact support with their mobile number and they will be added.',
+    action: TICKET,
+  },
+  {
+    keywords: ['offline', 'not online', 'online', 'not showing'],
+    question: 'A vendor shows offline',
+    answer: 'A store is offline when its owner has switched it off or closed for the day. Call the vendor from the Vendors tab to check.',
+  },
+  {
+    keywords: ['refund', 'complaint', 'problem', 'issue', 'help', 'support', 'agent', 'human', 'call'],
+    question: 'I need to talk to support',
+    answer: 'You can message support from here. Describe the problem and the team will get back to you.',
+    action: TICKET,
+  },
+];
+
+const TOPICS: Record<Role, Topic[]> = { vendor, delivery, franchise };
 
 export const GREETING = (name?: string) =>
   `Hi${name ? ` ${name}` : ''}! I'm your eKart360 assistant. Ask me anything about orders, your menu or payouts, or pick a question below.`;

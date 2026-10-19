@@ -1,12 +1,17 @@
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNavigationContainerRef, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Bell, House, Package, ReceiptText, Scooter, User, Wallet } from 'lucide-react-native';
+import { Bell, Bike, House, Package, ReceiptText, Scooter, Store, User, Wallet } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { TabBar } from '@/components';
 import { useSession } from '@/data/session';
+import { FranchiseEarningsScreen } from '@/features/franchise/earnings/FranchiseEarningsScreen';
+import { FranchiseHomeScreen } from '@/features/franchise/home/FranchiseHomeScreen';
+import { FranchisePartnerScreen, FranchiseVendorScreen } from '@/features/franchise/network/DetailScreens';
+import { FranchisePartnersScreen, FranchiseVendorsScreen } from '@/features/franchise/network/NetworkScreens';
+import { FranchiseProfileScreen } from '@/features/franchise/profile/FranchiseProfileScreen';
 import { ActiveScreen } from '@/features/delivery/active/ActiveScreen';
 import { DeliveryFailedScreen, DeliveryOtpScreen, PickupCodeScreen, ProofPhotoScreen } from '@/features/delivery/active/TripScreens';
 import { HistoryScreen, PartnerEarningsScreen, StatementScreen, TripDetailScreen } from '@/features/delivery/earnings/EarningsScreens';
@@ -49,7 +54,7 @@ import { DocumentsScreen, StoreDetailsScreen } from '@/features/vendor/profile/S
 import { VendorProfileScreen } from '@/features/vendor/profile/VendorProfileScreen';
 import { ThemeProvider, palette } from '@/theme';
 
-import type { AuthParams, DeliveryParams, DeliveryTabParams, VendorParams, VendorTabParams } from './types';
+import type { AuthParams, DeliveryParams, DeliveryTabParams, FranchiseParams, FranchiseTabParams, VendorParams, VendorTabParams } from './types';
 
 const navTheme = {
   ...DefaultTheme,
@@ -172,6 +177,41 @@ function DeliveryNavigator() {
   );
 }
 
+// ─── Franchise: Home · Vendors · Partners · Earnings · Profile ────────────────
+
+const FranchiseTab = createBottomTabNavigator<FranchiseTabParams>();
+const FRANCHISE_ICONS = { Home: House, Vendors: Store, Partners: Bike, Earnings: Wallet, Profile: User };
+const franchiseTabBar = (props: BottomTabBarProps) => <TabBar {...props} icons={FRANCHISE_ICONS} />;
+
+function FranchiseTabs() {
+  return (
+    <FranchiseTab.Navigator screenOptions={{ headerShown: false }} tabBar={franchiseTabBar}>
+      <FranchiseTab.Screen name="Home" component={FranchiseHomeScreen} options={{ title: 'Home' }} />
+      <FranchiseTab.Screen name="Vendors" component={FranchiseVendorsScreen} options={{ title: 'Vendors' }} />
+      <FranchiseTab.Screen name="Partners" component={FranchisePartnersScreen} options={{ title: 'Partners' }} />
+      <FranchiseTab.Screen name="Earnings" component={FranchiseEarningsScreen} options={{ title: 'Earnings' }} />
+      <FranchiseTab.Screen name="Profile" component={FranchiseProfileScreen} options={{ title: 'Profile' }} />
+    </FranchiseTab.Navigator>
+  );
+}
+
+const FranchiseStack = createNativeStackNavigator<FranchiseParams>();
+
+function FranchiseNavigator() {
+  return (
+    <FranchiseStack.Navigator screenOptions={stackOptions}>
+      <FranchiseStack.Screen name="FranchiseTabs" component={FranchiseTabs} />
+      <FranchiseStack.Screen name="FranchiseVendor" component={FranchiseVendorScreen} />
+      <FranchiseStack.Screen name="FranchisePartner" component={FranchisePartnerScreen} />
+      <FranchiseStack.Screen name="Notifications" component={NotificationsScreen} />
+      <FranchiseStack.Screen name="Help" component={HelpScreen} />
+      <FranchiseStack.Screen name="Assistant" component={AssistantScreen} />
+      <FranchiseStack.Screen name="ReportProblem" component={ReportProblemScreen} />
+      <FranchiseStack.Screen name="Privacy" component={PrivacyScreen} />
+    </FranchiseStack.Navigator>
+  );
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -207,6 +247,8 @@ export function RootNavigator() {
             <VendorNavigator key="vendor" />
           ) : role === 'delivery' ? (
             <DeliveryNavigator key="delivery" />
+          ) : role === 'franchise' ? (
+            <FranchiseNavigator key="franchise" />
           ) : (
             <AuthNavigator />
           )}

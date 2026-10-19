@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
+import { Calendar, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from 'lucide-react-native';
 
 import { palette, radius, space, useTheme } from '@/theme';
 
@@ -11,7 +11,7 @@ type Range = { from: Date | null; to: Date | null };
 
 const sameDay = (a: Date | null, b: Date) => Boolean(a && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate());
 const dateKey = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-const shortDate = (d: Date | null) => (d ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Select date');
+const shortDate = (d: Date | null) => (d ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Select date');
 const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 const daysAgo = (days: number) => {
   const date = startOfDay(new Date());
@@ -31,22 +31,63 @@ const quickRanges = () => {
     { label: 'Last 30 days', range: { from: daysAgo(29), to: today } },
     { label: 'This month', range: { from: thisMonth, to: today } },
     { label: 'Last month', range: { from: lastMonthStart, to: lastMonthEnd } },
+    { label: 'This year', range: { from: new Date(today.getFullYear(), 0, 1), to: today } },
+    { label: 'Last year', range: { from: new Date(today.getFullYear() - 1, 0, 1), to: new Date(today.getFullYear() - 1, 11, 31) } },
   ];
 };
 
 /** A dependency-free From/To month calendar used for history filters. */
-export function DateRangePicker({ value, onChange }: { value: Range; onChange: (range: Range) => void }) {
+export function DateRangePicker({
+  value,
+  onChange,
+  caption = 'History period',
+  title = 'Select history period',
+  customOnly = false,
+  open: controlledOpen,
+  onClose,
+}: {
+  value: Range;
+  onChange: (range: Range) => void;
+  caption?: string;
+  title?: string;
+  /** Open straight on the From/To calendar, without the list of preset ranges. */
+  customOnly?: boolean;
+  /** Controlled mode: the caller shows and hides the sheet and no trigger row is drawn. */
+  open?: boolean;
+  onClose?: () => void;
+}) {
   const { r } = useTheme();
-  const [open, setOpen] = useState(false);
+  const controlled = controlledOpen !== undefined;
+  const [innerOpen, setInnerOpen] = useState(false);
+  const open = controlled ? controlledOpen : innerOpen;
+  const setOpen = (next: boolean) => {
+    if (controlled) {
+      if (!next) {
+        onClose?.();
+      }
+    } else {
+      setInnerOpen(next);
+    }
+  };
   const [draft, setDraft] = useState<Range>(value);
   const [month, setMonth] = useState(() => value.to ?? value.from ?? new Date());
-  const [custom, setCustom] = useState(false);
+  const [custom, setCustom] = useState(customOnly);
   const [selecting, setSelecting] = useState<'from' | 'to'>('from');
   const days = useMemo(() => {
     const first = new Date(month.getFullYear(), month.getMonth(), 1);
     const count = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
     return Array.from({ length: first.getDay() + count }, (_, index) => (index < first.getDay() ? null : new Date(month.getFullYear(), month.getMonth(), index - first.getDay() + 1)));
   }, [month]);
+  useEffect(() => {
+    if (controlled && controlledOpen) {
+      setDraft(value);
+      setMonth(value.to ?? value.from ?? new Date());
+      setSelecting('from');
+      setCustom(customOnly);
+    }
+    // Reset the sheet each time it is opened, not when the value it shows changes under it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [controlled, controlledOpen]);
   const choose = (day: Date) => {
     if (selecting === 'from' || !draft.from) {
       setDraft({ from: day, to: null });
@@ -59,20 +100,20 @@ export function DateRangePicker({ value, onChange }: { value: Range; onChange: (
 
   return (
     <>
-      <Pressable onPress={() => { setDraft(value); setMonth(value.to ?? value.from ?? new Date()); setSelecting('from'); setCustom(false); setOpen(true); }} style={({ pressed }) => [styles.trigger, { borderColor: r.line }, pressed && styles.pressed]}>
+      {controlled ? null : <Pressable onPress={() => { setDraft(value); setMonth(value.to ?? value.from ?? new Date()); setSelecting('from'); setCustom(false); setOpen(true); }} style={({ pressed }) => [styles.trigger, { borderColor: r.line }, pressed && styles.pressed]}>
         <View style={[styles.calendarIcon, { backgroundColor: r.soft }]}><Calendar size={17} color={r.accentDeep} /></View>
         <View style={styles.flex}>
-          <Text v="caption" muted>History period</Text>
+          <Text v="caption" muted>{caption}</Text>
           <Text v="bodyStrong">{label}</Text>
         </View>
         <ChevronRight size={18} color={palette.inkMuted} />
-      </Pressable>
+      </Pressable>}
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
             <View style={styles.handle} />
-            <View style={styles.sheetTitle}><Text v="headline">Select history period</Text><Pressable onPress={() => setOpen(false)} hitSlop={10}><X size={20} color={palette.inkMuted} /></Pressable></View>
+            <View style={styles.sheetTitle}><Text v="headline">{title}</Text><Pressable onPress={() => setOpen(false)} hitSlop={10}><X size={20} color={palette.inkMuted} /></Pressable></View>
             {custom ? (
               <>
                 <Text v="caption" muted>{selecting === 'to' ? 'Now select the To date' : 'Choose a From date, then tap To'}</Text>
@@ -81,9 +122,15 @@ export function DateRangePicker({ value, onChange }: { value: Range; onChange: (
                   <Pressable disabled={!draft.from} onPress={() => setSelecting('to')} style={[styles.selectedDate, selecting === 'to' && { borderColor: r.accent, borderWidth: 1 }, !draft.from && styles.disabledDate]}><Text v="caption" muted>TO</Text><Text v="bodyStrong">{shortDate(draft.to)}</Text></Pressable>
                 </View>
                 <View style={styles.monthRow}>
-                  <Pressable onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} hitSlop={10}><ChevronLeft size={21} color={palette.ink} /></Pressable>
+                  <View style={styles.stepRow}>
+                    <Pressable onPress={() => setMonth(new Date(month.getFullYear() - 1, month.getMonth(), 1))} hitSlop={10}><ChevronsLeft size={21} color={palette.ink} /></Pressable>
+                    <Pressable onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} hitSlop={10}><ChevronLeft size={21} color={palette.ink} /></Pressable>
+                  </View>
                   <Text v="cardTitle">{month.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</Text>
-                  <Pressable onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} hitSlop={10}><ChevronRight size={21} color={palette.ink} /></Pressable>
+                  <View style={styles.stepRow}>
+                    <Pressable onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} hitSlop={10}><ChevronRight size={21} color={palette.ink} /></Pressable>
+                    <Pressable onPress={() => setMonth(new Date(month.getFullYear() + 1, month.getMonth(), 1))} hitSlop={10}><ChevronsRight size={21} color={palette.ink} /></Pressable>
+                  </View>
                 </View>
                 <View style={styles.weekRow}>{['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => <Text key={`${day}-${i}`} v="caption" muted center style={styles.weekDay}>{day}</Text>)}</View>
                 <View style={styles.grid}>{days.map((day, i) => !day ? <View key={`blank-${i}`} style={styles.day} /> : <Pressable key={day.toISOString()} onPress={() => choose(day)} style={[styles.day, inRange(day) && { backgroundColor: r.soft }, Boolean(selecting === 'from' && draft.from && sameDay(draft.from, day)) && { backgroundColor: r.accent, borderRadius: radius.pill }, Boolean(selecting === 'to' && draft.from && draft.to && (sameDay(draft.from, day) || sameDay(draft.to, day))) && { backgroundColor: r.accent, borderRadius: radius.pill }]}><Text v="captionStrong" center color={(selecting === 'from' && draft.from && sameDay(draft.from, day)) || (selecting === 'to' && draft.from && draft.to && (sameDay(draft.from, day) || sameDay(draft.to, day))) ? r.onAccent : palette.ink}>{day.getDate()}</Text></Pressable>)}</View>
@@ -110,5 +157,6 @@ const styles = StyleSheet.create({
   calendarIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' }, backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(26,29,33,0.45)' },
   sheet: { backgroundColor: palette.paper, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space.lg, gap: 12 }, handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: palette.line, alignSelf: 'center' },
   sheetTitle: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, quickList: { gap: 2 }, quickOption: { minHeight: 46, paddingHorizontal: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: palette.line }, customOption: { borderBottomWidth: 0, marginTop: 4 }, selectedRow: { flexDirection: 'row', gap: 8 }, selectedDate: { flex: 1, gap: 3, padding: space.sm, backgroundColor: palette.sunken, borderRadius: radius.sm }, disabledDate: { opacity: 0.55 }, monthRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   weekRow: { flexDirection: 'row' }, weekDay: { width: '14.2857%', paddingVertical: 5 }, grid: { flexDirection: 'row', flexWrap: 'wrap' }, day: { width: '14.2857%', height: 38, justifyContent: 'center' }, actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });

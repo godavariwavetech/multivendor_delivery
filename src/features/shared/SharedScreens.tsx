@@ -27,6 +27,7 @@ import { useVendor } from '@/data/vendorStore';
 import { useSupport } from '@/data/support';
 import { SharedParams, useSharedNav } from '@/navigation/types';
 import { fonts, palette, radius, space, useTheme } from '@/theme';
+import type { Role } from '@/theme';
 import { ago } from '@/utils/datetime';
 
 import { BotIcon } from './assistant/BotIcon';
@@ -36,6 +37,10 @@ function useRoleStore() {
   const { role } = useTheme();
   const vendor = useVendor();
   const delivery = useDelivery();
+  if (role === 'franchise') {
+    // A franchise has no notification feed yet.
+    return { notifications: [], readAll: () => {} };
+  }
   return role === 'vendor'
     ? {
         notifications: vendor.state.notifications,
@@ -91,7 +96,7 @@ export function NotificationsScreen() {
   );
 }
 
-const FAQS = {
+const FAQS: Record<Role, { q: string; a: string }[]> = {
   vendor: [
     { q: 'An order came in after closing time', a: 'Reject it with "Store closing". The customer is refunded automatically and your rating is not affected.' },
     { q: "The partner hasn't arrived", a: 'Keep the order on the Ready tab. If nobody arrives 10 minutes after the promised time, report it from the handover screen.' },
@@ -103,6 +108,11 @@ const FAQS = {
     { q: "The food isn't ready at the store", a: 'Wait at the counter. If it is more than 10 minutes past the ready time, use "Order not ready · report delay".' },
     { q: 'How is COD cash settled?', a: 'Cash you collect is deducted from your next weekly payout. You never deposit it separately.' },
     { q: 'When do I get paid?', a: 'Weekly earnings are paid on Tuesday to your registered bank account.' },
+  ],
+  franchise: [
+    { q: 'How is my commission calculated?', a: 'Your commission rate applied to the sub-total of every order your vendors deliver, counted on the day of delivery.' },
+    { q: 'How do I block a vendor or partner?', a: 'Open Vendors or Partners, find the account and tap Block. They can be unblocked the same way.' },
+    { q: 'How do I add a vendor or partner?', a: 'The platform admin links vendors and partners to your franchise. Contact support with their mobile number.' },
   ],
 };
 
