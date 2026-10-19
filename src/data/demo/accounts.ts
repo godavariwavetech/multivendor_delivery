@@ -39,6 +39,11 @@ export const DEMO_ACCOUNTS: Account[] = [
     roles: ['delivery'],
     partner: { name: 'Karthik R.', zone: 'Zone 4, Chennai North' },
   },
+  {
+    mobile: '9840700009',
+    roles: ['franchise'],
+    franchise: { name: 'Anna Nagar Franchise', owner: 'Meenakshi S.', area: 'Zone 4 · Anna Nagar, Chennai' },
+  },
 ];
 
 export const findAccount = (mobile: string) =>

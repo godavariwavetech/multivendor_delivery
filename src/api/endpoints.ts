@@ -62,4 +62,12 @@ export const endpoints = {
     preferences: '/updatepreferences',
     readNotifications: '/delivery/readnotifications',
   },
+  franchise: {
+    state: '/getfranchisestate',
+    vendorReport: '/franchise/vendorreport',
+    vendor: '/franchise/vendor',
+    partner: '/franchise/partner',
+    setVendorBlocked: '/franchise/setvendorblocked',
+    setPartnerBlocked: '/franchise/setpartnerblocked',
+  },
 } as const;

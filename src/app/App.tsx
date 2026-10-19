@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DialogHost, ToastProvider } from '@/components';
 import { DeliveryStoreProvider } from '@/data/deliveryStore';
+import { FranchiseStoreProvider } from '@/data/franchiseStore';
 import { SessionProvider, useSession } from '@/data/session';
 import { SupportProvider } from '@/data/support';
 import { VendorStoreProvider } from '@/data/vendorStore';
@@ -24,7 +25,7 @@ function SignedInServices({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Both role stores stay mounted, so a dual-role account can switch workspaces
+ * All three role stores stay mounted, so a dual-role account can switch workspaces
  * without losing in-progress orders or trips. ToastProvider sits above them:
  * the stores surface API failures through it.
  */
@@ -38,8 +39,10 @@ export default function App() {
             <SignedInServices>
               <VendorStoreProvider>
                 <DeliveryStoreProvider>
-                  <RootNavigator />
-                  <DialogHost />
+                  <FranchiseStoreProvider>
+                    <RootNavigator />
+                    <DialogHost />
+                  </FranchiseStoreProvider>
                 </DeliveryStoreProvider>
               </VendorStoreProvider>
             </SignedInServices>

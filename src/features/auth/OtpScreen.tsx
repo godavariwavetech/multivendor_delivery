@@ -55,7 +55,7 @@ export function OtpScreen() {
         </Text>
         <Text v="body" muted style={styles.sub}>
           {params.purpose === 'login'
-            ? `${LENGTH}-digit code sent to ${pretty} · ${params.role === 'delivery' ? 'Delivery partner' : 'Vendor'}`
+            ? `${LENGTH}-digit code sent to ${pretty} · ${params.role === 'delivery' ? 'Delivery partner' : params.role === 'franchise' ? 'Franchise' : 'Vendor'}`
             : `${LENGTH}-digit code sent to ${pretty}`}
         </Text>
 

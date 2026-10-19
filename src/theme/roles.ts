@@ -1,7 +1,7 @@
 import appConfig from '../config/appConfig.json';
 import { palette } from './palette';
 
-export type Role = 'vendor' | 'delivery';
+export type Role = 'vendor' | 'delivery' | 'franchise';
 
 /**
  * Board 1d: "The app keeps one shell — same header block, same card language,
@@ -54,6 +54,14 @@ export const roleColors: Record<Role, RoleColors> = {
     line: palette.leafLine,
     wash: palette.leafWash,
   },
+  franchise: {
+    accent: palette.violet,
+    accentDeep: palette.violetDeep,
+    onAccent: palette.white,
+    soft: palette.lilac,
+    line: palette.lilacLine,
+    wash: palette.lilacWash,
+  },
 };
 
 /**
@@ -81,7 +89,8 @@ export type Branding = { vendor: RoleTheme | null; delivery: RoleTheme | null };
 
 /** The workspace's colours: the tenant's pick when there is one, else the board's. */
 export const roleColorsFrom = (role: Role, brand?: Branding | null): RoleColors => {
-  const picked = brand?.[role];
+  // The tenant brands the vendor and delivery sides; the franchise keeps the built-in violet.
+  const picked = role === 'franchise' ? null : brand?.[role];
   if (!picked) {
     return roleColors[role];
   }

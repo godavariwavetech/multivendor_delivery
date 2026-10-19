@@ -1,4 +1,4 @@
-import { Bike, CircleAlert, Store } from 'lucide-react-native';
+import { Bike, CircleAlert, Store, Users } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -13,6 +13,13 @@ import { formatMobile, mobileDigits, mobileHasExtraDigits, mobileIssue } from '@
 const WORKSPACE_HINT: Record<Role, string> = {
   vendor: 'Store, menu, orders, coupons and settlements.',
   delivery: 'Requests, pickups, navigation and earnings.',
+  franchise: 'Your area’s vendors, delivery partners and commission.',
+};
+
+const SIGN_IN_LABEL: Record<Role, string> = {
+  vendor: 'Sign in as Vendor',
+  delivery: 'Sign in as Partner',
+  franchise: 'Sign in as Franchise',
 };
 
 /**
@@ -76,7 +83,8 @@ export function LoginScreen() {
   const accent = roleColorsFrom(role, branding).accent;
   const workspaces: SegmentOption<Role>[] = [
     { key: 'vendor', label: 'Vendor', icon: Store, activeColor: roleColorsFrom('vendor', branding).accent },
-    { key: 'delivery', label: 'Delivery partner', icon: Bike, activeColor: roleColorsFrom('delivery', branding).accent },
+    { key: 'delivery', label: 'Delivery', icon: Bike, activeColor: roleColorsFrom('delivery', branding).accent },
+    { key: 'franchise', label: 'Franchise', icon: Users, activeColor: roleColorsFrom('franchise', branding).accent },
   ];
 
   return (
@@ -182,8 +190,8 @@ export function LoginScreen() {
         </View>
 
         <Button
-          label={busy ? 'Please wait…' : role === 'vendor' ? 'Sign in as Vendor' : 'Sign in as Partner'}
-          variant={role === 'vendor' ? 'blue' : 'green'}
+          label={busy ? 'Please wait…' : SIGN_IN_LABEL[role]}
+          variant={role === 'vendor' ? 'blue' : role === 'delivery' ? 'green' : 'primary'}
           size="lg"
           disabled={busy}
           onPress={submit}
@@ -191,11 +199,11 @@ export function LoginScreen() {
 
         <View style={styles.spacer} />
         <Text v="caption" subtle center style={styles.footer}>
-          {'Vendors and delivery partners use this same app.\nNeed access? Contact your store admin.'}
+          {'Vendors, delivery partners and franchises use this same app.\nNeed access? Contact your store admin.'}
         </Text>
         {USE_MOCK_DATA ? (
           <Text v="caption" subtle center style={styles.demo}>
-            Demo · 98407 21536 (both roles) · 98407 00001 (vendor) · 98407 00002 (partner)
+            Demo · 98407 21536 (both roles) · 98407 00001 (vendor) · 98407 00002 (partner) · 98407 00009 (franchise)
           </Text>
         ) : (
           <Pressable onPress={() => nav.navigate('ServerAddress')} hitSlop={10} style={styles.server}>

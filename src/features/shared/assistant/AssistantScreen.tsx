@@ -24,7 +24,7 @@ export function AssistantScreen() {
   const [typing, setTyping] = useState(false);
 
   const account = session?.account;
-  const firstName = (role === 'delivery' ? account?.partner?.name : undefined)?.split(' ')[0];
+  const firstName = (role === 'delivery' ? account?.partner?.name : role === 'franchise' ? account?.franchise?.owner : undefined)?.split(' ')[0];
   const [messages, setMessages] = useState<Message[]>(() => [{ id: nextId++, from: 'bot', text: GREETING(firstName) }]);
 
   useEffect(() => {

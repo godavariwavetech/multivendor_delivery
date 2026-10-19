@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 export type AuthParams = {
   Login: undefined;
   /** `role` is the workspace picked on the sign-in screen (login only). */
-  Otp: { mobile: string; purpose: 'login' | 'reset'; role?: 'vendor' | 'delivery' };
+  Otp: { mobile: string; purpose: 'login' | 'reset'; role?: 'vendor' | 'delivery' | 'franchise' };
   ForgotPassword: undefined;
   /** Where the app looks for the backend; needed when testing on a real phone. */
   ServerAddress: undefined;
@@ -19,6 +19,20 @@ export type SharedParams = {
   Assistant: undefined;
   ReportProblem: { context?: string } | undefined;
   Privacy: undefined;
+};
+
+export type FranchiseTabParams = {
+  Home: undefined;
+  Vendors: undefined;
+  Partners: undefined;
+  Earnings: undefined;
+  Profile: undefined;
+};
+
+export type FranchiseParams = SharedParams & {
+  FranchiseTabs: NavigatorScreenParams<FranchiseTabParams> | undefined;
+  FranchiseVendor: { id: string };
+  FranchisePartner: { id: string };
 };
 
 export type VendorTabParams = {
@@ -75,6 +89,7 @@ export type DeliveryParams = SharedParams & {
 
 export const useAuthNav = () => useNavigation<NativeStackNavigationProp<AuthParams>>();
 export const useVendorNav = () => useNavigation<NativeStackNavigationProp<VendorParams>>();
+export const useFranchiseNav = () => useNavigation<NativeStackNavigationProp<FranchiseParams>>();
 export const useDeliveryNav = () => useNavigation<NativeStackNavigationProp<DeliveryParams>>();
 /** Shared screens are registered in both stacks; either navigator type works for them. */
 export const useSharedNav = () => useNavigation<NativeStackNavigationProp<SharedParams & { BankAccount: { role: 'vendor' | 'delivery' } }>>();

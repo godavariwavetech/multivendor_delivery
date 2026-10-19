@@ -4,7 +4,7 @@
  * type and implemented once the partner_app API exists.
  */
 
-export type Role = 'vendor' | 'delivery';
+export type Role = 'vendor' | 'delivery' | 'franchise';
 
 /** `categories.vertical` in the schema: food / grocery / fruit / meat (bakery is not in the schema yet). */
 export type Category = 'food' | 'grocery' | 'produce' | 'bakery' | 'meat';
@@ -18,6 +18,8 @@ export type Account = {
   roles: Role[];
   vendor?: { storeName: string; area: string; category?: Category };
   partner?: { name: string; zone: string };
+  /** `franchises` row: an area franchisee who oversees vendors and partners. */
+  franchise?: { name: string; owner: string; area: string };
 };
 
 // ─── Vendor ──────────────────────────────────────────────────────────────────
@@ -358,4 +360,154 @@ export type Trip = {
   customer?: string;
   verifiedBy?: string;
   breakdown?: { base: number; distance: number; tip: number };
+};
+
+// ─── Franchise ───────────────────────────────────────────────────────────────
+
+/**
+ * A franchise is an area franchisee: it owns a territory and oversees the vendors and
+ * delivery partners linked to it (`vendors.franchise_id`, `delivery_partners.franchise_id`).
+ * It earns `commissionPct` of the sub-total of every order those vendors deliver.
+ */
+export type FranchiseProfile = {
+  name: string;
+  owner: string;
+  initials: string;
+  code: string;
+  mobile: string;
+  email: string;
+  territory: string;
+  area: string;
+  commissionPct: number;
+  bank: string;
+};
+
+export type FranchiseVendor = {
+  id: string;
+  name: string;
+  mobile: string;
+  category: Category;
+  area: string;
+  online: boolean;
+  blocked: boolean;
+  kycVerified: boolean;
+  rating: number;
+  openOrders: number;
+  ordersToday: number;
+  salesToday: number;
+  orders30d: number;
+  sales30d: number;
+  /** Commission earned from this vendor in the last 30 days. */
+  earned30d: number;
+  /** Cancelled or rejected orders in the last 30 days and the sales value lost with them. */
+  cancelled30d: number;
+  lostSales30d: number;
+};
+
+/** Benefit (commission) and loss (cancelled or rejected sales) for one vendor over a chosen period. */
+export type FranchiseVendorResult = {
+  id: string;
+  name: string;
+  orders: number;
+  sales: number;
+  earned: number;
+  cancelled: number;
+  lostSales: number;
+};
+
+export type FranchiseVendorReport = {
+  vendors: FranchiseVendorResult[];
+  total: Omit<FranchiseVendorResult, 'id' | 'name'>;
+};
+
+/** Everything the franchise can see about one of its vendors. Account numbers arrive masked. */
+export type FranchiseVendorDetail = {
+  id: string;
+  name: string;
+  code: string;
+  category: Category;
+  online: boolean;
+  busy: boolean;
+  blocked: boolean;
+  kycVerified: boolean;
+  rating: number;
+  mobile: string;
+  mobile2: string;
+  email: string;
+  address: string;
+  area: string;
+  hours: string;
+  weeklyHoliday: string;
+  /** What the platform charges this vendor, not the franchise's own rate. */
+  platformCommissionPct: number;
+  joined: string | null;
+  licences: { fssai: string; gst: string; trade: string; drug: string; pan: string };
+  bank: { holder: string; bank: string; account: string; ifsc: string; upi: string };
+  totals: {
+    orders: number;
+    /** Orders the vendor accepted, including ones since delivered or cancelled. */
+    accepted: number;
+    rejected: number;
+    delivered: number;
+    /** Accepted and still being prepared, waiting for pickup or on the way. */
+    inProcess: number;
+    /** New orders the vendor has not answered yet. */
+    waiting: number;
+    cancelled: number;
+    open: number;
+    sales: number;
+    earned: number;
+    lostSales: number;
+  };
+  recent: { number: string; status: string; amount: number; payment: string; placedAt: string | null; deliveredAt: string | null }[];
+};
+
+export type FranchisePartnerDetail = {
+  id: string;
+  name: string;
+  mobile: string;
+  address: string;
+  area: string;
+  zone: string;
+  shift: string;
+  vehicleType: string;
+  vehicleNumber: string;
+  online: boolean;
+  onlineSince: string | null;
+  blocked: boolean;
+  kycVerified: boolean;
+  rating: number;
+  joined: string | null;
+  documents: { aadhaar: string; licence: string; pan: string };
+  bank: { account: string; ifsc: string };
+  totals: { delivered: number; today: number; failed: number; active: number; distanceKm: number; pay: number };
+  recent: { number: string; status: 'delivered' | 'failed' | 'in_progress'; distanceKm: number; pay: number; at: string | null }[];
+};
+
+export type FranchisePartner = {
+  id: string;
+  name: string;
+  mobile: string;
+  vehicle: string;
+  online: boolean;
+  blocked: boolean;
+  kycVerified: boolean;
+  rating: number;
+  onTrip: boolean;
+  tripsToday: number;
+  tripsTotal: number;
+};
+
+export type FranchiseDay = { label: string; orders: number; sales: number; earned: number };
+
+export type FranchiseWeek = { id: string; label: string; current: boolean; orders: number; sales: number; earned: number };
+
+export type FranchiseState = {
+  profile: FranchiseProfile;
+  today: { orders: number; sales: number; earned: number; liveOrders: number; vendorsOnline: number; partnersOnline: number };
+  month: { orders: number; sales: number; earned: number; cancelled: number };
+  days: FranchiseDay[];
+  weeks: FranchiseWeek[];
+  vendors: FranchiseVendor[];
+  partners: FranchisePartner[];
 };

@@ -7,35 +7,49 @@ import { useSession } from '@/data/session';
 import { APP_CONFIG, APP_VERSION } from '@config/constants';
 import { useVendor } from '@/data/vendorStore';
 import { CATEGORIES, CATEGORY_LONG_LABEL } from '@/domain/labels';
+import type { Role } from '@/domain/types';
 import { palette, space, useTheme } from '@/theme';
 
-/** Dual-role accounts can jump to the other workspace without signing out. */
+const SWITCH_TARGETS = {
+  vendor: { title: 'Vendor', icon: palette.blueDeep, bubble: palette.sky },
+  delivery: { title: 'Delivery partner', icon: palette.greenDeep, bubble: palette.leaf },
+  franchise: { title: 'Franchise', icon: palette.violetDeep, bubble: palette.lilac },
+} as const;
+
+/** Accounts holding more than one role can jump to another workspace without signing out. */
 export function WorkspaceSwitch() {
   const { session, switchRole } = useSession();
   const { role } = useTheme();
   if (!session || session.account.roles.length < 2) {
     return null;
   }
-  const other = role === 'vendor' ? 'Delivery partner' : 'Vendor';
-  const detail =
-    role === 'vendor'
-      ? `${session.account.partner?.name} · ${session.account.partner?.zone}`
-      : `${session.account.vendor?.storeName} · ${session.account.vendor?.area}`;
+  const { vendor, partner, franchise } = session.account;
+  const detail: Record<Role, string | undefined> = {
+    vendor: vendor && `${vendor.storeName} · ${vendor.area}`,
+    delivery: partner && `${partner.name} · ${partner.zone}`,
+    franchise: franchise && `${franchise.name} · ${franchise.area}`,
+  };
 
   return (
-    <Card onPress={switchRole}>
-      <View style={styles.row}>
-        <View style={[styles.icon, { backgroundColor: role === 'vendor' ? palette.leaf : palette.sky }]}>
-          <ArrowLeftRight size={20} color={role === 'vendor' ? palette.greenDeep : palette.blueDeep} strokeWidth={2.2} />
-        </View>
-        <View style={styles.flex}>
-          <Text v="cardTitle">{`Switch to ${other}`}</Text>
-          <Text v="body" muted>
-            {detail}
-          </Text>
-        </View>
-      </View>
-    </Card>
+    <>
+      {session.account.roles
+        .filter(other => other !== role)
+        .map(other => (
+          <Card key={other} onPress={() => switchRole(other)}>
+            <View style={styles.row}>
+              <View style={[styles.icon, { backgroundColor: SWITCH_TARGETS[other].bubble }]}>
+                <ArrowLeftRight size={20} color={SWITCH_TARGETS[other].icon} strokeWidth={2.2} />
+              </View>
+              <View style={styles.flex}>
+                <Text v="cardTitle">{`Switch to ${SWITCH_TARGETS[other].title}`}</Text>
+                <Text v="body" muted>
+                  {detail[other]}
+                </Text>
+              </View>
+            </View>
+          </Card>
+        ))}
+    </>
   );
 }
 
