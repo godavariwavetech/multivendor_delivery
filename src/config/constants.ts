@@ -18,9 +18,7 @@ export const API_PORT = 2477;
  */
 export const APP_CONFIG = appConfig;
 
-// TEMP: local backend over `adb reverse tcp:2407 tcp:2407`; restore the line below before committing.
-export const DEFAULT_API_BASE_URL = "http://localhost:2407";
-// export const DEFAULT_API_BASE_URL = `https://${appConfig.domain}:${API_PORT}`;
+export const DEFAULT_API_BASE_URL = `https://${appConfig.domain}:${API_PORT}`;
 
 /**
  * The address of the machine the backend was built against, tried on first run
