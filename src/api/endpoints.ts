@@ -38,6 +38,7 @@ export const endpoints = {
     handover: '/confirmhandover',
     productAvailability: '/updateproductavailability',
     saveProduct: '/saveproduct',
+    deleteProduct: '/deleteproduct',
     publishRates: '/publishrates',
     substitution: '/updatesubstitution',
     daypart: '/updatedaypart',

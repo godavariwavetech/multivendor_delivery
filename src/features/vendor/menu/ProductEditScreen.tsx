@@ -337,7 +337,13 @@ export function ProductEditScreen() {
         return;
       }
     }
-    const updated = { ...draft, name };
+    // The product may carry a stored category id the picker no longer lists (the form
+    // matched it by name); send the picker's own id, as picking it by hand does.
+    const category = categoryOf(categories, draft);
+    const subCategory = category?.subCategories.find(s => s.id === draft.subCategoryId || s.name === draft.subCategory);
+    const updated = category
+      ? { ...draft, name, group: category.name, categoryId: category.id, subCategoryId: subCategory?.id ?? null, subCategory: subCategory?.name ?? null }
+      : { ...draft, name };
     const saved = await actions.saveProduct({ ...updated, priceLine: productPriceLine(updated) }, pendingPhoto);
     if (!saved) {
       return;
@@ -345,6 +351,21 @@ export function ProductEditScreen() {
     toast(`${name} ${existing ? 'updated' : 'added'}`);
     returnToMenu();
   };
+
+  const confirmDelete = () =>
+    appAlert('Delete this item?', `${draft.name} will be removed from your menu. This can't be undone.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          if (await actions.deleteProduct(draft.id)) {
+            toast(`${draft.name} deleted`);
+            returnToMenu();
+          }
+        },
+      },
+    ]);
 
   const sheet = draft.sheet;
   const where = [draft.group, draft.subCategory].filter(Boolean).join(' › ');
@@ -434,6 +455,10 @@ export function ProductEditScreen() {
         <MeatSheetView sheet={sheet} onChange={s => setDraft(d => ({ ...d, sheet: s }))} />
       ) : null}
 
+      {existing ? (
+        <Button label="Delete item" variant="outline" style={styles.delete} onPress={confirmDelete} />
+      ) : null}
+
       <PhotoSourceSheet
         visible={sheetOpen}
         hasPhoto={Boolean(pendingPhoto)}
@@ -476,6 +501,7 @@ const styles = StyleSheet.create({
   photoRow: { flexDirection: 'row', gap: space.lg, alignItems: 'center', marginTop: space.md },
   head: { flexDirection: 'row', gap: space.lg, alignItems: 'center', marginBottom: space.xs },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  delete: { marginTop: space.lg, borderColor: palette.alert },
   field: { marginTop: space.md },
   flex: { flex: 1, gap: 2 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: space.sm },

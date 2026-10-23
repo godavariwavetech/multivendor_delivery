@@ -64,7 +64,7 @@ export type Order = {
   payout: number;
   payment: PaymentMode;
   refunded?: boolean;
-  customer: { name: string; area: string; distanceKm: number };
+  customer: { name: string; area: string; distanceKm: number; phone?: string };
   note?: string;
   prepMinutes?: number;
   acceptedAt?: number;
