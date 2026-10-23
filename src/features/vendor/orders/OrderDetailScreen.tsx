@@ -1,6 +1,6 @@
 import { Check, Phone, Share2, X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import Share from 'react-native-share';
 
 import {
@@ -218,7 +218,17 @@ export function OrderDetailScreen() {
                 : `${order.customer.distanceKm} km · partner assigned after "Ready"`}
             </Text>
           </View>
-          <IconCircle icon={Phone} onPress={() => toast(`Calling ${order.customer.name} via masked number…`)} />
+          <IconCircle
+            icon={Phone}
+            onPress={() => {
+              const phone = order.customer.phone;
+              if (!phone) {
+                toast('No phone number on this order');
+                return;
+              }
+              Linking.openURL(`tel:${phone}`).catch(() => toast('Could not open the phone app'));
+            }}
+          />
         </View>
       </Card>
 

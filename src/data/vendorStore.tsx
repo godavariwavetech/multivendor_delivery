@@ -85,6 +85,7 @@ type Action =
   | { type: 'simulateOrder' }
   | { type: 'setAvailable'; id: string; available: boolean }
   | { type: 'saveProduct'; product: Product }
+  | { type: 'deleteProduct'; id: string }
   | { type: 'publishRates' }
   | { type: 'setSubstitution'; on: boolean }
   | { type: 'setCategory'; category: Category }
@@ -314,6 +315,8 @@ function reducer(state: State, action: Action): State {
           : [action.product, ...state.products],
       };
     }
+    case 'deleteProduct':
+      return { ...state, products: state.products.filter(p => p.id !== action.id) };
     case 'publishRates':
       return { ...state, ratesPublished: true };
     case 'setSubstitution':
@@ -618,6 +621,28 @@ function useVendorValue() {
           if (USE_MOCK_DATA) {
             persistDemoProducts(next);
           }
+          return true;
+        },
+        deleteProduct: async (id: string): Promise<boolean> => {
+          if (!USE_MOCK_DATA) {
+            if (!active) {
+              toast('Sign in to delete this item');
+              return false;
+            }
+            if (/^\d+$/.test(id)) {
+              try {
+                await apiClient.post(endpoints.vendor.deleteProduct, { product_id: Number(id) });
+              } catch (error) {
+                toast(error instanceof Error ? error.message : 'The item could not be deleted');
+                return false;
+              }
+            }
+            dispatch({ type: 'deleteProduct', id });
+            refresh();
+            return true;
+          }
+          dispatch({ type: 'deleteProduct', id });
+          persistDemoProducts(state.products.filter(p => p.id !== id));
           return true;
         },
         publishRates: () => {
