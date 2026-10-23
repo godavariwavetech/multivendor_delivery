@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import {
@@ -20,6 +20,7 @@ import {
   SectionLabel,
   Text,
   applyKey,
+  appAlert,
   useToast,
 } from '@/components';
 import { useDelivery } from '@/data/deliveryStore';
@@ -38,8 +39,15 @@ export function PickupCodeScreen() {
   const nav = useDeliveryNav();
   const toast = useToast();
   const { state, activeRequest: r, actions } = useDelivery();
-  const [code, setCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const stage = state.active?.stage;
+
+  // The store types the code on their side; the next refresh moves the trip on, and this screen follows.
+  useEffect(() => {
+    if (stage === 'on_the_way' || stage === 'arrived' || stage === 'complete') {
+      toast(`Picked up · head to ${r?.drop.name ?? 'the customer'}`);
+      nav.goBack();
+    }
+  }, [stage, nav, toast, r?.drop.name]);
 
   if (!r || !state.active) {
     return null;
@@ -47,33 +55,37 @@ export function PickupCodeScreen() {
   const trip = state.active;
   const checks = requiredChecks(r).slice(0, 2);
 
-  const confirm = async () => {
-    const result = await actions.confirmPickup(code);
-    if (!result.ok) {
-      setError(result.error);
-      setCode('');
-      return;
-    }
-    toast(`Picked up · head to ${r.drop.name}`);
-    nav.goBack();
-  };
+  const release = () =>
+    appAlert('Release this trip?', 'The order goes back to other partners and you are free to accept another request.', [
+      { text: 'Keep trip', style: 'cancel' },
+      {
+        text: 'Release',
+        style: 'destructive',
+        onPress: async () => {
+          const result = await actions.releaseTrip();
+          if (!result.ok) {
+            toast(result.error);
+            return;
+          }
+          toast(`#${r.id} released`);
+          nav.goBack();
+        },
+      },
+    ]);
 
   return (
     <Screen scroll={false} gap={10}>
       <BackHeader title="At the counter" subtitle={`#${r.id} · ${r.store.name}`} onBack={nav.goBack} right={categoryPill(r)} />
-      <Banner tone="leaf" title="Ask the vendor for the handover code" body="It is on their handover screen." />
-      <CodeBoxes value={code} length={4} error={Boolean(error)} />
-      {error ? (
-        <Text v="caption" color={palette.alert}>
-          {error}
+      <Banner tone="leaf" title="Show this code to the vendor" body="They enter it on their handover screen to give you the order." />
+      <Card style={styles.codeCard}>
+        <SectionLabel style={styles.codeLabel}>Pickup code</SectionLabel>
+        <Text v="code" center>
+          {r.handoverCode || '····'}
         </Text>
-      ) : r.handoverCode ? (
-        <Text v="caption" subtle>{`Demo code: ${r.handoverCode}`}</Text>
-      ) : (
-        <Text v="caption" subtle>
-          The store reads the code from their handover screen.
+        <Text v="caption" subtle center>
+          {r.handoverCode ? 'This screen moves on as soon as the store confirms.' : 'Fetching your code…'}
         </Text>
-      )}
+      </Card>
       <Card>
         <SectionLabel>Check while you pack</SectionLabel>
         {checks.map((c, i) => (
@@ -84,13 +96,7 @@ export function PickupCodeScreen() {
         ))}
       </Card>
       <View style={styles.flex} />
-      <NumericKeypad
-        onKey={k => {
-          setError(null);
-          setCode(c => applyKey(c, k, 4));
-        }}
-      />
-      <Button label="Confirm pickup" size="lg" disabled={code.length < 4} onPress={confirm} style={styles.bottom} />
+      <Button label="Can’t pick up? Release this trip" variant="outline" onPress={release} style={styles.bottom} />
     </Screen>
   );
 }
@@ -323,6 +329,8 @@ export function DeliveryFailedScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  codeCard: { alignItems: 'center', gap: space.sm, paddingVertical: space.xl },
+  codeLabel: { textAlign: 'center' },
   bottom: { marginTop: space.md, marginBottom: space.lg },
   pair: { flexDirection: 'row', gap: 10 },
   half: { flex: 1, paddingVertical: space.md },

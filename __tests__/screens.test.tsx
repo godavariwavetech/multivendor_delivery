@@ -227,7 +227,7 @@ describe('vendor', () => {
     ['Order detail · cancelled', OrderDetailScreen, { id: 'VK-2826' }, 'refunded'],
     ['Accept order', AcceptOrderScreen, { id: 'VK-2841' }, 'Prep time you promise'],
     ['Reject order', RejectOrderScreen, { id: 'VK-2841' }, 'Kitchen overloaded'],
-    ['Handover', HandoverScreen, { id: 'VK-2836' }, '5192'],
+    ['Handover', HandoverScreen, { id: 'VK-2836' }, 'Ask the partner for the code'],
     ['Menu', MenuScreen, undefined, 'Paneer Butter Masala'], // the menu opens on the veg view
     ['Edit food item', ProductEditScreen, { id: 'f-biryani' }, 'Spice level choice'],
     ['New dish', ProductEditScreen, {}, 'New dish'],
@@ -246,6 +246,12 @@ describe('vendor', () => {
     ['Bank account', BankAccountScreen, { role: 'vendor' }, 'HDFC Bank'],
   ] as const)('%s', async (_, C, params, expected) => {
     expect(await renderScreen(C, { params })).toContain(expected);
+  });
+
+  test('the store types the partner’s code to hand over, it does not show its own', async () => {
+    const out = await renderScreen(HandoverScreen, { params: { id: 'VK-2836' } });
+    expect(out).toContain('Ask the partner for the code');
+    expect(out).not.toContain('5192');
   });
 
   test('a new item opens straight into the details form', async () => {
@@ -442,7 +448,7 @@ describe('delivery', () => {
     ['Requests', RequestsScreen, undefined, 'Hotel Saravana'],
     ['Incoming request', IncomingRequestScreen, { id: 'VK-2853' }, 'Grocery pickup'],
     ['Active · on the way', ActiveScreen, undefined, 'Slide to mark arrived'],
-    ['Pickup code', PickupCodeScreen, undefined, 'handover code'],
+    ['Pickup code', PickupCodeScreen, undefined, 'Show this code to the vendor'],
     ['Delivery OTP', DeliveryOtpScreen, undefined, '4-digit OTP'],
     ['Proof photo', ProofPhotoScreen, undefined, 'Proof of delivery'],
     ['Delivery failed', DeliveryFailedScreen, undefined, 'Customer unavailable'],

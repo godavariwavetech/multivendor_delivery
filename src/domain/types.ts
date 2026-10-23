@@ -307,6 +307,19 @@ export type MeatPickup = {
 };
 export type PickupSheet = FoodPickup | GroceryPickup | ProducePickup | BakeryPickup | MeatPickup;
 
+/** The order's bill as the customer was charged, so a partner can explain what they collect. */
+export type OrderBill = {
+  lines: { name: string; variant?: string; qty: number; amount: number }[];
+  itemTotal: number;
+  packing: number;
+  tax: number;
+  delivery: number;
+  discount: number;
+  couponCode?: string;
+  tip: number;
+  total: number;
+};
+
 export type DeliveryRequest = {
   /** `delivery_assignments.id` — what the API actions take. Absent in demo mode. */
   assignmentId?: number;
@@ -324,6 +337,9 @@ export type DeliveryRequest = {
   codAmount?: number;
   orderTotal: number;
   items: number;
+  /** The dishes in the order, e.g. "2 × Chicken Biryani (Full), Gulab Jamun". */
+  itemNames?: string;
+  bill?: OrderBill;
   parcels: number;
   readyInMin: number;
   waitingMin?: number;

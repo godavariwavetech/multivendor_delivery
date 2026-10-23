@@ -36,6 +36,7 @@ import {
 } from './demo/vendorMisc';
 import { useSession } from './session';
 import type { PickedPhoto } from '@/utils/photo';
+import { markNotificationsRead, markNotificationsUnread, withLocalReads } from '@/utils/notificationReads';
 
 const LIVE = !USE_MOCK_DATA;
 const DEMO_PRODUCTS_STORAGE_KEY = 'partner.demo.products.v1';
@@ -95,7 +96,9 @@ type Action =
   | { type: 'toggleDay'; day: string }
   | { type: 'setHours'; opening: string; closing: string }
   | { type: 'setPref'; key: keyof State['prefs']; value: boolean }
-  | { type: 'readNotifications' };
+  | { type: 'readNotifications' }
+  | { type: 'readNotification'; id: string }
+  | { type: 'unreadNotifications'; ids: string[] };
 
 const EMPTY_PERIOD = { label: '—', net: 0, gross: 0, orders: 0, commission: 0, coupon: 0 };
 
@@ -242,7 +245,7 @@ function reducer(state: State, action: Action): State {
   const now = Date.now();
   switch (action.type) {
     case 'hydrate':
-      return { ...state, ...action.data, category: action.data.store.category, loaded: true };
+      return { ...state, ...action.data, notifications: withLocalReads('vendor', action.data.notifications), category: action.data.store.category, loaded: true };
     case 'restoreDemoProducts':
       return { ...state, products: action.products };
     case 'toggleOpen':
@@ -349,6 +352,10 @@ function reducer(state: State, action: Action): State {
       return { ...state, store: { ...state.store, openingTime: action.opening, closingTime: action.closing } };
     case 'setPref':
       return { ...state, prefs: { ...state.prefs, [action.key]: action.value } };
+    case 'unreadNotifications':
+      return { ...state, notifications: state.notifications.map(n => (action.ids.includes(n.id) ? { ...n, read: false } : n)) };
+    case 'readNotification':
+      return { ...state, notifications: state.notifications.map(n => (n.id === action.id ? { ...n, read: true } : n)) };
     case 'readNotifications':
       return { ...state, notifications: state.notifications.map(n => ({ ...n, read: true })) };
     default:
@@ -576,9 +583,24 @@ function useVendorValue() {
           dispatch({ type: 'markReady', id });
           send(endpoints.vendor.markReady, { order_id: orderIdOf(id) });
         },
-        handover: (id: string) => {
+        /** The partner shows the pickup code; the store types it here and the server checks it. */
+        handover: async (id: string, code: string): Promise<{ ok: true } | { ok: false; error: string }> => {
+          if (USE_MOCK_DATA || !active) {
+            const expected = state.orders.find(o => o.id === id)?.handoverCode;
+            if (expected && code !== expected) {
+              return { ok: false, error: "That code doesn't match. Ask the partner to show it again." };
+            }
+            dispatch({ type: 'handover', id });
+            return { ok: true };
+          }
+          try {
+            await apiClient.post(endpoints.vendor.handover, { order_id: orderIdOf(id), handover_code: code });
+          } catch (error) {
+            return { ok: false, error: error instanceof Error ? error.message : 'Could not reach the server.' };
+          }
           dispatch({ type: 'handover', id });
-          send(endpoints.vendor.handover, { order_id: orderIdOf(id) });
+          refresh();
+          return { ok: true };
         },
         simulateOrder: () => dispatch({ type: 'simulateOrder' }),
         setAvailable: (id: string, available: boolean) => {
@@ -691,8 +713,17 @@ function useVendorValue() {
           send(endpoints.vendor.preferences, { [key]: value });
         },
         readNotifications: () => {
+          markNotificationsRead('vendor', state.notifications.map(n => n.id));
           dispatch({ type: 'readNotifications' });
           send(endpoints.vendor.readNotifications, {});
+        },
+        readNotification: (id: string) => {
+          markNotificationsRead('vendor', [id]);
+          dispatch({ type: 'readNotification', id });
+        },
+        unreadNotifications: (ids: string[]) => {
+          markNotificationsUnread('vendor', ids);
+          dispatch({ type: 'unreadNotifications', ids });
         },
       },
     };

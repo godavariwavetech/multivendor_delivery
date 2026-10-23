@@ -11,6 +11,7 @@ import { useDeliveryNav, useDeliveryRoute } from '@/navigation/types';
 import { palette, radius, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { clock } from '@/utils/datetime';
+import { requestItemNames } from '@/utils/trips';
 
 import { RESPOND_SECONDS } from './RequestsScreen';
 
@@ -29,12 +30,13 @@ export function IncomingRequestScreen() {
   const busy = Boolean(state.active && state.active.stage !== 'complete');
 
   useEffect(() => {
-    if (left <= 0 && r?.status === 'open') {
+    // Busy partners are only looking: the list does not expire a request for them either.
+    if (left <= 0 && r?.status === 'open' && !busy) {
       actions.skip(r.id);
       toast('Request expired · reassigned');
       nav.goBack();
     }
-  }, [actions, left, nav, r, toast]);
+  }, [actions, busy, left, nav, r, toast]);
 
   if (!r) {
     return null;
@@ -89,6 +91,11 @@ export function IncomingRequestScreen() {
         ) : null}
 
         <View style={styles.route}>
+          <Text v="bodyStrong">{`Order #${r.id}`}</Text>
+          <Text v="body" muted>
+            {[requestItemNames(r), `${r.items} ${r.items === 1 ? 'item' : 'items'}`].filter(Boolean).join(' · ')}
+          </Text>
+          <Divider style={styles.divider} />
           <RouteTimeline
             from={{ title: r.store.name, subtitle: `${r.store.area} · ${r.store.distanceKm} km away` }}
             to={{ title: r.drop.area, subtitle: `Drop ${r.drop.distanceKm} km from pickup` }}

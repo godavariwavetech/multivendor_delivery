@@ -9,6 +9,7 @@ import type { Branding } from '@/theme';
 import { PARTNER_PROFILE } from './demo/accounts';
 import { ACTIVE_SEED, seedRequests } from './demo/requests';
 import { STATEMENTS, TODAY_BASE, WEEK_BASE, partnerNotifications, seedTrips } from './demo/trips';
+import { markNotificationsRead, markNotificationsUnread, withLocalReads } from '@/utils/notificationReads';
 import { useSession } from './session';
 
 const MIN = 60_000;
@@ -73,7 +74,9 @@ type Action =
   | { type: 'fail'; reason: string }
   | { type: 'refreshRequests' }
   | { type: 'setPref'; key: keyof State['prefs']; value: string | boolean }
-  | { type: 'readNotifications' };
+  | { type: 'readNotifications' }
+  | { type: 'readNotification'; id: string }
+  | { type: 'unreadNotifications'; ids: string[] };
 
 const DEMO_ZONES = [
   { key: 'Zone 4', detail: 'Chennai North · Anna Nagar, Kilpauk, Thiru Vi Ka Nagar' },
@@ -168,7 +171,7 @@ function reducer(state: State, action: Action): State {
         },
         zones: d.zones ?? state.zones,
         options: d.options ?? state.options,
-        notifications: d.notifications,
+        notifications: withLocalReads('delivery', d.notifications),
         loaded: true,
       };
     }
@@ -268,6 +271,10 @@ function reducer(state: State, action: Action): State {
     }
     case 'setPref':
       return { ...state, prefs: { ...state.prefs, [action.key]: action.value } };
+    case 'unreadNotifications':
+      return { ...state, notifications: state.notifications.map(n => (action.ids.includes(n.id) ? { ...n, read: false } : n)) };
+    case 'readNotification':
+      return { ...state, notifications: state.notifications.map(n => (n.id === action.id ? { ...n, read: true } : n)) };
     case 'readNotifications':
       return { ...state, notifications: state.notifications.map(n => ({ ...n, read: true })) };
     default:
@@ -428,6 +435,13 @@ function useDeliveryValue() {
           }
           return result;
         },
+        /** Hands back a trip that has not been picked up, so the partner is free to accept another. */
+        releaseTrip: async (): Promise<ActionResult> => {
+          if (!LIVE) {
+            return { ok: false, error: 'Releasing a trip needs the live server.' };
+          }
+          return ask(endpoints.delivery.releaseTrip, { assignment_id: assignmentId });
+        },
         arrived: () => {
           dispatch({ type: 'arrived' });
           send(endpoints.delivery.arrived, { assignment_id: assignmentId });
@@ -493,8 +507,17 @@ function useDeliveryValue() {
           send(endpoints.delivery.preferences, { [key]: value });
         },
         readNotifications: () => {
+          markNotificationsRead('delivery', state.notifications.map(n => n.id));
           dispatch({ type: 'readNotifications' });
           send(endpoints.delivery.readNotifications, {});
+        },
+        readNotification: (id: string) => {
+          markNotificationsRead('delivery', [id]);
+          dispatch({ type: 'readNotification', id });
+        },
+        unreadNotifications: (ids: string[]) => {
+          markNotificationsUnread('delivery', ids);
+          dispatch({ type: 'unreadNotifications', ids });
         },
       },
     };

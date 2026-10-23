@@ -11,6 +11,7 @@ import { useDeliveryNav } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { clock, formatCountdown } from '@/utils/datetime';
+import { requestItemNames } from '@/utils/trips';
 
 export const RESPOND_SECONDS = 20;
 
@@ -91,7 +92,7 @@ export function RequestsScreen() {
           ) : null}
 
           {first ? (
-            <Card tone="highlight">
+            <Card tone="highlight" onPress={() => nav.navigate('IncomingRequest', { id: first.id })}>
               <RequestBody request={first} now={now} strongPayout />
               <View style={styles.actions}>
                 <Button
@@ -158,6 +159,7 @@ export function RequestsScreen() {
 }
 
 function RequestBody({ request: r, now, strongPayout }: { request: DeliveryRequest; now: number; strongPayout?: boolean }) {
+  const names = requestItemNames(r);
   const tags: { label: string; tone: 'neutral' | 'sky' | 'leaf' }[] = [];
   if (r.category !== 'food') {
     tags.push({ label: CATEGORY_LABEL[r.category], tone: 'leaf' });
@@ -182,6 +184,14 @@ function RequestBody({ request: r, now, strongPayout }: { request: DeliveryReque
           {formatAmount(r.payout)}
         </Text>
       </View>
+      <Text v="bodyStrong" style={styles.gap}>
+        {`Order #${r.id}`}
+      </Text>
+      {names ? (
+        <Text v="body" muted numberOfLines={2}>
+          {names}
+        </Text>
+      ) : null}
       <Text v="body" muted style={styles.gap}>
         {strongPayout
           ? `Pickup ${r.store.distanceKm} km · drop ${r.drop.distanceKm} km · ${r.totalKm} km total`
