@@ -55,6 +55,7 @@ export const endpoints = {
     rejectRequest: '/rejectrequest',
     reachedStore: '/reachedstore',
     confirmPickup: '/confirmpickup',
+    releaseTrip: '/releasetrip',
     arrived: '/arrivedcustomer',
     complete: '/completedelivery',
     fail: '/faildelivery',

@@ -45,10 +45,14 @@ function useRoleStore() {
     ? {
         notifications: vendor.state.notifications,
         readAll: vendor.actions.readNotifications,
+        readOne: vendor.actions.readNotification,
+        unread: vendor.actions.unreadNotifications,
       }
     : {
         notifications: delivery.state.notifications,
         readAll: delivery.actions.readNotifications,
+        readOne: delivery.actions.readNotification,
+        unread: delivery.actions.unreadNotifications,
       };
 }
 
@@ -56,9 +60,32 @@ function useRoleStore() {
 export function NotificationsScreen() {
   const nav = useSharedNav();
   const { r } = useTheme();
-  const { notifications, readAll } = useRoleStore();
+  const { notifications, readAll, readOne, unread: markUnread } = useRoleStore();
   const now = Date.now();
   const unread = notifications.filter(n => !n.read).length;
+  // The ids "Mark read" just changed, so Undo can put exactly those back.
+  const [justRead, setJustRead] = useState<string[]>([]);
+
+  const markAllRead = () => {
+    setJustRead(notifications.filter(n => !n.read).map(n => n.id));
+    readAll();
+  };
+  const undo = () => {
+    markUnread(justRead);
+    setJustRead([]);
+  };
+
+  const open = (n: (typeof notifications)[number]) => {
+    const wasUnread = !n.read;
+    readOne(n.id);
+    appAlert(n.title, `${n.body}\n\n${new Date(n.at).toLocaleString('en-IN')}`, [
+      { text: 'Mark unread', onPress: () => markUnread([n.id]) },
+      { text: 'Close' },
+    ]);
+    if (wasUnread) {
+      setJustRead([]);
+    }
+  };
 
   return (
     <Screen>
@@ -66,11 +93,17 @@ export function NotificationsScreen() {
         title="Notifications"
         subtitle={unread ? `${unread} unread` : 'All caught up'}
         onBack={nav.goBack}
-        right={unread ? <LinkButton label="Mark read" onPress={readAll} /> : undefined}
+        right={
+          unread ? (
+            <LinkButton label="Mark read" onPress={markAllRead} />
+          ) : justRead.length ? (
+            <LinkButton label="Undo" onPress={undo} />
+          ) : undefined
+        }
       />
       {notifications.length ? (
         notifications.map(n => (
-          <Card key={n.id}>
+          <Card key={n.id} onPress={() => open(n)}>
             <View style={styles.notif}>
               <View style={[styles.dot, { backgroundColor: n.read ? 'transparent' : r.accent }]} />
               <View style={styles.flex}>

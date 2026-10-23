@@ -37,6 +37,52 @@ export const arriveBy = (trip: ActiveTrip, req: DeliveryRequest) =>
 export const etaAt = (trip: ActiveTrip, req: DeliveryRequest, now: number) =>
   (trip.pickedUpAt ?? now) + req.etaMin * MIN;
 
+/**
+ * The dishes in a request. The server sends them as `itemNames`; a server that does not yet
+ * still lists them inside the pickup sheet of a produce or meat order, so those are used instead.
+ */
+export const requestItemNames = (req: DeliveryRequest): string | undefined => {
+  if (req.itemNames) {
+    return req.itemNames;
+  }
+  const pickup = req.pickup;
+  if (pickup.kind === 'produce') {
+    return pickup.weighed.map(w => w.name).join(', ') || undefined;
+  }
+  if (pickup.kind === 'meat') {
+    return pickup.lines.map(l => `${l.name} (${l.weight})`).join(', ') || undefined;
+  }
+  return undefined;
+};
+
+const rupees = (n: number) => `₹${Math.round(n * 100) / 100}`;
+
+/** The full payment detail shown when the payment card is tapped. */
+export const paymentDetail = (req: DeliveryRequest) => {
+  const bill = req.bill;
+  const how =
+    req.payment === 'cod' ? `Cash on delivery · collect ${rupees(req.codAmount ?? req.orderTotal)}` : 'Prepaid · nothing to collect';
+  if (!bill) {
+    // A server that does not send the bill yet: the total is still known.
+    return [requestItemNames(req), `${req.items} items`, `Order total ${rupees(req.orderTotal)}`, how].filter(Boolean).join('\n');
+  }
+  const lines = bill.lines.map(
+    l => `${l.qty > 1 ? `${l.qty} × ` : ''}${l.name}${l.variant ? ` (${l.variant})` : ''} — ${rupees(l.amount)}`,
+  );
+  const charges: [string, number][] = [
+    ['Item total', bill.itemTotal],
+    ['Packing', bill.packing],
+    ['GST', bill.tax],
+    ['Delivery', bill.delivery],
+    ['Tip', bill.tip],
+  ];
+  const rows = charges.filter(([, amount]) => amount > 0).map(([label, amount]) => `${label}: ${rupees(amount)}`);
+  if (bill.discount > 0) {
+    rows.push(`Discount${bill.couponCode ? ` (${bill.couponCode})` : ''}: −${rupees(bill.discount)}`);
+  }
+  return [...lines, '', ...rows, `Total: ${rupees(bill.total)}`, '', how].join('\n');
+};
+
 export const paymentLine = (req: DeliveryRequest) =>
   req.payment === 'cod'
     ? { title: `${req.items} items · Collect ₹${req.codAmount} cash`, subtitle: 'COD · exact change advised', pill: 'COD', paid: false }

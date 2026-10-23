@@ -31,7 +31,7 @@ import { palette, radius, shadow, space, useTheme } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { clock } from '@/utils/datetime';
 import { pickPhoto } from '@/utils/photo';
-import { arriveBy, etaAt, keepHotMinutesLeft, paymentLine, readyAt } from '@/utils/trips';
+import { arriveBy, etaAt, keepHotMinutesLeft, paymentDetail, paymentLine, readyAt } from '@/utils/trips';
 
 import { PICKUP_COPY, PickupHandling, categoryPill, requiredChecks } from './handling';
 
@@ -249,7 +249,7 @@ function OnTheWayView({ trip, request: r }: { trip: ActiveTrip; request: Deliver
               <ContactButtons callLabel="Call" who={r.drop.name} />
             </View>
           </Card>
-          <Card>
+          <Card onPress={() => appAlert(`Order #${r.id}`, paymentDetail(r), [{ text: 'Close' }])}>
             <View style={styles.row}>
               <View style={styles.flex}>
                 <Text v="bodyStrong">{pay.title}</Text>

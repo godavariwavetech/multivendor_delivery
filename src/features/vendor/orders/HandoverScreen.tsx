@@ -8,13 +8,17 @@ import {
   Button,
   Card,
   ChecklistRow,
+  CodeBoxes,
   Divider,
   IconCircle,
+  KeyValue,
   LinkButton,
   NoteBox,
+  NumericKeypad,
   Screen,
   SectionLabel,
   Text,
+  applyKey,
   useToast,
   appAlert,
 } from '@/components';
@@ -35,6 +39,8 @@ export function HandoverScreen() {
   const { order: find, store, actions } = useVendor();
   const order = find(params.id);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [code, setCode] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   if (!order) {
     return null;
@@ -48,8 +54,13 @@ export function HandoverScreen() {
   const allChecked = items.every(i => checks[i]);
 
   const confirm = () => {
-    const done = () => {
-      actions.handover(order.id);
+    const done = async () => {
+      const result = await actions.handover(order.id, code);
+      if (!result.ok) {
+        setError(result.error);
+        setCode('');
+        return;
+      }
       toast(`Handed over to ${partner?.name ?? 'partner'}`);
       nav.goBack();
     };
@@ -78,7 +89,7 @@ export function HandoverScreen() {
     <Screen
       footer={
         <View style={styles.footer}>
-          <Button label="Confirm handover" size="lg" onPress={confirm} />
+          <Button label="Confirm handover" size="lg" disabled={code.length < 4} onPress={confirm} />
           <LinkButton center label="Partner not here · report" onPress={() => nav.navigate('ReportProblem', { context: `Handover #${order.id}` })} />
         </View>
       }>
@@ -107,12 +118,56 @@ export function HandoverScreen() {
 
       <Card style={styles.codeCard}>
         <SectionLabel style={styles.center}>Handover code</SectionLabel>
-        <Text v="code" center>
-          {order.handoverCode}
-        </Text>
         <Text v="body" muted center>
-          Read it out to the partner. They enter it to take the order.
+          Ask the partner for the code on their phone, then enter it to hand the order over.
         </Text>
+        <CodeBoxes value={code} length={4} error={Boolean(error)} />
+        {error ? (
+          <Text v="caption" color={palette.alert}>
+            {error}
+          </Text>
+        ) : null}
+      </Card>
+      <NumericKeypad
+        onKey={k => {
+          setError(null);
+          setCode(c => applyKey(c, k, 4));
+        }}
+      />
+
+      <Card>
+        <SectionLabel>{`Order details · ${order.lines.length} ${order.lines.length === 1 ? 'item' : 'items'}`}</SectionLabel>
+        {order.lines.map((l, i) => (
+          <View key={`${l.name}-${i}`}>
+            {i > 0 ? <Divider /> : null}
+            <View style={styles.line}>
+              <View style={styles.flex}>
+                <Text v="bodyStrong">{l.name}</Text>
+                <Text v="body" muted>
+                  {[l.variant, l.options, l.productId ? `Code #${l.productId}` : undefined].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
+              <View style={styles.right}>
+                <Text v="bodyStrong">{`× ${l.qty}`}</Text>
+                <Text v="body" muted>
+                  {formatAmount(l.price)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ))}
+        <Divider />
+        <KeyValue label="Item total" value={formatAmount(order.itemTotal)} />
+        {order.packing > 0 ? <KeyValue label="Packing" value={formatAmount(order.packing)} /> : null}
+        {order.gst > 0 ? <KeyValue label="GST" value={formatAmount(order.gst)} /> : null}
+        {order.coupon ? <KeyValue label={`Coupon ${order.coupon.code}`} value={`−${formatAmount(order.coupon.amount)}`} /> : null}
+        <KeyValue label="Order total" value={formatAmount(order.total)} strong />
+        {order.note ? (
+          <Text v="body" muted style={styles.note}>
+            <Text v="bodyStrong">Customer note: </Text>
+            {order.note}
+          </Text>
+        ) : null}
       </Card>
 
       <Card>
@@ -139,5 +194,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   codeCard: { alignItems: 'center', gap: space.sm, paddingVertical: space.xl },
   center: { textAlign: 'center' },
+  line: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.xs },
+  right: { alignItems: 'flex-end' },
+  note: { marginTop: space.sm },
   footer: { flex: 1, gap: space.md },
 });
