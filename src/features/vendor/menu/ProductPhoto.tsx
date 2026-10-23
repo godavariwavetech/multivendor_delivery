@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { ImageIcon } from 'lucide-react-native';
 import { Image, StyleSheet, View } from 'react-native';
 
+import { USE_MOCK_DATA } from '@config/constants';
 import type { Product } from '@/domain/types';
 import { photoUrl } from '@/utils/photo';
 
@@ -57,6 +59,12 @@ const nameCells: Record<Product['category'], { match: RegExp; cell: number }[]> 
   ],
 };
 
+/**
+ * The bundled pictures above belong to the demo menu. With live data a dish shows the photo the server holds for
+ * it, and a placeholder when there is none: a guess made from the dish name would put the wrong picture on it.
+ */
+const BUILT_IN_ART = USE_MOCK_DATA;
+
 export function ProductPhoto({
   product,
   size,
@@ -67,18 +75,19 @@ export function ProductPhoto({
   faded?: boolean;
 }) {
   const name = product.name.toLowerCase();
-  const namedCell = nameCells[product.category].find(({ match }) => match.test(name))?.cell;
-  // No picture for a dish we don't have one for: the tile stays empty rather than showing a wrong one.
-  const cell = namedCell ?? photoCell[product.id];
+  const namedCell = BUILT_IN_ART ? nameCells[product.category].find(({ match }) => match.test(name))?.cell : undefined;
+  // No picture for a dish we don't have one for: the tile shows the placeholder rather than a wrong one.
+  const cell = BUILT_IN_ART ? namedCell ?? photoCell[product.id] : undefined;
   const storedUri = photoUrl(product.image);
   const [failedUri, setFailedUri] = useState<string>();
   useEffect(() => setFailedUri(undefined), [storedUri]);
-  // A stored path whose file is gone falls back to the built-in picture.
+  // A stored path whose file is gone falls back to the demo picture, or the placeholder with live data.
   const remoteUri = storedUri && storedUri !== failedUri ? storedUri : undefined;
-  const dedicatedImage =
-    product.category === 'food' && /fried rice/i.test(name)
+  const dedicatedImage = !BUILT_IN_ART || product.category !== 'food'
+    ? null
+    : /chicken\s+fried\s+rice/i.test(name)
       ? chickenFriedRicePhoto
-      : product.category === 'food' && /kalakand/i.test(name)
+      : /kalakand/i.test(name)
         ? kalakandPhoto
         : null;
 
@@ -93,7 +102,11 @@ export function ProductPhoto({
         />
       ) : dedicatedImage ? (
         <Image source={dedicatedImage} style={{ width: size, height: size }} resizeMode="cover" />
-      ) : cell === undefined ? null : (
+      ) : cell === undefined ? (
+        <View testID="product-photo-placeholder" style={styles.placeholder}>
+          <ImageIcon size={Math.round(size * 0.4)} color="#B9AEA0" strokeWidth={1.8} />
+        </View>
+      ) : (
         <Image
           source={atlas}
           resizeMode="stretch"
@@ -110,5 +123,6 @@ export function ProductPhoto({
 const styles = StyleSheet.create({
   frame: { overflow: 'hidden', borderRadius: 14, backgroundColor: '#F2EDE6' },
   atlas: { position: 'absolute' },
+  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   faded: { opacity: 0.55 },
 });

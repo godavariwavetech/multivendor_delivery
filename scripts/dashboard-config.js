@@ -1,3 +1,4 @@
+/* eslint-env node */
 // Shared by the dashboard server (reject early) and CI (never trust the input).
 // Run directly in CI to turn the workflow inputs into build files.
 const fs = require('fs');
