@@ -40,7 +40,7 @@ import { PICKUP_COPY, PickupHandling, categoryPill, requiredChecks } from './han
  * to the store → pickup (2b, per category) → code → on the way → OTP → complete.
  */
 export function ActiveScreen() {
-  const { state, activeRequest, refresh } = useDelivery();
+  const { state, activeRequest } = useDelivery();
   const trip = state.active;
 
   if (!trip || !activeRequest) {
@@ -61,7 +61,7 @@ export function ActiveScreen() {
 
 function NoTrip() {
   const nav = useDeliveryNav();
-  const { state, openRequests, actions } = useDelivery();
+  const { state, openRequests, actions, refresh } = useDelivery();
   return (
     <Screen tab onRefresh={refresh}>
       <TitleHeader title="Active" />

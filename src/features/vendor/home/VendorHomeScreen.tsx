@@ -166,7 +166,7 @@ export function VendorHomeScreen() {
 const styles = StyleSheet.create({
   screen: { paddingHorizontal: 0, paddingTop: 0 },
   hero: { minHeight: 158, overflow: 'hidden', paddingHorizontal: space.gutter, paddingTop: space.lg, paddingBottom: 24 },
-  pattern: { ...StyleSheet.absoluteFillObject, opacity: 0.12 },
+  pattern: { ...StyleSheet.absoluteFill, opacity: 0.12 },
   patternOne: { position: 'absolute', right: -8, top: -18, transform: [{ rotate: '-18deg' }] },
   patternTwo: { position: 'absolute', right: 90, top: 50, transform: [{ rotate: '15deg' }] },
   patternThree: { position: 'absolute', left: -8, bottom: -16, transform: [{ rotate: '-24deg' }] },

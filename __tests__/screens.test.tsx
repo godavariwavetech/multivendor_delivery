@@ -54,8 +54,13 @@ import { OrdersScreen } from '../src/features/vendor/orders/OrdersScreen';
 import { RejectOrderScreen } from '../src/features/vendor/orders/RejectOrderScreen';
 import { DocumentsScreen, StoreDetailsScreen } from '../src/features/vendor/profile/StoreScreens';
 import { VendorProfileScreen } from '../src/features/vendor/profile/VendorProfileScreen';
-import type { Role } from '../src/domain/types';
+import { storage } from '../src/api/storage';
+import type { Order, Role } from '../src/domain/types';
 import { ThemeProvider } from '../src/theme';
+import { seedOrders } from '../src/data/demo/orders';
+import { ProductPhoto } from '../src/features/vendor/menu/ProductPhoto';
+import { OrderRow } from '../src/features/vendor/orders/OrderCards';
+import { formatAmount } from '../src/utils/currency';
 
 type Stores = {
   vendor: ReturnType<typeof useVendor>;
@@ -125,7 +130,17 @@ async function renderScreen(
     // re-renders between presses and the next lookup sees the new handlers.
     await interact(tree.root);
   }
-  const text = JSON.stringify(tree.toJSON());
+  // Props can carry context objects (some with throwing getters); only text, styles and plain props are read.
+  const plain = (node: ReactTestRenderer.ReactTestRendererNode | null): unknown => {
+    if (node === null || typeof node === 'string') return node;
+    if (Array.isArray(node)) return node.map(plain);
+    const props: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(node.props ?? {})) {
+      if (k === 'style' || k === 'source' || ['string', 'number', 'boolean'].includes(typeof v)) props[k] = v;
+    }
+    return { type: node.type, props, children: (node.children ?? []).map(c => plain(c as ReactTestRenderer.ReactTestRendererNode)) };
+  };
+  const text = JSON.stringify(plain(tree.toJSON() as ReactTestRenderer.ReactTestRendererNode | null));
   await ReactTestRenderer.act(async () => tree.unmount());
   return text;
 }
@@ -191,7 +206,7 @@ describe('auth', () => {
     await renderScreen(LoginScreen, {
       run: async s => {
         results.push(await s.session.signInWithPassword('9840700001', 'amma2024', 'delivery')); // vendor-only number
-        results.push(await s.session.signInWithPassword('9840700002', 'amma2024', 'vendor')); // partner-only number
+        results.push(await s.session.signInWithPassword('9840700005', 'amma2024', 'vendor')); // partner-only number
         results.push(await s.session.signInWithPassword('9840721536', 'amma2024', 'delivery')); // dual-role number
         results.push(await s.session.requestOtp('9840721536', 'vendor', 'login'));
       },
@@ -213,7 +228,7 @@ describe('vendor', () => {
     ['Accept order', AcceptOrderScreen, { id: 'VK-2841' }, 'Prep time you promise'],
     ['Reject order', RejectOrderScreen, { id: 'VK-2841' }, 'Kitchen overloaded'],
     ['Handover', HandoverScreen, { id: 'VK-2836' }, '5192'],
-    ['Menu', MenuScreen, undefined, 'Chicken Biryani'],
+    ['Menu', MenuScreen, undefined, 'Paneer Butter Masala'], // the menu opens on the veg view
     ['Edit food item', ProductEditScreen, { id: 'f-biryani' }, 'Spice level choice'],
     ['New dish', ProductEditScreen, {}, 'New dish'],
     ['Out of stock', OutOfStockScreen, undefined, 'Mutton Chukka'],
@@ -303,6 +318,116 @@ describe('vendor', () => {
     expect(out).toContain('Rates not published for today');
   });
 
+  describe('order photos and amounts (VA-001, VA-002)', () => {
+    const photos = (root: ReactTestRenderer.ReactTestInstance) => ({
+      photos: root.findAllByType(ProductPhoto).length,
+      placeholders: root.findAll(n => String(n.type) === 'View' && n.props.testID === 'order-thumb-placeholder').length,
+    });
+    const rows = (status: string) => seedOrders('food').filter(o => o.status === status);
+
+    // Demo mode keeps edited dishes in storage; a rename here must not reach the next test.
+    afterEach(() => storage.remove('partner.demo.products.v1'));
+
+    test('delivered rows show the menu photo when the item is on the menu', async () => {
+      let seen = { photos: 0, placeholders: 0 };
+      await renderScreen(OrdersScreen, { params: { tab: 'delivered' }, interact: root => void (seen = photos(root)) });
+      expect(seen.photos).toBe(rows('delivered').length);
+      expect(seen.placeholders).toBe(0);
+    });
+
+    test('a dish renamed after the order is still found by its product id', async () => {
+      let seen = { photos: 0, placeholders: 0 };
+      await renderScreen(OrdersScreen, {
+        params: { tab: 'delivered' },
+        run: s => {
+          const line = rows('delivered')[0].lines[0];
+          const dish = s.vendor.state.products.find(p => p.id === line.productId)!;
+          s.vendor.actions.saveProduct({ ...dish, name: 'Renamed dish' });
+        },
+        interact: root => void (seen = photos(root)),
+      });
+      expect(seen.photos).toBe(1);
+      expect(seen.placeholders).toBe(0);
+    });
+
+    describe('a row built from its own line data', () => {
+      const base = rows('delivered')[0];
+      const withLine = (line: Partial<Order['lines'][number]>): Order => ({ ...base, lines: [{ ...base.lines[0], productId: undefined, ...line }] });
+      const show = async (order: Order) => {
+        let seen = { photos: 0, placeholders: 0, images: [] as string[] };
+        await renderScreen(() => <OrderRow order={order} workLabel="Cooking" onPress={() => {}} />, {
+          interact: root => {
+            seen = {
+              ...photos(root),
+              images: root.findAll(n => n.props.testID === 'order-thumb-image' && String(n.type) !== 'Image').map(n => n.props.source.uri),
+            };
+          },
+        });
+        return seen;
+      };
+
+      test('a dish no longer on the menu shows the photo sent with the line', async () => {
+        const seen = await show(withLine({ productId: '999999', name: 'Gone dish', image: '/uploads/partner_app/gone.jpg' }));
+        expect(seen.photos).toBe(0);
+        expect(seen.placeholders).toBe(0);
+        expect(seen.images).toHaveLength(1);
+        expect(seen.images[0]).toMatch(/\/uploads\/partner_app\/gone\.jpg$/);
+      });
+
+      test('a dish no longer on the menu with no photo shows the placeholder', async () => {
+        const seen = await show(withLine({ productId: '999999', name: 'Gone dish', image: null }));
+        expect(seen.placeholders).toBe(1);
+        expect(seen.photos).toBe(0);
+      });
+
+      test('a line whose name matches a menu dish but whose id does not is not given that dish’s photo', async () => {
+        const dishName = base.lines[0].name;
+        const seen = await show(withLine({ productId: '999999', name: dishName, image: null }));
+        expect(seen.photos).toBe(0);
+        expect(seen.placeholders).toBe(1);
+      });
+
+      test('a line with no id (older backend) still falls back to the dish name', async () => {
+        const seen = await show(withLine({ name: base.lines[0].name }));
+        expect(seen.photos).toBe(1);
+        expect(seen.placeholders).toBe(0);
+      });
+
+      test('an order with no lines shows the placeholder', async () => {
+        const seen = await show({ ...base, lines: [] });
+        expect(seen.placeholders).toBe(1);
+      });
+    });
+
+    test('Home new-order cards carry no per-order amount, but keep the payment type', async () => {
+      const first = rows('new')[0];
+      const out = await renderScreen(VendorHomeScreen);
+      expect(out).toContain(first.id);
+      expect(out).not.toContain(formatAmount(first.total));
+      expect(out).toContain('Prepaid');
+    });
+
+    test('the Orders tab still shows amounts for new, ready and delivered orders', async () => {
+      for (const [tab, status] of [['new', 'new'], ['ready', 'ready'], ['delivered', 'delivered']] as const) {
+        const out = await renderScreen(OrdersScreen, { params: { tab } });
+        expect(out).toContain(formatAmount(rows(status)[0].total));
+      }
+    });
+
+    test('Home keeps the Today earnings card', async () => {
+      const out = await renderScreen(VendorHomeScreen);
+      expect(out).toContain('Today');
+      expect(out).toMatch(/orders · avg/);
+    });
+
+    test('cancelled and rejected rows keep their amount in Old and are not on Home', async () => {
+      const out = await renderScreen(OrdersScreen, { params: { tab: 'past' } });
+      for (const o of [...rows('cancelled'), ...rows('rejected')]) expect(out).toContain(formatAmount(o.total));
+      const home = await renderScreen(VendorHomeScreen);
+      for (const o of [...rows('cancelled'), ...rows('rejected')]) expect(home).not.toContain(o.id);
+    });
+  });
+
   test('grocery menu says Packing', async () => {
     const out = await renderScreen(OrdersScreen, { params: { tab: 'cooking' }, run: s => s.vendor.actions.setCategory('grocery') });
     expect(out).toContain('Packing');
@@ -371,6 +496,55 @@ describe('delivery', () => {
   test('no active trip', async () => {
     const out = await renderScreen(ActiveScreen, opts({ run: (s: Stores) => s.delivery.actions.finish() }));
     expect(out).toContain('No active delivery');
+  });
+
+  describe('reporting a delivery as failed (DA-001, DA-003)', () => {
+    const labelOf = (node: ReactTestRenderer.ReactTestInstance): string =>
+      node.children.map(c => (typeof c === 'string' ? c : labelOf(c))).join('');
+
+    test('the Active tab shows "No active delivery" after a failed delivery is reported', async () => {
+      const out = await renderScreen(ActiveScreen, opts({ run: (s: Stores) => s.delivery.actions.fail('Customer unavailable') }));
+      expect(out).toContain('No active delivery');
+    });
+
+    test('Report & return order submits without crashing and closes the trip', async () => {
+      let latest!: ReturnType<typeof useDelivery>;
+      const Probe = () => {
+        latest = useDelivery();
+        return <DeliveryFailedScreen />;
+      };
+      const press = async (root: ReactTestRenderer.ReactTestInstance, label: string) => {
+        const target = root.findAll(n => typeof n.props.onPress === 'function' && labelOf(n).includes(label))[0];
+        expect(target).toBeDefined();
+        await ReactTestRenderer.act(async () => target.props.onPress());
+      };
+      await renderScreen(Probe, opts({
+        interact: async (root: ReactTestRenderer.ReactTestInstance) => {
+          expect(latest.activeRequest).toBeDefined();
+          await press(root, 'Skip wait (demo)');
+          await press(root, 'Customer unavailable');
+          await press(root, 'Report & return order');
+          expect(latest.activeRequest).toBeUndefined();
+          expect(latest.state.trips[0].status).toBe('cancelled');
+          expect(latest.state.trips[0].note).toBe('customer unavailable');
+        },
+      }));
+    });
+
+    test('a failed trip is not left as the active one, so the partner can take the next request', async () => {
+      let latest!: ReturnType<typeof useDelivery>;
+      const Probe = () => {
+        latest = useDelivery();
+        return null;
+      };
+      await renderScreen(Probe, opts({
+        run: (s: Stores) => s.delivery.actions.fail('Customer unavailable'),
+        interact: () => {
+          expect(latest.state.active).toBeUndefined();
+          expect(latest.openRequests.length).toBeGreaterThan(0);
+        },
+      }));
+    });
   });
 });
 

@@ -64,7 +64,10 @@ export const photoUrl = (stored?: string | null) => {
     return undefined;
   }
   // A server path gets the server's address; a full URL or a photo still on this phone is used as it is.
-  return /^(https?|file|content):\/\//i.test(stored) ? stored : `${getBaseUrl()}${stored}`;
+  if (/^(https?|file|content):\/\//i.test(stored)) {
+    return stored;
+  }
+  return `${getBaseUrl()}${stored.startsWith('/') ? '' : '/'}${stored}`;
 };
 
 export type PhotoSource = 'camera' | 'gallery';

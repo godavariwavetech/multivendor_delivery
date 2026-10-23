@@ -1,5 +1,7 @@
 import type { AssignedPartner, Category, Order, OrderLine, OrderStatus, PaymentMode } from '@/domain/types';
 
+import { PRODUCTS } from './products';
+
 const MIN = 60_000;
 const SEC = 1_000;
 
@@ -134,7 +136,8 @@ export function seedOrders(category: Category, now = Date.now()): Order[] {
       .filter((i): i is number => i !== undefined)
       .map(i => {
         const [name, qty, price, veg, variant, options] = pool[i];
-        return { name, qty, price, veg, variant, options };
+        // A dish on the demo menu is linked by id, as the backend does; one that is not stays unlinked.
+        return { productId: PRODUCTS.find(p => p.name === name)?.id, name, qty, price, veg, variant, options };
       });
     const itemTotal = lines.reduce((sum, l) => sum + l.price, 0);
     const packing = 20;

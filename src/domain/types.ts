@@ -31,6 +31,10 @@ export type Account = {
 export type OrderStatus = 'new' | 'cooking' | 'ready' | 'picked_up' | 'delivered' | 'cancelled' | 'rejected';
 
 export type OrderLine = {
+  /** `products.id` of the line's dish, from its variant. It survives a rename or removal; absent on an older backend and in demo seeds. */
+  productId?: string;
+  /** Server path of the dish's primary photo, or null when it has none. */
+  image?: string | null;
   name: string;
   qty: number;
   variant?: string;

@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.xl,
     overflow: 'hidden',
   },
-  heroPattern: { ...StyleSheet.absoluteFillObject, opacity: 0.12 },
+  heroPattern: { ...StyleSheet.absoluteFill, opacity: 0.12 },
   heroPatternOne: { position: 'absolute', right: -6, top: -12, transform: [{ rotate: '-20deg' }] },
   heroPatternTwo: { position: 'absolute', right: 80, bottom: -16, transform: [{ rotate: '16deg' }] },
   heroPatternThree: { position: 'absolute', left: 42, top: -16, transform: [{ rotate: '20deg' }] },

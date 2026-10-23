@@ -201,10 +201,11 @@ function reducer(state: State, action: Action): State {
     case 'proofPhoto':
       return patchActive(state, { proofPhoto: true });
     case 'complete': {
-      if (!state.active) {
+      const req = state.active ? state.accepted[state.active.requestId] : undefined;
+      // The server's trip can arrive without its request; there is nothing to summarise then.
+      if (!state.active || !req) {
         return state;
       }
-      const req = state.accepted[state.active.requestId];
       const minutes = Math.max(8, Math.round((now - state.active.acceptedAt) / MIN));
       const trip: Trip = {
         id: req.id,
@@ -232,10 +233,11 @@ function reducer(state: State, action: Action): State {
     case 'finish':
       return { ...state, active: undefined };
     case 'fail': {
-      if (!state.active) {
-        return state;
+      const req = state.active ? state.accepted[state.active.requestId] : undefined;
+      if (!state.active || !req) {
+        // Nothing to summarise, but the trip is over either way.
+        return state.active ? { ...state, active: undefined } : state;
       }
-      const req = state.accepted[state.active.requestId];
       const trip: Trip = {
         id: req.id,
         store: req.store.name,
