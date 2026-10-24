@@ -26,6 +26,8 @@ export function OrdersScreen() {
   const [tab, setTab] = useState<TabKey>(route.params?.tab ?? 'new');
   const work = workLabel(store.category);
   const deliveredOrders = pastOrders.filter(o => o.status === 'delivered');
+  // Once the partner has collected the parcel the order stays under Ready, marked "Out for delivery", until it is delivered.
+  const readyTab = [...readyOrders, ...pastOrders.filter(o => o.status === 'picked_up')];
 
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function OrdersScreen() {
   const tabs = [
     { key: 'new' as const, label: `New · ${newOrders.length}`, tone: 'sky' as const },
     { key: 'cooking' as const, label: `${work} · ${cookingOrders.length}`, tone: 'peach' as const },
-    { key: 'ready' as const, label: `Ready · ${readyOrders.length}`, tone: 'mint' as const },
+    { key: 'ready' as const, label: `Ready · ${readyTab.length}`, tone: 'mint' as const },
     { key: 'delivered' as const, label: `Delivered · ${deliveredOrders.length}`, tone: 'lavender' as const },
   ];
 
@@ -106,8 +108,15 @@ export function OrdersScreen() {
         ))}
 
       {tab === 'ready' &&
-        (readyOrders.length ? (
-          readyOrders.map(o => <OrderRow key={o.id} order={o} workLabel={work} onPress={() => nav.navigate('Handover', { id: o.id })} />)
+        (readyTab.length ? (
+          readyTab.map(o => (
+            <OrderRow
+              key={o.id}
+              order={o}
+              workLabel={work}
+              onPress={() => (o.status === 'ready' ? nav.navigate('Handover', { id: o.id }) : open(o.id))}
+            />
+          ))
         ) : (
           <EmptyState icon={PackageCheck} title="No orders waiting" body="Orders marked ready wait here until the partner collects them." />
         ))}

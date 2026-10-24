@@ -181,7 +181,7 @@ export function OrderRow({ order, onPress, workLabel }: { order: Order; onPress:
         : { label: 'Ready · waiting for partner', tone: 'sky' };
       break;
     case 'picked_up':
-      pill = { label: order.closeNote ?? 'Picked up', tone: 'neutral' };
+      pill = { label: order.partner ? `Out for delivery · ${order.partner.name.split(' ')[0]}` : 'Out for delivery', tone: 'leaf' };
       break;
     case 'delivered':
       pill = { label: order.closeNote ?? `Delivered ${order.closedAt ? clock(order.closedAt) : ''}`, tone: 'neutral' };
