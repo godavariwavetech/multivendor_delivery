@@ -22,7 +22,7 @@ export const APP_CONFIG = appConfig;
  * Dev switch: true sends debug builds to the backend on this PC (reach it from a USB phone with
  * `adb reverse tcp:2407 tcp:2407`). Set false to use the hosted server again. Release builds always use it.
  */
-const USE_LOCAL_SERVER = true;
+const USE_LOCAL_SERVER = false;
 const LOCAL_API_BASE_URL = 'http://localhost:2407';
 
 export const DEFAULT_API_BASE_URL =
