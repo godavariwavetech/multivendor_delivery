@@ -1,25 +1,30 @@
-import { ChevronRight } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Card, HomeHeader, Pill, ProgressBar, Screen, StatTile, Text, TileRow, Toggle, useToast } from '@/components';
+// ON HOLD: ProgressBar, StatTile, TileRow — today's stats and the peak-bonus card are hidden from Home.
+import { Button, Card, HomeHeader, Screen, TabPills, Text, Toggle, useToast } from '@/components';
 import { useDelivery } from '@/data/deliveryStore';
-import { CATEGORY_LABEL } from '@/domain/labels';
 import { useNow } from '@/hooks/useNow';
 import { useDeliveryNav } from '@/navigation/types';
 import { palette, space } from '@/theme';
-import { formatAmount } from '@/utils/currency';
 import { clock } from '@/utils/datetime';
-import { etaAt, tripStatusPill } from '@/utils/trips';
+import { tripStatusPill } from '@/utils/trips';
 
-/** Board 4b·1 / 1c·1 — online switch, today's three-up, active trip, nearby requests. */
+import { RequestRow } from '../requests/RequestsScreen';
+
+/** Board 4b·1 / 1c·1 — online switch, then only the ongoing trip and the pending requests. */
 export function PartnerHomeScreen() {
   const nav = useDeliveryNav();
   const toast = useToast();
   const now = useNow(15_000);
-  const { state, profile, activeRequest, openRequests, today, unread, refresh, actions } = useDelivery();
+  const { state, profile, activeRequest, openRequests, unread, refresh, actions } = useDelivery();
   const trip = state.active;
-  const foodOnly = openRequests.every(r => r.category === 'food');
+  const ongoing = Boolean(trip && activeRequest && trip.stage !== 'complete');
+  const [tab, setTab] = useState<'pending' | 'ongoing'>('pending');
+  const tabs = [
+    { key: 'pending' as const, label: `Pending · ${openRequests.length}`, tone: 'sky' as const },
+    { key: 'ongoing' as const, label: `Ongoing · ${ongoing ? 1 : 0}`, tone: 'mint' as const },
+  ];
 
   return (
     <Screen tab onRefresh={refresh}>
@@ -56,48 +61,54 @@ export function PartnerHomeScreen() {
         </View>
       </Card>
 
+      {/* ON HOLD: today's three-up.
       <TileRow>
         <StatTile tone="sky" value={String(today.deliveries)} label="Deliveries" />
         <StatTile tone="lavender" value={String(today.km)} unit="km" label="Distance" />
         <StatTile tone="mint" value={formatAmount(today.earned)} label="Today" onPress={() => nav.navigate('DeliveryTabs', { screen: 'Earnings' })} />
-      </TileRow>
+      </TileRow> */}
 
-      {trip && activeRequest && trip.stage !== 'complete' ? (
-        <Card tone="highlight">
-          <View style={styles.head}>
-            <Text v="cardTitle">{`#${activeRequest.id} · active`}</Text>
-            <Pill label={tripStatusPill(trip, activeRequest, now)} tone="leaf" />
-          </View>
-          <Text v="body" muted style={styles.gap}>
-            {`${activeRequest.store.name} → ${activeRequest.drop.area}`}
-          </Text>
-          <Text v="body" muted>
-            {`${activeRequest.drop.distanceKm} km · ETA ${clock(etaAt(trip, activeRequest, now))}`}
-          </Text>
+      <TabPills tabs={tabs} value={tab} onChange={setTab} />
+
+      {tab === 'ongoing' ? (
+        ongoing && trip && activeRequest ? (
+        <RequestRow request={activeRequest} status={tripStatusPill(trip, activeRequest, now)} statusColor={palette.greenDeep} tone="highlight">
           <Button label="Continue delivery" style={styles.gapLg} onPress={() => nav.navigate('DeliveryTabs', { screen: 'Active' })} />
+        </RequestRow>
+      ) : (
+        <Card>
+          <Text v="body" muted>
+            No ongoing order
+          </Text>
         </Card>
+        )
       ) : null}
 
-      {state.online ? (
-        <Card onPress={() => nav.navigate('DeliveryTabs', { screen: 'Requests' })}>
-          <View style={styles.row}>
-            <View style={styles.flex}>
-              <Text v="cardTitle">
-                {openRequests.length
-                  ? `${openRequests.length} ${foodOnly ? 'food ' : ''}requests nearby`
-                  : 'No requests nearby right now'}
-              </Text>
+      {tab === 'pending' ? (
+        state.online ? (
+        <>
+          {openRequests.length ? (
+            openRequests.map(r => (
+              <RequestRow key={r.id} request={r} status="Pending" onPress={() => nav.navigate('IncomingRequest', { id: r.id })} />
+            ))
+          ) : (
+            <Card>
               <Text v="body" muted>
-                {openRequests.length
-                  ? `Within 2 km · ${[...new Set(openRequests.map(r => CATEGORY_LABEL[r.category]))].join(', ')}`
-                  : 'Stay online — new requests arrive every few minutes'}
+                No pending orders right now. Stay online — new requests appear here.
               </Text>
-            </View>
-            <ChevronRight size={22} color={palette.inkSubtle} strokeWidth={2.2} />
-          </View>
-        </Card>
+            </Card>
+          )}
+        </>
+        ) : (
+          <Card>
+            <Text v="body" muted>
+              You're offline. Go online to receive delivery requests.
+            </Text>
+          </Card>
+        )
       ) : null}
 
+      {/* ON HOLD: Dinner peak bonus card.
       <Card>
         <View style={styles.head}>
           <Text v="cardTitle">Dinner peak bonus</Text>
@@ -109,7 +120,7 @@ export function PartnerHomeScreen() {
             ? `Bonus unlocked · +${formatAmount(today.peakReward)} added to this week`
             : `Finish ${today.peakTarget} trips before 10 PM for +${formatAmount(today.peakReward)}`}
         </Text>
-      </Card>
+      </Card> */}
     </Screen>
   );
 }

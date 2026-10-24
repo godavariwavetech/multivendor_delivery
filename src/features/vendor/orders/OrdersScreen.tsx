@@ -1,6 +1,6 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
-import { ClipboardCheck, CookingPot, PackageCheck, ReceiptText } from 'lucide-react-native';
+import { CookingPot, PackageCheck, ReceiptText } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -14,7 +14,7 @@ import { prepSecondsLeft } from '@/utils/orders';
 
 import { CookingCard, NewOrderCard, OrderRow } from './OrderCards';
 
-type TabKey = 'new' | 'cooking' | 'ready' | 'delivered' | 'past';
+type TabKey = 'new' | 'cooking' | 'ready' | 'delivered';
 
 /** Board 4a·2 (orders by status) with 3a·3 (the cooking queue) as the middle tab. */
 export function OrdersScreen() {
@@ -26,7 +26,7 @@ export function OrdersScreen() {
   const [tab, setTab] = useState<TabKey>(route.params?.tab ?? 'new');
   const work = workLabel(store.category);
   const deliveredOrders = pastOrders.filter(o => o.status === 'delivered');
-  const oldOrders = pastOrders.filter(o => o.status !== 'delivered');
+
 
   useEffect(() => {
     if (route.params?.tab) {
@@ -42,7 +42,6 @@ export function OrdersScreen() {
     { key: 'cooking' as const, label: `${work} · ${cookingOrders.length}`, tone: 'peach' as const },
     { key: 'ready' as const, label: `Ready · ${readyOrders.length}`, tone: 'mint' as const },
     { key: 'delivered' as const, label: `Delivered · ${deliveredOrders.length}`, tone: 'lavender' as const },
-    { key: 'past' as const, label: 'Old', tone: 'butter' as const },
   ];
 
   const open = (id: string) => nav.navigate('OrderDetail', { id });
@@ -78,7 +77,7 @@ export function OrdersScreen() {
           <EmptyState
             icon={ReceiptText}
             title="No new orders"
-            body="New orders show up here with a 3-minute accept window."
+            body="New orders show up here. There is no time limit to accept."
             action={USE_MOCK_DATA ? 'Simulate a new order' : undefined}
             onAction={USE_MOCK_DATA ? actions.simulateOrder : undefined}
           />
@@ -120,12 +119,6 @@ export function OrdersScreen() {
           <EmptyState icon={PackageCheck} title="No delivered orders" body="Orders handed over to customers are listed here." />
         ))}
 
-      {tab === 'past' &&
-        (oldOrders.length ? (
-          oldOrders.map(o => <OrderRow key={o.id} order={o} workLabel={work} onPress={() => open(o.id)} />)
-        ) : (
-          <EmptyState icon={ClipboardCheck} title="No old orders" body="Picked up, cancelled and rejected orders are listed here." />
-        ))}
     </Screen>
   );
 }

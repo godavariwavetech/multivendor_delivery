@@ -33,24 +33,42 @@ const toPicked = (asset: Asset | undefined): PickedPhoto | null => {
  */
 const OPTIONS = { mediaType: 'photo', maxWidth: 1280, maxHeight: 1280, quality: 0.8 } as const;
 
+/**
+ * One photo from the camera or the gallery, null when the person backs out. The camera permission is asked for
+ * first, and a picker failure is shown rather than swallowed: it used to look exactly like backing out.
+ */
+const capture = async (source: PhotoSource): Promise<PickedPhoto | null> => {
+  try {
+    if (source === 'camera' && !(await ensureCameraPermission())) {
+      return null;
+    }
+    const result = await (source === 'camera' ? launchCamera : launchImageLibrary)(OPTIONS);
+    if (result.didCancel) {
+      return null;
+    }
+    if (result.errorCode) {
+      appAlert(
+        'Photo not added',
+        result.errorCode === 'camera_unavailable' ? 'No camera is available on this device.' : result.errorMessage || 'The photo could not be opened.',
+      );
+      return null;
+    }
+    return toPicked(result.assets?.[0]);
+  } catch (e) {
+    appAlert('Photo not added', e instanceof Error ? e.message : 'The photo could not be opened.');
+    return null;
+  }
+};
+
+/** Opens the camera straight away, with no gallery choice — a proof of delivery has to be taken on the spot. */
+export const takePhoto = (): Promise<PickedPhoto | null> => capture('camera');
+
 /** Asks camera or gallery, and resolves to null if the person backs out. */
 export const pickPhoto = (title = 'Add a photo'): Promise<PickedPhoto | null> =>
   new Promise(resolve => {
     appAlert(title, undefined, [
-      {
-        text: 'Take a photo',
-        onPress: async () => {
-          const result = await launchCamera(OPTIONS);
-          resolve(result.didCancel || result.errorCode ? null : toPicked(result.assets?.[0]));
-        },
-      },
-      {
-        text: 'Choose from gallery',
-        onPress: async () => {
-          const result = await launchImageLibrary(OPTIONS);
-          resolve(result.didCancel || result.errorCode ? null : toPicked(result.assets?.[0]));
-        },
-      },
+      { text: 'Take a photo', onPress: () => capture('camera').then(resolve) },
+      { text: 'Choose from gallery', onPress: () => capture('gallery').then(resolve) },
       { text: 'Cancel', style: 'cancel', onPress: () => resolve(null) },
     ]);
   });

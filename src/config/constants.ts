@@ -18,7 +18,15 @@ export const API_PORT = 2477;
  */
 export const APP_CONFIG = appConfig;
 
-export const DEFAULT_API_BASE_URL = `https://${appConfig.domain}:${API_PORT}`;
+/**
+ * Dev switch: true sends debug builds to the backend on this PC (reach it from a USB phone with
+ * `adb reverse tcp:2407 tcp:2407`). Set false to use the hosted server again. Release builds always use it.
+ */
+const USE_LOCAL_SERVER = true;
+const LOCAL_API_BASE_URL = 'http://localhost:2407';
+
+export const DEFAULT_API_BASE_URL =
+  __DEV__ && USE_LOCAL_SERVER ? LOCAL_API_BASE_URL : `https://${appConfig.domain}:${API_PORT}`;
 
 /**
  * The address of the machine the backend was built against, tried on first run

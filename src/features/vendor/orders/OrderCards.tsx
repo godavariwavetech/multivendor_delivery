@@ -1,16 +1,15 @@
-import { Check, ChevronRight, Clock, ImageIcon, X } from 'lucide-react-native';
+import { Check, ImageIcon, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Pill, Text } from '@/components';
+import { Button, OrderSummary, RoundPhoto } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import type { Order, OrderLine, Product } from '@/domain/types';
 import { ProductPhoto } from '../menu/ProductPhoto';
 import { palette, space } from '@/theme';
-import { formatAmount } from '@/utils/currency';
-import { ago, clock, formatCountdown } from '@/utils/datetime';
+import { ago, clock } from '@/utils/datetime';
 import { photoUrl } from '@/utils/photo';
-import { acceptSecondsLeft, itemsLabel, linesSummary } from '@/utils/orders';
+import { itemsLabel, linesSummary } from '@/utils/orders';
 
 const payLabel = (o: Order) => (o.refunded ? 'Refunded' : o.payment === 'cod' ? 'COD' : 'Prepaid');
 
@@ -34,35 +33,21 @@ export function NewOrderCard({
   onOpen: () => void;
   showCountdown?: 'ago' | 'accept';
 }) {
-  const left = acceptSecondsLeft(order, now);
-  const chip =
-    showCountdown === 'accept'
-      ? left > 0
-        ? `${formatCountdown(left)} to accept`
-        : 'Accept now'
-      : showCountdown === 'ago'
-        ? ago(order.placedAt, now)
-        : 'New';
+  // ON HOLD: the 'accept' countdown chip ("2:18 to accept"); a new order has no time limit.
+  const status = showCountdown === 'ago' ? `New · ${ago(order.placedAt, now)}` : 'New';
 
   return (
-    <Card tone={highlight ? 'highlight' : 'paper'} onPress={onOpen}>
-      <View style={styles.rowWrap}>
-        <OrderThumb order={order} />
-        <View style={styles.flex}>
-      <View style={styles.head}>
-        <Text v="cardTitle">{showCountdown === 'ago' ? `#${order.id} · ${itemsLabel(order)}` : `#${order.id}`}</Text>
-        <Pill label={chip} tone="sky" icon={showCountdown ? Clock : undefined} />
-      </View>
-      <Text v="body" muted style={styles.gapTop}>
-        {showCountdown === 'ago' ? linesSummary(order.lines) : `${linesSummary(order.lines)} · ${formatAmount(order.total)}`}
-      </Text>
-      {showCountdown === 'ago' ? (
-        <Text v="body" muted>
-          {payLabel(order)}
-        </Text>
-      ) : null}
-        </View>
-      </View>
+    <OrderSummary
+      tone={highlight ? 'highlight' : 'paper'}
+      thumb={<OrderThumb order={order} />}
+      number={order.id}
+      at={order.placedAt}
+      status={status}
+      total={order.total}
+      note={`${linesSummary(order.lines)} · ${payLabel(order)}`}
+      area={order.customer.area}
+      address={order.customer.address}
+      onPress={onOpen}>
       <View style={styles.actions}>
         <Button label="Reject" icon={X} variant="outline" size="sm" flex={1} onPress={onReject} />
         <Button
@@ -73,7 +58,7 @@ export function NewOrderCard({
           onPress={onAccept}
         />
       </View>
-    </Card>
+    </OrderSummary>
   );
 }
 
@@ -92,21 +77,18 @@ export function CookingCard({
   onOpen: () => void;
 }) {
   return (
-    <Card onPress={onOpen}>
-      <View style={styles.rowWrap}>
-        <OrderThumb order={order} />
-        <View style={styles.flex}>
-          <Text v="cardTitle">{`#${order.id}`}</Text>
-          <Text v="body" muted style={styles.gapTopSm}>
-            {linesSummary(order.lines)}
-          </Text>
-          {order.partner ? (
-            <Text v="body">{`Partner ${order.partner.name.split(' ')[0]} waiting at counter`}</Text>
-          ) : null}
-        </View>
-      </View>
+    <OrderSummary
+      thumb={<OrderThumb order={order} />}
+      number={order.id}
+      at={order.placedAt}
+      status={order.partner ? `Preparing · ${order.partner.name.split(' ')[0]} waiting at counter` : 'Preparing'}
+      total={order.total}
+      note={`${linesSummary(order.lines)} · ${payLabel(order)}`}
+      area={order.customer.area}
+      address={order.customer.address}
+      onPress={onOpen}>
       <Button label="Mark ready" onPress={onReady} style={styles.gapTopLg} />
-    </Card>
+    </OrderSummary>
   );
 }
 
@@ -160,6 +142,20 @@ function LinePhoto({ stored, faded }: { stored?: string | null; faded: boolean }
   );
 }
 
+/** One order line's dish as a round photo: its menu photo, else the photo sent with the line, else a neutral tile. */
+export function LineThumb({ line, size = 48 }: { line: OrderLine; size?: number }) {
+  const { state } = useVendor();
+  const source = resolveLinePhoto(line, state.products);
+  if (source.kind === 'menu') {
+    return (
+      <View style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden' }}>
+        <ProductPhoto product={source.product} size={size} faded={false} />
+      </View>
+    );
+  }
+  return <RoundPhoto stored={source.kind === 'stored' ? source.path : null} size={size} />;
+}
+
 /** The order's first item: its menu photo, else the photo sent with the line, else a neutral tile. */
 function OrderThumb({ order }: { order: Order }) {
   const { state } = useVendor();
@@ -195,19 +191,19 @@ export function OrderRow({ order, onPress, workLabel }: { order: Order; onPress:
   }
 
   return (
-    <Card onPress={onPress} style={closed ? styles.faded : undefined}>
-      <View style={styles.rowWrap}>
-        <OrderThumb order={order} />
-        <View style={styles.flex}>
-          <Text v="cardTitle" color={closed ? palette.inkMuted : undefined}>{`#${order.id}`}</Text>
-          <Text v="body" muted style={styles.gapTopSm}>
-            {`${itemsLabel(order)} · ${formatAmount(order.total)} · ${payLabel(order)}`}
-          </Text>
-          <Pill label={pill.label} tone={pill.tone} style={styles.gapTop} />
-        </View>
-        <ChevronRight size={22} color={palette.inkSubtle} strokeWidth={2.2} />
-      </View>
-    </Card>
+    <OrderSummary
+      thumb={<OrderThumb order={order} />}
+      number={order.id}
+      at={order.placedAt}
+      status={pill.label}
+      statusColor={closed ? palette.inkSubtle : undefined}
+      total={order.total}
+      note={`${itemsLabel(order)} · ${payLabel(order)}`}
+      area={order.customer.area}
+      address={order.customer.address}
+      faded={closed}
+      onPress={onPress}
+    />
   );
 }
 

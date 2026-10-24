@@ -2,8 +2,8 @@ import type { Order, OrderLine } from '@/domain/types';
 
 import { formatCountdown } from './datetime';
 
-/** Board: vendors have 3 minutes to accept a new order. */
-export const ACCEPT_WINDOW_SEC = 180;
+// ON HOLD: vendors have no time limit to accept a new order (the board said 3 minutes).
+// export const ACCEPT_WINDOW_SEC = 180;
 
 export const lineLabel = (l: OrderLine) => `${l.qty} × ${l.name}${l.variant ? ` (${l.variant})` : ''}`;
 
@@ -17,8 +17,9 @@ export const itemsLabel = (order: Order) => {
   return `${n} item${n === 1 ? '' : 's'}`;
 };
 
-export const acceptSecondsLeft = (order: Order, now: number) =>
-  ACCEPT_WINDOW_SEC - Math.floor((now - order.placedAt) / 1000);
+// ON HOLD: countdown to accept.
+// export const acceptSecondsLeft = (order: Order, now: number) =>
+//   ACCEPT_WINDOW_SEC - Math.floor((now - order.placedAt) / 1000);
 
 /** Seconds of promised prep time left; negative once the order is late. */
 export const prepSecondsLeft = (order: Order, now: number) => {

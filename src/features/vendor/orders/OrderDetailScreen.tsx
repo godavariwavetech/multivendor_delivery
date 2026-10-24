@@ -19,6 +19,7 @@ import {
   useToast,
 } from '@/components';
 import { useVendor } from '@/data/vendorStore';
+import { LineThumb } from './OrderCards';
 import { ORDER_STATUS_LABEL, workLabel } from '@/domain/labels';
 import type { OrderStatus } from '@/domain/types';
 import { useNow } from '@/hooks/useNow';
@@ -160,6 +161,7 @@ export function OrderDetailScreen() {
           <View key={`${l.name}-${i}`}>
             {i > 0 ? <Divider style={styles.divider} /> : null}
             <View style={styles.line}>
+              <LineThumb line={l} />
               <View style={styles.vegWrap}>
                 <VegMark veg={l.veg} />
               </View>
@@ -246,7 +248,7 @@ export function OrderDetailScreen() {
 
 const styles = StyleSheet.create({
   divider: { marginVertical: space.md },
-  line: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
+  line: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
   vegWrap: { paddingTop: 3 },
   flex: { flex: 1 },
   lineName: { fontSize: 15 },

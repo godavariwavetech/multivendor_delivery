@@ -99,7 +99,7 @@ const delivery: Topic[] = [
   {
     keywords: ['accept', 'request', 'new delivery', 'incoming', 'skip'],
     question: 'How do I accept a delivery request?',
-    answer: 'Open Requests and tap Accept before the countdown ends. If you skip a request it is offered to another partner.',
+    answer: 'Open Requests and tap Accept. Every online partner sees a new request and there is no time limit, but the first partner to accept gets the order and it disappears for everyone else.',
   },
   {
     keywords: ['not answering', 'no answer', 'unavailable', 'customer not', "can't reach", 'not picking'],

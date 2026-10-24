@@ -12,6 +12,13 @@ export const clock = (ms: number): string => {
   return `${h12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 };
 
+/** "01-08-2026 12:20 PM" — the order time shown on every order row. */
+export const orderStamp = (ms: number): string => {
+  const d = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${clock(ms)}`;
+};
+
 /** "2:18" — accept windows, prep timers, respond timers. Negative input renders as its absolute value. */
 export const formatCountdown = (totalSeconds: number): string => {
   const s = Math.abs(Math.round(totalSeconds));

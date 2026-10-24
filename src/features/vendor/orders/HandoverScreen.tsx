@@ -23,6 +23,7 @@ import {
   appAlert,
 } from '@/components';
 import { useVendor } from '@/data/vendorStore';
+import { LineThumb } from './OrderCards';
 import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
@@ -141,6 +142,7 @@ export function HandoverScreen() {
           <View key={`${l.name}-${i}`}>
             {i > 0 ? <Divider /> : null}
             <View style={styles.line}>
+              <LineThumb line={l} />
               <View style={styles.flex}>
                 <Text v="bodyStrong">{l.name}</Text>
                 <Text v="body" muted>
@@ -194,7 +196,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   codeCard: { alignItems: 'center', gap: space.sm, paddingVertical: space.xl },
   center: { textAlign: 'center' },
-  line: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.xs },
+  line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.xs },
   right: { alignItems: 'flex-end' },
   note: { marginTop: space.sm },
   footer: { flex: 1, gap: space.md },

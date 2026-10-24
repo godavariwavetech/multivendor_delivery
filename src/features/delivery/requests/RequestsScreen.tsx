@@ -1,53 +1,90 @@
 import { Check, Inbox, WifiOff, X } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Banner, Button, Card, EmptyState, LinkButton, NoteBox, Pill, Screen, Text, TitleHeader, useToast } from '@/components';
+import { Banner, Button, Card, EmptyState, LinkButton, NoteBox, OrderSummary, Screen, TabPills, Text, TitleHeader, useToast } from '@/components';
+import type { CardTone } from '@/components';
 import { useDelivery } from '@/data/deliveryStore';
-import { CATEGORY_LABEL } from '@/domain/labels';
 import type { DeliveryRequest } from '@/domain/types';
 import { useNow } from '@/hooks/useNow';
 import { useDeliveryNav } from '@/navigation/types';
+import { TripRow } from '../earnings/EarningsScreens';
 import { palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
-import { clock, formatCountdown } from '@/utils/datetime';
-import { requestItemNames } from '@/utils/trips';
+import { requestItemNames, tripStatusPill } from '@/utils/trips';
 
-export const RESPOND_SECONDS = 20;
+// ON HOLD: requests have no response time limit — the first partner to accept gets the order.
+// export const RESPOND_SECONDS = 20;
 
-export const readyLine = (r: DeliveryRequest, now: number) => {
-  if (r.readyInMin <= 0) {
-    return 'ready now';
-  }
-  return r.category === 'food' ? `Food ready at ${clock(now + r.readyInMin * 60_000)}` : `ready in ${r.readyInMin} min`;
-};
+/** A request as the shared order row: photo, number, time, status, total, area and address; actions go in `children`. */
+export function RequestRow({
+  request: r,
+  status,
+  statusColor,
+  tone,
+  onPress,
+  children,
+}: {
+  request: DeliveryRequest;
+  status: string;
+  statusColor?: string;
+  tone?: CardTone;
+  onPress?: () => void;
+  children?: React.ReactNode;
+}) {
+  const note = [requestItemNames(r), r.payment === 'cod' ? `COD ${formatAmount(r.codAmount ?? r.orderTotal)}` : 'Prepaid', r.waitingMin ? `Waiting ${r.waitingMin} min` : '']
+    .filter(Boolean)
+    .join(' · ');
+  return (
+    <OrderSummary
+      number={r.id}
+      at={r.placedAt}
+      status={status}
+      statusColor={statusColor}
+      total={r.orderTotal}
+      note={note}
+      area={r.drop.area}
+      address={r.drop.address}
+      photo={r.photo}
+      tone={tone}
+      onPress={onPress}>
+      {children}
+    </OrderSummary>
+  );
+}
 
-/** Board 4b·2 — the first open request is offered with a 20-second timer. */
+/** Board 4b·2 — open requests go to every online partner; the first to accept gets the order. */
 export function RequestsScreen() {
   const nav = useDeliveryNav();
   const toast = useToast();
   const now = useNow();
   const { state, openRequests, activeRequest, refresh, actions } = useDelivery();
-  const [offer, setOffer] = useState<{ id: string; at: number } | null>(null);
 
+  const [tab, setTab] = useState<'pending' | 'ongoing' | 'completed'>('pending');
+  const completed = state.trips.filter(t => t.status === 'delivered');
   const first = openRequests[0];
   const busy = Boolean(state.active && state.active.stage !== 'complete');
+  const trip = state.active;
+  const tabs = [
+    { key: 'pending' as const, label: `Pending · ${openRequests.length}`, tone: 'sky' as const },
+    { key: 'ongoing' as const, label: `Ongoing · ${busy ? 1 : 0}`, tone: 'mint' as const },
+    { key: 'completed' as const, label: `Completed · ${completed.length}`, tone: 'lavender' as const },
+  ];
 
-  // Start a fresh 20-second window whenever a different request moves to the top.
-  useEffect(() => {
-    if (first && offer?.id !== first.id) {
-      setOffer({ id: first.id, at: Date.now() });
-    }
-  }, [first, offer?.id]);
-
-  const left = offer ? RESPOND_SECONDS - Math.floor((now - offer.at) / 1000) : RESPOND_SECONDS;
-
-  useEffect(() => {
-    if (state.online && !busy && first && offer?.id === first.id && left <= 0) {
-      actions.skip(first.id);
-      toast('Request expired · reassigned to another partner');
-    }
-  }, [actions, busy, first, left, offer?.id, state.online, toast]);
+  // ON HOLD: the 20-second window and the auto-skip when it ran out.
+  // const [offer, setOffer] = useState<{ id: string; at: number } | null>(null);
+  // useEffect(() => {
+  //   if (first && offer?.id !== first.id) {
+  //     setOffer({ id: first.id, at: Date.now() });
+  //   }
+  // }, [first, offer?.id]);
+  // const left = offer ? RESPOND_SECONDS - Math.floor((now - offer.at) / 1000) : RESPOND_SECONDS;
+  // useEffect(() => {
+  //   if (state.online && !busy && first && offer?.id === first.id && left <= 0) {
+  //     actions.skip(first.id);
+  //     toast('Request expired · reassigned to another partner');
+  //   }
+  // }, [actions, busy, first, left, offer?.id, state.online, toast]);
 
   const accept = (r: DeliveryRequest) => {
     if (busy) {
@@ -82,7 +119,27 @@ export function RequestsScreen() {
         />
       ) : (
         <>
-          {busy && activeRequest ? (
+          <TabPills tabs={tabs} value={tab} onChange={setTab} />
+
+          {tab === 'ongoing' ? (
+            busy && trip && activeRequest ? (
+              <RequestRow request={activeRequest} status={tripStatusPill(trip, activeRequest, now)} statusColor={palette.greenDeep} tone="highlight">
+                <Button label="Continue delivery" style={styles.gap} onPress={() => nav.navigate('DeliveryTabs', { screen: 'Active' })} />
+              </RequestRow>
+            ) : (
+              <EmptyState icon={Inbox} title="No ongoing orders" body="An order you accept shows up here until it is delivered." />
+            )
+          ) : null}
+
+          {tab === 'completed' ? (
+            completed.length ? (
+              completed.map(t => <TripRow key={`${t.id}-${t.at}`} trip={t} onPress={() => nav.navigate('TripDetail', { id: t.id })} />)
+            ) : (
+              <EmptyState icon={Inbox} title="No completed orders yet" body="Orders you deliver today show up here with their details." />
+            )
+          ) : null}
+
+          {tab === 'pending' && busy && activeRequest ? (
             <Banner
               tone="leaf"
               title={`Finish #${activeRequest.id} first`}
@@ -91,9 +148,8 @@ export function RequestsScreen() {
             />
           ) : null}
 
-          {first ? (
-            <Card tone="highlight" onPress={() => nav.navigate('IncomingRequest', { id: first.id })}>
-              <RequestBody request={first} now={now} strongPayout />
+          {tab === 'pending' && first ? (
+            <RequestRow request={first} status="Pending" tone="highlight" onPress={() => nav.navigate('IncomingRequest', { id: first.id })}>
               <View style={styles.actions}>
                 <Button
                   label="Skip"
@@ -105,43 +161,32 @@ export function RequestsScreen() {
                     toast('Skipped · offered to another partner');
                   }}
                 />
-                <Button
-                  icon={Check}
-                  label={busy ? 'Accept' : `Accept · ${formatCountdown(Math.max(0, left))}`}
-                  flex={1.8}
-                  disabled={busy}
-                  onPress={() => accept(first)}
-                />
+                <Button icon={Check} label="Accept" flex={1.8} disabled={busy} onPress={() => accept(first)} />
               </View>
-            </Card>
+            </RequestRow>
           ) : null}
 
-          {others.map(r => (
-            <Card
-              key={r.id}
-              onPress={r.status === 'open' ? () => nav.navigate('IncomingRequest', { id: r.id }) : undefined}
-              style={r.status === 'taken' ? styles.faded : undefined}>
-              {r.status === 'taken' ? (
-                <>
-                  <View style={styles.head}>
-                    <Text v="cardTitle" color={palette.inkMuted}>
-                      {r.store.name}
-                    </Text>
-                    <Text v="cardTitle" color={palette.inkMuted}>
-                      {formatAmount(r.payout)}
-                    </Text>
-                  </View>
-                  <Text v="body" subtle style={styles.gap}>
-                    Taken by another partner
+          {(tab === 'pending' ? others : []).map(r =>
+            r.status === 'taken' ? (
+              <Card key={r.id} style={styles.faded}>
+                <View style={styles.head}>
+                  <Text v="cardTitle" color={palette.inkMuted}>
+                    {r.store.name}
                   </Text>
-                </>
-              ) : (
-                <RequestBody request={r} now={now} />
-              )}
-            </Card>
-          ))}
+                  <Text v="cardTitle" color={palette.inkMuted}>
+                    {formatAmount(r.payout)}
+                  </Text>
+                </View>
+                <Text v="body" subtle style={styles.gap}>
+                  Taken by another partner
+                </Text>
+              </Card>
+            ) : (
+              <RequestRow key={r.id} request={r} status="Pending" onPress={() => nav.navigate('IncomingRequest', { id: r.id })} />
+            ),
+          )}
 
-          {!first && !others.length ? (
+          {tab === 'pending' && !first && !others.length ? (
             <EmptyState
               icon={Inbox}
               title="No requests right now"
@@ -151,73 +196,16 @@ export function RequestsScreen() {
             />
           ) : null}
 
-          <NoteBox>Requests expire in 20 seconds. Skipping does not affect your rating; not responding does.</NoteBox>
+          <NoteBox>Requests have no time limit. The first partner to accept gets the order. Skipping does not affect your rating.</NoteBox>
         </>
       )}
     </Screen>
   );
 }
 
-function RequestBody({ request: r, now, strongPayout }: { request: DeliveryRequest; now: number; strongPayout?: boolean }) {
-  const names = requestItemNames(r);
-  const tags: { label: string; tone: 'neutral' | 'sky' | 'leaf' }[] = [];
-  if (r.category !== 'food') {
-    tags.push({ label: CATEGORY_LABEL[r.category], tone: 'leaf' });
-  }
-  if (r.payment === 'cod') {
-    tags.push({ label: `COD ${formatAmount(r.codAmount ?? 0)}`, tone: 'neutral' });
-  }
-  if (r.parcels > 1) {
-    tags.push({ label: `${r.parcels} ${r.category === 'grocery' ? 'bags' : 'parcels'}`, tone: 'neutral' });
-  }
-  if (r.waitingMin) {
-    tags.push({ label: `Waiting ${r.waitingMin} min`, tone: 'sky' });
-  }
-
-  return (
-    <>
-      <View style={styles.head}>
-        <Text v="cardTitle" style={styles.flex}>
-          {r.store.name}
-        </Text>
-        <Text v="cardTitle" color={strongPayout ? palette.greenDeep : undefined}>
-          {formatAmount(r.payout)}
-        </Text>
-      </View>
-      <Text v="bodyStrong" style={styles.gap}>
-        {`Order #${r.id}`}
-      </Text>
-      {names ? (
-        <Text v="body" muted numberOfLines={2}>
-          {names}
-        </Text>
-      ) : null}
-      <Text v="body" muted style={styles.gap}>
-        {strongPayout
-          ? `Pickup ${r.store.distanceKm} km · drop ${r.drop.distanceKm} km · ${r.totalKm} km total`
-          : `Pickup ${r.store.distanceKm} km · drop ${r.drop.distanceKm} km · ${readyLine(r, now)}`}
-      </Text>
-      {strongPayout ? (
-        <Text v="body" muted>
-          {`${readyLine(r, now)} · ${r.payment === 'cod' ? 'cash on delivery' : 'prepaid'}`}
-        </Text>
-      ) : null}
-      {tags.length ? (
-        <View style={styles.tags}>
-          {tags.map(t => (
-            <Pill key={t.label} label={t.label} tone={t.tone} />
-          ))}
-        </View>
-      ) : null}
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
-  flex: { flex: 1 },
-  gap: { marginTop: space.xs },
+  gap: { marginTop: space.md },
   actions: { flexDirection: 'row', gap: 10, marginTop: space.lg },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: space.md },
   faded: { opacity: 0.7 },
 });

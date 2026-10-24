@@ -2,6 +2,7 @@ export { Text } from './Text';
 export { Button, LinkButton, BackButton, BellButton, IconCircle } from './Button';
 export { Card, Banner, NoteBox } from './Card';
 export type { CardTone } from './Card';
+export { OrderSummary, RoundPhoto } from './OrderSummary';
 export { Pill, Chip, ChipRow } from './Pill';
 export type { PillTone } from './Pill';
 export { Toggle, Checkbox, ChecklistRow } from './Toggle';

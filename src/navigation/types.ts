@@ -37,7 +37,7 @@ export type FranchiseParams = SharedParams & {
 
 export type VendorTabParams = {
   Home: undefined;
-  Orders: { tab?: 'new' | 'cooking' | 'ready' | 'delivered' | 'past' } | undefined;
+  Orders: { tab?: 'new' | 'cooking' | 'ready' | 'delivered' } | undefined;
   Menu: undefined;
   Earnings: undefined;
   Profile: undefined;

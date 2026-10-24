@@ -11,6 +11,7 @@ import {
   HeroBars,
   KeyValue,
   LinkButton,
+  OrderSummary,
   Pill,
   RouteTimeline,
   Screen,
@@ -26,30 +27,26 @@ import type { Trip } from '@/domain/types';
 import { useDeliveryNav, useDeliveryRoute } from '@/navigation/types';
 import { palette, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
-import { clock } from '@/utils/datetime';
+import { orderStamp } from '@/utils/datetime';
+import { OrderDetailCards, OrderHero } from '../OrderDetailCards';
 
+/** A finished trip as the shared order row; what the partner earned sits under the order total. */
 export function TripRow({ trip, onPress }: { trip: Trip; onPress: () => void }) {
   const cancelled = trip.status === 'cancelled';
-  const detail = cancelled
-    ? `${clock(trip.at)} · ${trip.note}`
-    : `${clock(trip.at)} · ${trip.km} km · ${trip.minutes} min${trip.tip ? ` · +${formatAmount(trip.tip)} tip` : ''}`;
   return (
-    <Card onPress={onPress} style={cancelled ? styles.faded : undefined}>
-      <View style={styles.row}>
-        <View style={styles.flex}>
-          <Text v="bodyStrong" numberOfLines={1} style={styles.tripTitle}>{`#${trip.id} · ${trip.store}`}</Text>
-          <Text v="body" muted numberOfLines={1}>
-            {detail}
-          </Text>
-        </View>
-        <View style={styles.right}>
-          <Text v="cardTitle">{formatAmount(trip.earning)}</Text>
-          <Text v="captionStrong" color={cancelled ? palette.inkSubtle : palette.greenDeep}>
-            {cancelled ? 'Cancelled' : 'Delivered'}
-          </Text>
-        </View>
-      </View>
-    </Card>
+    <OrderSummary
+      number={trip.id}
+      at={trip.placedAt ?? trip.at}
+      status={cancelled ? `Cancelled${trip.note ? ` · ${trip.note}` : ''}` : 'Completed'}
+      statusColor={cancelled ? palette.inkSubtle : palette.greenDeep}
+      total={trip.orderTotal ?? trip.earning}
+      note={`You earned ${formatAmount(trip.earning)}${trip.tip ? ` · +${formatAmount(trip.tip)} tip` : ''}`}
+      area={trip.area ?? trip.store}
+      address={trip.address}
+      photo={trip.photo}
+      faded={cancelled}
+      onPress={onPress}
+    />
   );
 }
 
@@ -154,6 +151,7 @@ export function TripDetailScreen() {
 
   const b = t.breakdown ?? { base: t.earning - t.tip, distance: 0, tip: t.tip };
   const cancelled = t.status === 'cancelled';
+  const details = t.details ?? req;
 
   return (
     <Screen
@@ -162,17 +160,12 @@ export function TripDetailScreen() {
       }>
       <BackHeader
         title={`#${t.id}`}
-        subtitle={`${t.store} · ${clock(t.at)}`}
+        subtitle={`${t.store} · ${orderStamp(t.placedAt ?? t.at)}`}
         onBack={nav.goBack}
         pill={cancelled ? 'Cancelled' : 'Delivered'}
         pillTone={cancelled ? 'neutral' : 'leaf'}
       />
-      <Card>
-        <RouteTimeline
-          from={{ title: t.store, subtitle: req ? req.store.area : 'Pickup' }}
-          to={{ title: t.customer ?? 'Customer', subtitle: req ? req.drop.area : 'Drop' }}
-        />
-      </Card>
+      {details ? <OrderHero request={details} /> : null}
       <Card>
         <SectionLabel>Earnings</SectionLabel>
         <AmountRow label={cancelled ? 'Attempt pay' : 'Base'} amount={b.base} />
@@ -180,7 +173,17 @@ export function TripDetailScreen() {
         {!cancelled ? <AmountRow label="Tip" amount={b.tip} /> : null}
         <AmountRow label="Earned" amount={t.earning} total />
       </Card>
+      {details ? (
+        <OrderDetailCards request={details} finished />
+      ) : (
+        <Card>
+          <RouteTimeline from={{ title: t.store, subtitle: 'Pickup' }} to={{ title: t.customer ?? 'Customer', subtitle: 'Drop' }} />
+        </Card>
+      )}
       <Card>
+        <SectionLabel>Trip</SectionLabel>
+        <KeyValue label="Delivered at" value={orderStamp(t.at)} strong />
+        {t.customer ? <KeyValue label="Customer" value={t.customer} strong /> : null}
         <KeyValue label="Distance" value={`${t.km} km`} strong />
         <KeyValue label="Trip time" value={`${t.minutes} min`} strong />
         {cancelled ? (

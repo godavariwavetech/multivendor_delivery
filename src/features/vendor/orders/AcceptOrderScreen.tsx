@@ -16,13 +16,13 @@ import {
   useToast,
 } from '@/components';
 import { useVendor } from '@/data/vendorStore';
+import { LineThumb } from './OrderCards';
 import { useNow } from '@/hooks/useNow';
 import { useVendorNav, useVendorRoute } from '@/navigation/types';
 import { PREP_TIME_OPTIONS } from '@config/constants';
-import { palette, space } from '@/theme';
+import { space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
-import { clock, formatCountdown } from '@/utils/datetime';
-import { acceptSecondsLeft } from '@/utils/orders';
+import { clock } from '@/utils/datetime';
 
 const PREP_OPTIONS = PREP_TIME_OPTIONS.map(m => ({ key: m, label: `${m} m` }));
 
@@ -40,7 +40,6 @@ export function AcceptOrderScreen() {
     return null;
   }
 
-  const left = acceptSecondsLeft(order, now);
   const food = store.category === 'food';
   const effective = prep + (state.busyMode ? 10 : 0);
 
@@ -74,8 +73,7 @@ export function AcceptOrderScreen() {
         title={`#${order.id}`}
         subtitle={`Today ${clock(order.placedAt)} · ${order.payment === 'cod' ? 'COD' : 'Prepaid'} ${formatAmount(order.total)}`}
         onBack={nav.goBack}
-        pill={left > 0 ? `${formatCountdown(left)} left` : 'Accept now'}
-        pillTone="sky"
+        // ON HOLD: pill={left > 0 ? `${formatCountdown(left)} left` : 'Accept now'} — no accept time limit.
       />
 
       <Card>
@@ -84,6 +82,7 @@ export function AcceptOrderScreen() {
           <View key={`${l.name}-${i}`}>
             {i > 0 ? <Divider style={styles.divider} /> : null}
             <View style={styles.ticketLine}>
+              <LineThumb line={l} />
               <Text v="cardTitle" style={styles.qty}>{`${l.qty}×`}</Text>
               <View style={styles.flex}>
                 <Text v="cardTitle" style={styles.lineName}>
@@ -95,6 +94,7 @@ export function AcceptOrderScreen() {
                   </Text>
                 ) : null}
               </View>
+              <Text v="body">{formatAmount(l.price)}</Text>
             </View>
           </View>
         ))}
@@ -107,6 +107,15 @@ export function AcceptOrderScreen() {
             </Text>
           </>
         ) : null}
+      </Card>
+
+      <Card>
+        <SectionLabel>Delivery address</SectionLabel>
+        <Text v="cardTitle">{order.customer.name}</Text>
+        <Text v="body" muted>
+          {order.customer.address || order.customer.area}
+        </Text>
+        <Text v="caption" subtle>{`${order.customer.distanceKm} km from your store`}</Text>
       </Card>
 
       <Card>
@@ -130,17 +139,15 @@ export function AcceptOrderScreen() {
         title="Rejecting needs a reason"
         body="Item unavailable · kitchen overloaded · store closing. Repeated rejections affect your rating."
       />
-      <Text v="caption" color={palette.inkSubtle} center>
-        Orders not accepted within 3 minutes are passed to the store admin.
-      </Text>
+      {/* ON HOLD: "Orders not accepted within 3 minutes are passed to the store admin." — no accept time limit. */}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   divider: { marginVertical: space.md },
-  ticketLine: { flexDirection: 'row', gap: space.md },
-  qty: { width: 32 },
+  ticketLine: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  qty: { width: 28 },
   lineName: { fontSize: 15 },
   flex: { flex: 1 },
   note: { marginTop: space.md },

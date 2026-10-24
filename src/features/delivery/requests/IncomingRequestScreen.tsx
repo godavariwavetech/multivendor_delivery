@@ -1,42 +1,45 @@
 import { Check, X } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet } from 'react-native';
 
-import { Banner, Button, CountdownRing, Divider, RouteTimeline, Text, useToast } from '@/components';
+import { AmountRow, BackHeader, Banner, Button, Card, Screen, SectionLabel, Text, useToast } from '@/components';
 import { useDelivery } from '@/data/deliveryStore';
 import { CATEGORY_LABEL } from '@/domain/labels';
-import { useNow } from '@/hooks/useNow';
 import { useDeliveryNav, useDeliveryRoute } from '@/navigation/types';
-import { palette, radius, space } from '@/theme';
-import { formatAmount } from '@/utils/currency';
+import { space } from '@/theme';
 import { clock } from '@/utils/datetime';
-import { requestItemNames } from '@/utils/trips';
 
-import { RESPOND_SECONDS } from './RequestsScreen';
+import { OrderDetailCards, OrderHero } from '../OrderDetailCards';
 
-/** Board 1c·2 / 3b·1 — a request sheet over a dimmed screen, with a 20-second ring. */
+/** Board 1c·2 / 3b·1 — one request in full: payout, dishes and bill, payment, route. No response timer. */
 export function IncomingRequestScreen() {
   const nav = useDeliveryNav();
   const toast = useToast();
-  const insets = useSafeAreaInsets();
-  const now = useNow(250);
   const { params } = useDeliveryRoute<'IncomingRequest'>();
   const { request, state, actions } = useDelivery();
   const r = request(params.id);
-  const [openedAt] = useState(() => Date.now());
-
-  const left = RESPOND_SECONDS - (now - openedAt) / 1000;
   const busy = Boolean(state.active && state.active.stage !== 'complete');
 
+  // ON HOLD: the 20-second window and the auto-skip when it ran out.
+  // const [openedAt] = useState(() => Date.now());
+  // const left = RESPOND_SECONDS - (now - openedAt) / 1000;
+  // useEffect(() => {
+  //   // Busy partners are only looking: the list does not expire a request for them either.
+  //   if (left <= 0 && r?.status === 'open' && !busy) {
+  //     actions.skip(r.id);
+  //     toast('Request expired · reassigned');
+  //     nav.goBack();
+  //   }
+  // }, [actions, busy, left, nav, r, toast]);
+
+  // The partner who accepts first gets the order; if another partner took it while this sheet was open, close it.
+  const accepting = useRef(false);
   useEffect(() => {
-    // Busy partners are only looking: the list does not expire a request for them either.
-    if (left <= 0 && r?.status === 'open' && !busy) {
-      actions.skip(r.id);
-      toast('Request expired · reassigned');
+    if (!accepting.current && (!r || r.status === 'taken')) {
+      toast('This order was taken by another partner');
       nav.goBack();
     }
-  }, [actions, busy, left, nav, r, toast]);
+  }, [nav, r, toast]);
 
   if (!r) {
     return null;
@@ -44,76 +47,22 @@ export function IncomingRequestScreen() {
 
   const food = r.category === 'food';
   const title = food ? 'Food pickup' : `${CATEGORY_LABEL[r.category]} pickup`;
-  const extra = r.pickup.kind === 'food' ? 'hot bag' : r.pickup.kind === 'meat' ? 'cold bag' : r.pickup.kind === 'bakery' ? 'fragile' : r.payment === 'cod' ? 'cash' : 'no cash';
 
   const accept = () => {
     if (busy) {
       toast('Finish your active delivery first');
       return;
     }
+    accepting.current = true;
     actions.accept(r.id);
     nav.goBack();
     nav.navigate('DeliveryTabs', { screen: 'Active' });
   };
 
   return (
-    <View style={styles.backdrop}>
-      <StatusBar barStyle="light-content" />
-      <View style={[styles.ghosts, { paddingTop: insets.top + space.xl }]}>
-        <View style={[styles.ghost, styles.ghostSmall]} />
-        <View style={[styles.ghost, styles.ghostMid]} />
-        <View style={[styles.ghost, styles.ghostLarge]} />
-      </View>
-
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]}>
-        <View style={styles.head}>
-          <CountdownRing seconds={left} total={RESPOND_SECONDS} />
-          <View style={styles.flex}>
-            <Text v="displaySm">{title}</Text>
-            <Text v="body" muted>{`Respond in ${Math.max(0, Math.ceil(left))} seconds`}</Text>
-          </View>
-          <View style={styles.payout}>
-            <Text v="display" color={palette.greenDeep}>
-              {formatAmount(r.payout)}
-            </Text>
-            <Text v="caption" muted>
-              payout
-            </Text>
-          </View>
-        </View>
-
-        {food && r.readyInMin > 0 ? (
-          <Banner
-            tone="leaf"
-            title={`Food is ready at ${clock(Date.now() + r.readyInMin * 60_000)}.`}
-            body="Reach the store around then — no long wait expected."
-          />
-        ) : null}
-
-        <View style={styles.route}>
-          <Text v="bodyStrong">{`Order #${r.id}`}</Text>
-          <Text v="body" muted>
-            {[requestItemNames(r), `${r.items} ${r.items === 1 ? 'item' : 'items'}`].filter(Boolean).join(' · ')}
-          </Text>
-          <Divider style={styles.divider} />
-          <RouteTimeline
-            from={{ title: r.store.name, subtitle: `${r.store.area} · ${r.store.distanceKm} km away` }}
-            to={{ title: r.drop.area, subtitle: `Drop ${r.drop.distanceKm} km from pickup` }}
-          />
-          <Divider style={styles.divider} />
-          <View style={styles.meta}>
-            <Text v="caption" muted>
-              <Text v="captionStrong">{`${r.totalKm} km`}</Text> total
-            </Text>
-            <Text v="captionStrong">{`~${r.etaMin} min`}</Text>
-            <Text v="caption" muted>
-              <Text v="captionStrong">{r.payment === 'cod' ? `COD ${formatAmount(r.codAmount ?? 0)}` : 'Prepaid'}</Text>
-              {` · ${extra}`}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.actions}>
+    <Screen
+      footer={
+        <>
           <Button
             label="Reject"
             icon={X}
@@ -126,35 +75,40 @@ export function IncomingRequestScreen() {
             }}
           />
           <Button label="Accept delivery" icon={Check} variant="green" size="lg" flex={1.8} onPress={accept} />
-        </View>
-        <Text v="caption" subtle center>
-          Rejected requests are reassigned automatically.
+        </>
+      }>
+      <BackHeader title={`Order #${r.id}`} subtitle={`${title} · ${r.store.name}`} onBack={nav.goBack} />
+
+      <OrderHero request={r} />
+
+      {food && r.readyInMin > 0 ? (
+        <Banner
+          tone="leaf"
+          title={`Food is ready at ${clock(Date.now() + r.readyInMin * 60_000)}.`}
+          body="Reach the store around then — no long wait expected."
+        />
+      ) : null}
+
+      <Card>
+        <SectionLabel>Your delivery payout</SectionLabel>
+        <AmountRow label="Base pay" amount={r.breakdown.base} />
+        <AmountRow label={`Distance pay · ${r.drop.distanceKm} km`} amount={r.breakdown.distance} />
+        {r.breakdown.tip ? <AmountRow label="Customer tip" amount={r.breakdown.tip} /> : null}
+        <AmountRow label="You earn" amount={r.payout} total />
+        <Text v="caption" subtle style={styles.note}>
+          This is your pay for delivering the order. It is not the price the customer pays.
         </Text>
-      </View>
-    </View>
+      </Card>
+
+      <OrderDetailCards request={r} />
+
+      <Text v="caption" subtle center>
+        Rejected requests are reassigned automatically.
+      </Text>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: palette.night, justifyContent: 'flex-end' },
-  ghosts: { position: 'absolute', top: 0, left: space.gutter, right: space.gutter, gap: 12 },
-  ghost: { backgroundColor: 'rgba(255, 255, 255, 0.07)', borderRadius: radius.xl },
-  ghostSmall: { height: 44 },
-  ghostMid: { height: 80 },
-  ghostLarge: { height: 120 },
-  sheet: {
-    backgroundColor: palette.canvas,
-    borderTopLeftRadius: 34,
-    borderTopRightRadius: 34,
-    paddingHorizontal: space.gutter,
-    paddingTop: space.xl,
-    gap: space.md,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  flex: { flex: 1 },
-  payout: { alignItems: 'flex-end' },
-  route: { backgroundColor: palette.paper, borderRadius: radius.lg, padding: space.lg },
-  divider: { marginVertical: space.md },
-  meta: { flexDirection: 'row', justifyContent: 'space-between', gap: space.sm },
-  actions: { flexDirection: 'row', gap: 10, marginTop: space.xs },
+  note: { marginTop: space.sm },
 });

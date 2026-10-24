@@ -66,7 +66,7 @@ export type Order = {
   payout: number;
   payment: PaymentMode;
   refunded?: boolean;
-  customer: { name: string; area: string; distanceKm: number; phone?: string };
+  customer: { name: string; area: string; address?: string; distanceKm: number; phone?: string };
   note?: string;
   prepMinutes?: number;
   acceptedAt?: number;
@@ -311,7 +311,7 @@ export type PickupSheet = FoodPickup | GroceryPickup | ProducePickup | BakeryPic
 
 /** The order's bill as the customer was charged, so a partner can explain what they collect. */
 export type OrderBill = {
-  lines: { name: string; variant?: string; qty: number; amount: number }[];
+  lines: { name: string; variant?: string; qty: number; amount: number; image?: string | null }[];
   itemTotal: number;
   packing: number;
   tax: number;
@@ -327,9 +327,24 @@ export type DeliveryRequest = {
   assignmentId?: number;
   orderId?: number;
   id: string;
+  /** When the customer placed the order, and the first dish's photo, for the order row. */
+  placedAt?: number;
+  photo?: string | null;
   category: Category;
   status: RequestStatus;
-  store: { name: string; area: string; address: string; distanceKm: number; note: string; latitude?: number | null; longitude?: number | null };
+  store: {
+    name: string;
+    area: string;
+    address: string;
+    distanceKm: number;
+    note: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    /** The store's contact number, picture and opening hours, for the request details. */
+    phone?: string;
+    photo?: string | null;
+    hours?: string;
+  };
   drop: { name: string; area: string; address: string; distanceKm: number; latitude?: number | null; longitude?: number | null };
   payout: number;
   breakdown: { base: number; distance: number; tip: number };
@@ -368,6 +383,14 @@ export type ActiveTrip = {
 export type Trip = {
   id: string;
   assignmentId?: number;
+  /** For the order row: when it was placed, what the customer paid, where it went, the first dish's photo. */
+  placedAt?: number;
+  orderTotal?: number;
+  area?: string;
+  address?: string;
+  photo?: string | null;
+  /** The order as it was offered (bill, store, addresses), for the trip's detail screen. */
+  details?: DeliveryRequest;
   store: string;
   category: Category;
   at: number;

@@ -8,18 +8,18 @@ import {
   Button,
   Card,
   ChecklistRow,
-  CodeBoxes,
+  // CodeBoxes, // ON HOLD: OTP entry
   Divider,
   KeyValue,
   ListGroup,
   ListRow,
-  NumericKeypad,
+  // NumericKeypad, // ON HOLD: OTP entry
   ProgressBar,
   Radio,
   Screen,
   SectionLabel,
   Text,
-  applyKey,
+  // applyKey, // ON HOLD: OTP entry
   appAlert,
   useToast,
 } from '@/components';
@@ -30,7 +30,7 @@ import { useDeliveryNav } from '@/navigation/types';
 import { fonts, palette, radius, space } from '@/theme';
 import { formatAmount } from '@/utils/currency';
 import { formatCountdown } from '@/utils/datetime';
-import { pickPhoto } from '@/utils/photo';
+import { takePhoto } from '@/utils/photo';
 
 import { categoryPill, requiredChecks } from './handling';
 
@@ -125,8 +125,23 @@ export function DeliveryOtpScreen() {
   };
 
   return (
-    <Screen scroll={false} gap={10}>
+    <Screen footer={<Button label="Delivered" icon={Check} variant="green" size="lg" flex={1} onPress={verify} />}>
       <BackHeader title="Complete delivery" subtitle={`#${r.id} · ${r.drop.name}`} onBack={nav.goBack} />
+      <Banner tone="leaf" title="Customer OTP is on hold" body="No code is needed for now. Hand over the order, then tap Delivered." />
+      <Card>
+        <SectionLabel>Deliver to</SectionLabel>
+        <Text v="cardTitle">{r.drop.name}</Text>
+        <Text v="body" muted>
+          {r.drop.address || r.drop.area}
+        </Text>
+        <KeyValue label="Payment" value={r.payment === 'cod' ? 'Cash on delivery' : 'Prepaid'} />
+        <KeyValue
+          label="Collect from customer"
+          value={r.payment === 'cod' ? formatAmount(r.codAmount ?? r.orderTotal) : 'Nothing to collect'}
+          strong={r.payment === 'cod'}
+        />
+      </Card>
+      {/* ON HOLD: customer OTP entry at the drop — re-enable with the backend check in completedelivery.
       <Banner tone="leaf" title="Ask the customer for their 4-digit OTP" body="It is shown in their order screen." />
       <CodeBoxes value={code} length={4} error={Boolean(error)} />
       {error ? (
@@ -139,33 +154,36 @@ export function DeliveryOtpScreen() {
         <Text v="caption" subtle>
           The customer reads the OTP from their order screen.
         </Text>
-      )}
-      <View style={styles.pair}>
-        <Card style={styles.half} onPress={() => nav.navigate('ProofPhoto')}>
-          <Text v="bodyStrong" center>
-            Proof photo
-          </Text>
-          <Text v="caption" muted center>
+      )} */}
+      {error ? (
+        <Text v="caption" color={palette.alert}>
+          {error}
+        </Text>
+      ) : null}
+      <Card onPress={() => nav.navigate('ProofPhoto')}>
+        <View style={styles.optionRow}>
+          <Text v="bodyStrong">Proof photo</Text>
+          <Text v="body" muted>
             {state.active.proofPhoto ? 'Added ✓' : 'Optional'}
           </Text>
-        </Card>
-        <Card style={styles.half} onPress={() => nav.navigate('DeliveryFailed')}>
-          <Text v="bodyStrong" center>
-            Customer unavailable
-          </Text>
-          <Text v="caption" muted center>
+        </View>
+      </Card>
+      <Card onPress={() => nav.navigate('DeliveryFailed')}>
+        <View style={styles.optionRow}>
+          <Text v="bodyStrong">Customer unavailable</Text>
+          <Text v="body" muted>
             Report issue
           </Text>
-        </Card>
-      </View>
-      <View style={styles.flex} />
+        </View>
+      </Card>
+      {/* ON HOLD: OTP keypad.
       <NumericKeypad
         onKey={k => {
           setError(null);
           setCode(c => applyKey(c, k, 4));
         }}
-      />
-      <Button label="Verify & complete" size="lg" disabled={code.length < 4} onPress={verify} style={styles.bottom} />
+      /> */}
+      {/* ON HOLD: with the OTP, the footer button goes back to `disabled={code.length < 4}` and "Verify & complete". */}
     </Screen>
   );
 }
@@ -192,7 +210,7 @@ export function ProofPhotoScreen() {
               nav.goBack();
               return;
             }
-            const picked = await pickPhoto('Proof of delivery');
+            const picked = await takePhoto();
             if (!picked) {
               return;
             }
@@ -333,6 +351,7 @@ const styles = StyleSheet.create({
   codeLabel: { textAlign: 'center' },
   bottom: { marginTop: space.md, marginBottom: space.lg },
   pair: { flexDirection: 'row', gap: 10 },
+  optionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   half: { flex: 1, paddingVertical: space.md },
   viewfinder: {
     flex: 1,

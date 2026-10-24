@@ -467,9 +467,10 @@ function useDeliveryValue() {
         /** The customer reads out the OTP; the server checks it. */
         complete: async (otp: string): Promise<ActionResult> => {
           if (!LIVE) {
-            if (activeRequest && otp !== activeRequest.customerOtp) {
-              return { ok: false, error: 'Incorrect OTP. Ask the customer to check the order screen again.' };
-            }
+            // ON HOLD: customer OTP check at the drop.
+            // if (activeRequest && otp !== activeRequest.customerOtp) {
+            //   return { ok: false, error: 'Incorrect OTP. Ask the customer to check the order screen again.' };
+            // }
             dispatch({ type: 'complete' });
             return { ok: true };
           }

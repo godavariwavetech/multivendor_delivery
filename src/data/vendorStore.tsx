@@ -71,10 +71,13 @@ type State = ServerState & {
   /** Demo mode switches the store category from Profile; live, it follows the store. */
   category: Category;
   loaded: boolean;
+  /** Delivered orders fetched for the Old tab. Kept apart from `orders` so the 15-second refresh does not drop them. */
+  archive: Order[];
 };
 
 type Action =
   | { type: 'hydrate'; data: ServerState }
+  | { type: 'archive'; orders: Order[] }
   | { type: 'restoreDemoProducts'; products: Product[] }
   | { type: 'toggleOpen' }
   | { type: 'setBusy'; on: boolean }
@@ -145,6 +148,7 @@ const demoInitial = (): State => ({
   hours: WEEKLY_HOURS,
   notifications: vendorNotifications(),
   loaded: true,
+  archive: [],
 });
 
 const liveInitial = (): State => ({
@@ -164,6 +168,7 @@ const liveInitial = (): State => ({
   hours: [],
   notifications: [],
   loaded: false,
+  archive: [],
 });
 
 const initial = (): State => (LIVE ? liveInitial() : demoInitial());
@@ -246,6 +251,8 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'hydrate':
       return { ...state, ...action.data, notifications: withLocalReads('vendor', action.data.notifications), category: action.data.store.category, loaded: true };
+    case 'archive':
+      return { ...state, archive: action.orders };
     case 'restoreDemoProducts':
       return { ...state, products: action.products };
     case 'toggleOpen':
@@ -554,11 +561,13 @@ function useVendorValue() {
       cookingOrders: byStatus(['cooking']),
       readyOrders: byStatus(['ready']),
       pastOrders: byStatus(['picked_up', 'delivered', 'cancelled', 'rejected']),
+      archive: state.archive,
       unread: state.notifications.filter(n => !n.read).length,
-      order: (id: string) => state.orders.find(o => o.id === id),
+      order: (id: string) => state.orders.find(o => o.id === id) ?? state.archive.find(o => o.id === id),
       product: (id: string) => state.products.find(p => p.id === id),
       refresh,
       actions: {
+        setArchive: (orders: Order[]) => dispatch({ type: 'archive', orders }),
         toggleOpen: () => {
           dispatch({ type: 'toggleOpen' });
           send(endpoints.vendor.storeOnline, { is_online: !state.open });

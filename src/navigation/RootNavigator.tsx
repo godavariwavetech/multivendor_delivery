@@ -152,11 +152,8 @@ function DeliveryNavigator() {
   return (
     <DeliveryStack.Navigator screenOptions={stackOptions}>
       <DeliveryStack.Screen name="DeliveryTabs" component={DeliveryTabs} />
-      <DeliveryStack.Screen
-        name="IncomingRequest"
-        component={IncomingRequestScreen}
-        options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }}
-      />
+      {/* Was a transparent modal over a dimmed screen; now a normal full screen with the order's full detail. */}
+      <DeliveryStack.Screen name="IncomingRequest" component={IncomingRequestScreen} />
       <DeliveryStack.Screen name="PickupCode" component={PickupCodeScreen} />
       <DeliveryStack.Screen name="DeliveryOtp" component={DeliveryOtpScreen} />
       <DeliveryStack.Screen name="ProofPhoto" component={ProofPhotoScreen} />
