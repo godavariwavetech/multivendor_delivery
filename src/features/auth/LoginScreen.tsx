@@ -2,7 +2,7 @@ import { Bike, CircleAlert, Store, Users } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, LinkButton, Screen, SegmentOption, SegmentedTabs, Text } from '@/components';
+import { Button, Screen, SegmentOption, SegmentedTabs, Text } from '@/components';
 import { USE_MOCK_DATA } from '@config/constants';
 import { useSession } from '@/data/session';
 import type { Role } from '@/domain/types';
@@ -23,12 +23,12 @@ const SIGN_IN_LABEL: Record<Role, string> = {
 };
 
 /**
- * Board 1a·1 — mobile number + password, OTP alternative, forgot password. The
+ * Board 1a·1 — mobile number + password. The
  * workspace is chosen here with tabs instead of a separate picker screen.
  */
 export function LoginScreen() {
   const nav = useAuthNav();
-  const { signInWithPassword, requestOtp, branding } = useSession();
+  const { signInWithPassword, branding } = useSession();
   const [role, setRole] = useState<Role>('vendor');
   // Prefilled only in demo mode; a real sign-in starts empty.
   const [mobile, setMobile] = useState(USE_MOCK_DATA ? '98407 21536' : '');
@@ -43,7 +43,7 @@ export function LoginScreen() {
   const digits = mobileDigits(mobile);
   const mobileMessage = mobileIssue(digits, extraDigits);
 
-  /** Why this number cannot be used yet, for the sign-in and OTP buttons. */
+  /** Why this number cannot be used yet, for the sign-in button. */
   const mobileBlocker = () => mobileMessage ?? (digits.length !== 10 ? 'Enter your 10-digit mobile number.' : null);
 
   const submit = async () => {
@@ -59,23 +59,6 @@ export function LoginScreen() {
     const result = await signInWithPassword(digits, password, role);
     setBusy(false);
     setError(result.ok ? null : result.error);
-  };
-
-  const useOtp = async () => {
-    const blocker = mobileBlocker();
-    if (blocker) {
-      setError(blocker);
-      return;
-    }
-    setBusy(true);
-    const sent = await requestOtp(digits, role, 'login');
-    setBusy(false);
-    if (!sent.ok) {
-      setError(sent.error);
-      return;
-    }
-    setError(null);
-    nav.navigate('Otp', { mobile: digits, purpose: 'login', role });
   };
 
   // Everything accent-coloured on this screen follows the selected workspace
@@ -180,15 +163,6 @@ export function LoginScreen() {
           </Text>
         ) : null}
 
-        <View style={styles.links}>
-          <LinkButton label="Use OTP instead" onPress={useOtp} />
-          <Pressable onPress={() => nav.navigate('ForgotPassword')} hitSlop={10}>
-            <Text v="body" muted>
-              Forgot password?
-            </Text>
-          </Pressable>
-        </View>
-
         <Button
           label={busy ? 'Please wait…' : SIGN_IN_LABEL[role]}
           variant={role === 'vendor' ? 'blue' : role === 'delivery' ? 'green' : 'primary'}
@@ -242,13 +216,6 @@ const styles = StyleSheet.create({
   error: { marginTop: -6, marginBottom: space.md },
   fieldInvalid: { borderColor: palette.alert, borderRadius: radius.sm },
   fieldError: { marginTop: -8, marginBottom: space.md, paddingHorizontal: 6 },
-  links: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space.xl,
-    paddingHorizontal: 4,
-  },
   spacer: { flex: 1, minHeight: space.xxl },
   footer: { lineHeight: 20 },
   demo: { marginTop: space.md, fontSize: 11 },

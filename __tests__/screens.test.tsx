@@ -471,7 +471,7 @@ describe('delivery', () => {
   });
 
   test.each([
-    ['VK-2841', 'Confirm before you leave'],
+    ['VK-2841', 'Slide to confirm pickup'], // food: no confirm-before-you-leave card
     ['VK-2853', 'Bag tally'],
     ['VK-2861', 'Weighed at store'],
     ['VK-2874', 'Handling checklist'],
@@ -488,6 +488,9 @@ describe('delivery', () => {
       }),
     );
     expect(out).toContain(expected);
+    if (id === 'VK-2841') {
+      expect(out).not.toContain('Confirm before you leave');
+    }
   });
 
   test('trip complete', async () => {

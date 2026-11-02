@@ -71,7 +71,7 @@ const paymentValue = (r: DeliveryRequest) =>
 
 // ─── Food: prep countdown, parcel count, hot-bag checklist, tight window ─────
 
-function FoodHandling({ request: r, pickup, trip, now, onToggle }: HandlingProps<FoodPickup>) {
+function FoodHandling({ request: r, pickup, trip, now }: HandlingProps<FoodPickup>) {
   const left = Math.round((readyAt(trip, r) - now) / 1000);
   return (
     <>
@@ -90,7 +90,6 @@ function FoodHandling({ request: r, pickup, trip, now, onToggle }: HandlingProps
           </Text>
         </View>
       </Card>
-      <Checklist title="Confirm before you leave" items={pickup.checklist} trip={trip} onToggle={onToggle} />
       <Card>
         <KeyValue label="Items" value={`${r.items} · ${r.parcels} parcels`} strong />
         <KeyValue label="Payment" value={paymentValue(r)} strong />
@@ -297,6 +296,9 @@ export function PickupHandling(props: Omit<HandlingProps<never>, 'pickup'>) {
 export const requiredChecks = (r: DeliveryRequest): ChecklistItem[] => {
   const p = r.pickup;
   switch (p.kind) {
+    case 'food':
+      // Food has no confirm-before-you-leave card, so nothing has to be ticked.
+      return [];
     case 'grocery':
       return p.bags;
     default:

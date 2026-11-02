@@ -7,7 +7,6 @@ import {
   BackHeader,
   Button,
   Card,
-  ChecklistRow,
   CodeBoxes,
   Divider,
   IconCircle,
@@ -20,7 +19,6 @@ import {
   Text,
   applyKey,
   useToast,
-  appAlert,
 } from '@/components';
 import { useVendor } from '@/data/vendorStore';
 import { LineThumb } from './OrderCards';
@@ -37,9 +35,8 @@ export function HandoverScreen() {
   const nav = useVendorNav();
   const toast = useToast();
   const { params } = useVendorRoute<'Handover'>();
-  const { order: find, store, actions } = useVendor();
+  const { order: find, actions } = useVendor();
   const order = find(params.id);
-  const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -48,11 +45,6 @@ export function HandoverScreen() {
   }
 
   const partner = order.partner;
-  const items =
-    store.category === 'food'
-      ? [`${order.parcels} parcels sealed with sticker`, 'Gravy packed separately', 'Bill slip inside the bag']
-      : [`${order.parcels} bags tagged with #${order.id}`, 'Fragile items packed on top', 'Bill slip inside the bag'];
-  const allChecked = items.every(i => checks[i]);
 
   const confirm = () => {
     const done = async () => {
@@ -65,14 +57,7 @@ export function HandoverScreen() {
       toast(`Handed over to ${partner?.name ?? 'partner'}`);
       nav.goBack();
     };
-    if (allChecked) {
-      done();
-      return;
-    }
-    appAlert('Checklist not complete', 'Some items are not ticked. Hand over anyway?', [
-      { text: 'Go back', style: 'cancel' },
-      { text: 'Hand over', onPress: done },
-    ]);
+    done();
   };
 
   if (order.status !== 'ready') {
@@ -170,16 +155,6 @@ export function HandoverScreen() {
             {order.note}
           </Text>
         ) : null}
-      </Card>
-
-      <Card>
-        <SectionLabel>Before you hand over</SectionLabel>
-        {items.map((item, i) => (
-          <View key={item}>
-            {i > 0 ? <Divider /> : null}
-            <ChecklistRow label={item} checked={Boolean(checks[item])} onToggle={() => setChecks(c => ({ ...c, [item]: !c[item] }))} />
-          </View>
-        ))}
       </Card>
 
       <NoteBox>

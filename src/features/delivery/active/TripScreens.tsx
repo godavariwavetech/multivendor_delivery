@@ -86,15 +86,17 @@ export function PickupCodeScreen() {
           {r.handoverCode ? 'This screen moves on as soon as the store confirms.' : 'Fetching your code…'}
         </Text>
       </Card>
-      <Card>
-        <SectionLabel>Check while you pack</SectionLabel>
-        {checks.map((c, i) => (
-          <View key={c.key}>
-            {i > 0 ? <Divider /> : null}
-            <ChecklistRow label={c.label} hint={c.hint} checked={Boolean(trip.checks[c.key])} onToggle={() => actions.toggleCheck(c.key)} />
-          </View>
-        ))}
-      </Card>
+      {checks.length ? (
+        <Card>
+          <SectionLabel>Check while you pack</SectionLabel>
+          {checks.map((c, i) => (
+            <View key={c.key}>
+              {i > 0 ? <Divider /> : null}
+              <ChecklistRow label={c.label} hint={c.hint} checked={Boolean(trip.checks[c.key])} onToggle={() => actions.toggleCheck(c.key)} />
+            </View>
+          ))}
+        </Card>
+      ) : null}
       <View style={styles.flex} />
       <Button label="Can’t pick up? Release this trip" variant="outline" onPress={release} style={styles.bottom} />
     </Screen>
