@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import { ChevronRight, Plus } from 'lucide-react-native';
 import React from 'react';
 import { Image, Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette, pastel, pastelEdge, type PastelName, radius, shadow, space, useTheme } from '@/theme';
 
@@ -213,10 +214,14 @@ export function EmptyState({
 /** Extended floating action: "+ Add dish". */
 export function Fab({ label, onPress }: { label: string; onPress: () => void }) {
   const { r } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.fab, { backgroundColor: r.accent, opacity: pressed ? 0.88 : 1 }]}>
+      style={({ pressed }) => [
+        styles.fab,
+        { bottom: Math.max(insets.bottom, 12) + space.lg, backgroundColor: r.accent, opacity: pressed ? 0.88 : 1 },
+      ]}>
       <Plus size={22} color={r.onAccent} strokeWidth={2.4} />
       <Text v="cardTitle" color={r.onAccent}>
         {label}

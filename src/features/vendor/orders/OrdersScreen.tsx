@@ -46,6 +46,12 @@ export function OrdersScreen() {
     { key: 'delivered' as const, label: `Delivered · ${deliveredOrders.length}`, tone: 'lavender' as const },
   ];
 
+  console.log('[OrdersScreen] newOrders:', newOrders);
+  console.log('[OrdersScreen] cookingOrders:', cookingOrders);
+  console.log('[OrdersScreen] readyTab:', readyTab);
+  console.log('[OrdersScreen] pastOrders (all):', pastOrders);
+  console.log('[OrdersScreen] deliveredOrders:', deliveredOrders);
+
   const open = (id: string) => nav.navigate('OrderDetail', { id });
 
   return (

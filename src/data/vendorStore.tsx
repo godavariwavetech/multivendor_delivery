@@ -250,6 +250,7 @@ function reducer(state: State, action: Action): State {
   const now = Date.now();
   switch (action.type) {
     case 'hydrate':
+      console.log('[vendorStore] hydrate payload:', JSON.stringify(action.data));
       return { ...state, ...action.data, notifications: withLocalReads('vendor', action.data.notifications), category: action.data.store.category, loaded: true };
     case 'archive':
       return { ...state, archive: action.orders };

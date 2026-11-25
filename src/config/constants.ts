@@ -22,11 +22,13 @@ export const APP_CONFIG = appConfig;
  * Dev switch: true sends debug builds to the backend on this PC (reach it from a USB phone with
  * `adb reverse tcp:2407 tcp:2407`). Set false to use the hosted server again. Release builds always use it.
  */
-const USE_LOCAL_SERVER = false;
-const LOCAL_API_BASE_URL = 'http://localhost:2407';
+// const USE_LOCAL_SERVER = false;
+// const LOCAL_API_BASE_URL = 'http://localhost:2407';
 
-export const DEFAULT_API_BASE_URL =
-  __DEV__ && USE_LOCAL_SERVER ? LOCAL_API_BASE_URL : `https://${appConfig.domain}:${API_PORT}`;
+// export const DEFAULT_API_BASE_URL =
+//   __DEV__ && USE_LOCAL_SERVER ? LOCAL_API_BASE_URL : `https://${appConfig.domain}:${API_PORT}`;
+/** Pinned to the hosted backend while the local/computed resolution above is disabled. */
+export const DEFAULT_API_BASE_URL = 'https://ekart360.in:2477';
 
 /**
  * The address of the machine the backend was built against, tried on first run
@@ -51,7 +53,9 @@ export const UPLOAD_TIMEOUT_MS = 60000;
 export const USE_MOCK_DATA = false;
 
 /** Temporary development data for the history-period card while its API is deployed. */
-export const USE_MOCK_HISTORY = true;
+// export const USE_MOCK_HISTORY = true;
+/** The backend's /getvendorhistory is live now (vendorCtrl.js getvendorhistory), so this uses real data. */
+export const USE_MOCK_HISTORY = false;
 /** How often a signed-in workspace refetches its state. */
 export const POLL_INTERVAL_MS = 15000;
 

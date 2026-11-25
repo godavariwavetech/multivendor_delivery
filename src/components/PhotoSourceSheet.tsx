@@ -1,6 +1,7 @@
 import { Camera, ChevronRight, Image as ImageIcon, Trash2, X } from 'lucide-react-native';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette, radius, shadow, space } from '@/theme';
 
@@ -18,13 +19,14 @@ type Props = {
 
 /** The "Add photo" bottom sheet: take a photo, choose one, or remove the current one. */
 export function PhotoSourceSheet({ visible, hasPhoto, onClose, onCamera, onGallery, onRemove }: Props) {
+  const insets = useSafeAreaInsets();
   return (
     <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
         <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={onClose}>
           <View style={styles.scrim} />
         </Pressable>
-        <View style={styles.panel}>
+        <View style={[styles.panel, { paddingBottom: space.xxl + insets.bottom }]}>
           <View style={styles.grabber} />
           <View style={styles.header}>
             <Text v="cardTitle" style={styles.flex}>
